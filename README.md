@@ -1,0 +1,35 @@
+# Internal Representations of Behavioural Trait Intensity in an LLM
+
+_Francesco Braicovich, Gabriele Bettineschi, Giovanni Berlinghieri, Enrico Adamo, Andrea Porta  
+Bocconi University — Machine Learning and Artificial Intelligence, May 2026_
+
+## Abstract and introduction
+
+_[placeholder]_
+
+
+## Setup and development
+**Setup**
+1. Install dependencies with uv.
+   ```
+   uv sync
+   ```
+2. Login on the HuggingFace website and accept the license for [Gemma 2 2B](https://huggingface.co/google/gemma-2-2b).
+3. Authenticate yourself on the HuggingFace CLI.
+   ```
+   hf auth login
+   ```
+4. Setup nb-clean, one of the many nice tools to make git and jupyter notebooks work better together (if your venv is not in .venv, you should change the first command accordingly).
+   ```
+   git config --local filter.nb-clean.clean ".venv/bin/nb-clean clean --preserve-cell-outputs --remove-all-notebook-metadata"
+   
+   echo "*.ipynb filter=nb-clean" >> .git/info/attributes
+   ```
+
+**Development**
+
+Exploration happens in `notebooks/`. Notebooks follow the naming convention `{index}_{DDMM}_{surname}` (e.g. `001_0405_bettineschi.ipynb`).
+
+Once an approach is validated there, the logic is consolidated in `src/`. We have one module for loading data, one for handling the model and its internal representations, and one for analysing them.
+
+The full pipeline is run via `scripts/run.py`, configured by `scripts/config.yaml`. Output (activations, plots) is written to `output/` (gitignored).

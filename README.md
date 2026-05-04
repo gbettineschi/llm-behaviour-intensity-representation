@@ -1,7 +1,6 @@
 # Internal Representations of Behavioural Trait Intensity in an LLM
 
-_Francesco Braicovich, Gabriele Bettineschi, Giovanni Berlinghieri, Enrico Adamo, Andrea Porta  
-Bocconi University — Machine Learning and Artificial Intelligence, May 2026_
+_Produced by Francesco Braicovich, Gabriele Bettineschi, Giovanni Berlinghieri, Enrico Adamo, and Andrea Porta in May 2026 for the Machine Learning and Artificial Intelligence course at Bocconi University._
 
 ## Abstract and introduction
 

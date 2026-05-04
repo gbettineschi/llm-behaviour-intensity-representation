@@ -27,8 +27,14 @@ _[placeholder]_
 
 **Development**
 
-Exploration happens in `notebooks/`. Notebooks follow the naming convention `{index}_{DDMM}_{surname}` (e.g. `001_0405_bettineschi.ipynb`).
+All code is in `src/`.
 
-Once an approach is validated there, the logic is consolidated in `src/`. We have one module for loading data, one for handling the model and its internal representations, and one for analysing them.
+Exploration happens in `src/notebooks/`, where notebooks follow the naming convention `{index}_{DDMM}_{surname}` (e.g. `001_0405_bettineschi.ipynb`).
 
-The full pipeline is run via `scripts/run.py`, configured by `scripts/config.yaml`. Output (activations, plots) is written to `output/` (gitignored).
+Once a block of code is validated and meant to be reused, it is consolidated in one of the `.py` files that live in `/src` directly. We have one module for loading data, one for handling the model and its internal representations, and one for analysing them.
+
+At the end, we will write the full correct experiment in `scripts/run.py` with configs in `scripts/config.yaml`, for reproducibility.
+
+If we generate data and we want to keep track of it, we put it inside the `/data` folder. Since our data consists of lightweight text prompts, we can keep it on git. 
+
+Output (activations, plots) is written to `output/` (gitignored).

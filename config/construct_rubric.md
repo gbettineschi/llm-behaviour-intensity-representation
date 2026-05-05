@@ -34,6 +34,7 @@ Do not mix in apologies, thanks-only utterances, praise, or general emotional wa
 - stance on whether the request is optional
 - sentiment unrelated to the request
 - extra content not present in the base scenario
+- sentence length — do not use verbosity or number of words as a politeness cue; high-politeness paraphrases must not be substantially longer than low-politeness ones
 
 ### Three-level scale
 

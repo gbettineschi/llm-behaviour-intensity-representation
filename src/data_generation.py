@@ -6,6 +6,8 @@ import json
 import math
 import random
 import re
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -183,9 +185,10 @@ class Pipeline:
         schema = load_yaml(self.root / "config" / "scenario_schema.yaml")
         shared = schema["definitions"]["shared_fields"]
         trait_info = schema["traits"][trait]
+        levels_str = ", ".join(self.levels)
         return (
             f"Generate {n} base scenarios for the trait '{trait}'.\n"
-            f"Use three-level ordinal rewriting later: low, mid, high.\n"
+            f"Use {len(self.levels)}-level ordinal rewriting later: {levels_str}.\n"
             f"Speech-act restriction: {trait_info['speech_act']}.\n"
             f"Required trait-specific fields: {trait_info['required_fields']}.\n"
             f"Generation constraints: {trait_info['generation_constraints']}.\n"
@@ -236,34 +239,39 @@ class Pipeline:
         )
 
     def _ladder_user_prompt(self, trait: str, scenario: Dict[str, Any]) -> str:
+        levels_str = ", ".join(self.levels)
         return (
-            f"Create one 3-level canonical ladder for trait '{trait}'.\n"
+            f"Create one {len(self.levels)}-level canonical ladder for trait '{trait}'.\n"
             f"Scenario:\n{json.dumps(scenario, ensure_ascii=False, indent=2)}\n\n"
-            "Levels must be low, mid, high.\n"
+            f"Levels must be {levels_str}.\n"
             "The proposition or requested action must remain invariant.\n"
             "Return JSON with keys: scenario_id, trait, invariant_content, ladder.\n"
-            "'ladder' must map each level to a single sentence."
+            f"'ladder' must map each of these levels to a single sentence: {levels_str}."
         )
 
     def make_ladders(self, trait: str) -> None:
         scenarios = jsonl_read(self.trait_dir(trait) / "scenarios.jsonl")
         if not scenarios:
             raise FileNotFoundError("Run make-scenarios first.")
-        out_rows: List[Dict[str, Any]] = []
         system = self._ladder_system_prompt(trait)
-        for scenario in scenarios:
+        max_workers = int(self.config["pipeline"].get("max_workers", 1))
+
+        def _one(scenario: Dict[str, Any]) -> Dict[str, Any]:
             schema_hint = json.dumps(
                 {
                     "scenario_id": scenario["scenario_id"],
                     "trait": trait,
                     "invariant_content": scenario.get("proposition_or_request", ""),
-                    "ladder": {"low": "...", "mid": "...", "high": "..."},
+                    "ladder": {lvl: "..." for lvl in self.levels},
                 },
                 ensure_ascii=False,
             )
             obj = self.generator.call_json(system, self._ladder_user_prompt(trait, scenario), schema_hint)
             obj["scenario"] = scenario
-            out_rows.append(obj)
+            return obj
+
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            out_rows = list(ex.map(_one, scenarios))
         jsonl_write(self.trait_dir(trait) / "ladders.jsonl", out_rows)
         print(f"Wrote {len(out_rows)} ladders")
 
@@ -273,7 +281,10 @@ class Pipeline:
         return (
             "You generate paraphrases for a representation-geometry benchmark. "
             "Preserve meaning exactly while varying lexical realization. "
-            "Do not produce near-duplicates. Use different cue families when possible."
+            "Do not produce near-duplicates. Use different cue families when possible. "
+            "Critical: all paraphrases must be similar in length across levels. "
+            "Do not use sentence length or verbosity as a cue for the trait level. "
+            "A high-intensity paraphrase must not be longer than a low-intensity one."
         )
 
     def _paraphrase_user_prompt(
@@ -283,14 +294,17 @@ class Pipeline:
         used_cue_families: set[str],
     ) -> str:
         avoid = sorted(used_cue_families - {""})
+        n_levels = len(ladder_obj["ladder"])
         prompt = (
-            f"Given this canonical 3-level ladder:\n"
+            f"Given this canonical {n_levels}-level ladder:\n"
             f"{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
             f"Generate {per_level} paraphrases per level.\n"
             "For each paraphrase, provide: level, cue_family, text.\n"
             "Cue families should differ when possible, such as lexical marker, syntactic "
             "framing, gratitude framing, evidential framing, indirectness, modal framing.\n"
             "Keep the proposition or requested action unchanged.\n"
+            "Keep all paraphrases similar in length regardless of level. "
+            "Express intensity through word choice and framing, not sentence length.\n"
             "Return JSON with keys: scenario_id, trait, items."
         )
         if avoid:
@@ -331,11 +345,15 @@ class Pipeline:
         ladders = jsonl_read(self.trait_dir(trait) / "ladders.jsonl")
         if not ladders:
             raise FileNotFoundError("Run make-ladders first.")
+        ladders = sorted(ladders, key=lambda x: x["scenario_id"])
         per_level = int(self.config["pipeline"]["paraphrases_per_level"])
         system = self._paraphrase_system_prompt(trait)
-        rows: List[Dict[str, Any]] = []
+        max_workers = int(self.config["pipeline"].get("max_workers", 1))
+
         used_cue_families: set[str] = set()
-        for ladder in ladders:
+        lock = threading.Lock()
+
+        def _one(ladder: Dict[str, Any]) -> List[Dict[str, Any]]:
             schema_hint = json.dumps(
                 {
                     "scenario_id": ladder["scenario_id"],
@@ -344,25 +362,35 @@ class Pipeline:
                 },
                 ensure_ascii=False,
             )
+            with lock:
+                avoid = set(used_cue_families)
             obj = self.generator.call_json(
                 system,
-                self._paraphrase_user_prompt(ladder, per_level, used_cue_families),
+                self._paraphrase_user_prompt(ladder, per_level, avoid),
                 schema_hint,
             )
             scenario_id = obj["scenario_id"]
+            batch: List[Dict[str, Any]] = []
             for idx, item in enumerate(obj["items"], start=1):
                 cue_family = item.get("cue_family", "unspecified")
-                used_cue_families.add(cue_family)
-                rows.append({
+                batch.append({
                     "scenario_id": scenario_id,
                     "trait": trait,
                     "level": item["level"],
                     "cue_family": cue_family,
                     "text": normalize_text(item["text"]),
-                    "canonical": ladder["ladder"][item["level"]],
+                    "canonical": ladder["ladder"].get(item["level"], ""),
                     "invariant_content": ladder.get("invariant_content", ""),
                     "paraphrase_id": f"{scenario_id}-{item['level']}-{idx:02d}",
                 })
+            with lock:
+                for r in batch:
+                    used_cue_families.add(r["cue_family"])
+            return batch
+
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            results = list(ex.map(_one, ladders))
+        rows = [row for batch in results for row in batch]
         jsonl_write(self.trait_dir(trait) / "paraphrases.jsonl", rows)
         print(f"Wrote {len(rows)} paraphrase rows")
 
@@ -378,16 +406,25 @@ class Pipeline:
         )
 
     def _judge_user_prompt(self, trait: str, scenario_id: str, bundle: List[Dict[str, Any]]) -> str:
-        grouped = {level: [r["text"] for r in bundle if r["level"] == level] for level in self.levels}
+        levels_order = " < ".join(self.levels)
+        grouped = {
+            level: [{"id": r["paraphrase_id"], "text": r["text"]}
+                    for r in bundle if r["level"] == level]
+            for level in self.levels
+        }
         return (
-            f"Validate this bundle for trait '{trait}' and scenario '{scenario_id}'.\n"
-            f"Texts by level:\n{json.dumps(grouped, ensure_ascii=False, indent=2)}\n\n"
-            "Check: proposition/request preservation, correct low<mid<high ordering, "
-            "naturalness, paraphrase diversity, and obvious lexical shortcut risk.\n"
-            "Return JSON with keys: scenario_id, accepted, overall_score, checks, notes, item_scores.\n"
+            f"Validate this bundle for trait '{trait}'.\n"
+            f"Texts by level (use the exact 'id' values in your item_scores):\n"
+            f"{json.dumps(grouped, ensure_ascii=False, indent=2)}\n\n"
+            f"Check: proposition/request preservation, correct {levels_order} ordering, "
+            "naturalness, paraphrase diversity, obvious lexical shortcut risk, and "
+            "length_balance (flag if one level's texts are substantially longer/shorter "
+            "than the others — length must not be a trait cue).\n"
+            "Return JSON with keys: accepted, overall_score, checks, notes, item_scores.\n"
             "'checks' must include content_preservation, monotonic_order, naturalness, "
-            "cue_diversity, shortcut_risk.\n"
-            "'item_scores' must be a list with paraphrase_id and score in [0,1]."
+            "cue_diversity, shortcut_risk, length_balance.\n"
+            "'item_scores' must be a list where each entry has the exact 'id' string from "
+            "above as 'paraphrase_id', and a 'score' in [0,1]."
         )
 
     def _judge_scenario_bundle(
@@ -402,9 +439,9 @@ class Pipeline:
 
         Returns (verdict, bundle_accepted, all_judged_rows, accepted_rows).
         """
+        example_ids = [r["paraphrase_id"] for r in bundle[:2]] if bundle else ["x"]
         schema_hint = json.dumps(
             {
-                "scenario_id": scenario_id,
                 "accepted": True,
                 "overall_score": 0.92,
                 "checks": {
@@ -413,13 +450,15 @@ class Pipeline:
                     "naturalness": True,
                     "cue_diversity": True,
                     "shortcut_risk": "low",
+                    "length_balance": True,
                 },
                 "notes": "brief explanation",
-                "item_scores": [
-                    {"paraphrase_id": bundle[0]["paraphrase_id"] if bundle else "x", "score": 0.91}
-                ],
+                "item_scores": [{"paraphrase_id": pid, "score": 0.91} for pid in example_ids],
             },
             ensure_ascii=False,
+        )
+        tie_breaker_margin = float(
+            self.config["pipeline"].get("tie_breaker_margin", 0.15)
         )
         primary = self.judge.call_json(
             system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
@@ -428,7 +467,7 @@ class Pipeline:
             bool(primary.get("accepted", False))
             and float(primary.get("overall_score", 0.0)) >= min_score
         )
-        if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - 0.15):
+        if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin):
             tie = self.tie_breaker.call_json(
                 system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
             )
@@ -442,16 +481,26 @@ class Pipeline:
             for x in primary.get("item_scores", [])
             if "paraphrase_id" in x
         }
+        # If the bundle is accepted overall, a missing item score means the judge
+        # didn't explicitly reject that item — give benefit of the doubt.
+        # Only items with an explicit score below min_score get filtered out.
+        default_item_score = min_score if bundle_accepted else 0.0
         judged_rows: List[Dict[str, Any]] = []
         accepted_rows: List[Dict[str, Any]] = []
         for row in bundle:
             rec = dict(row)
             rec["judge"] = primary
-            rec["accepted"] = bundle_accepted and item_scores.get(row["paraphrase_id"], 0.0) >= min_score
+            rec["accepted"] = bundle_accepted and item_scores.get(row["paraphrase_id"], default_item_score) >= min_score
             rec["item_score"] = item_scores.get(row["paraphrase_id"])
             judged_rows.append(rec)
             if rec["accepted"]:
                 accepted_rows.append(rec)
+        if bundle_accepted and not accepted_rows:
+            print(
+                f"  WARNING: bundle {scenario_id} accepted overall but 0 items passed "
+                f"item-level threshold {min_score}. "
+                f"item_scores keys: {list(item_scores.keys())[:5]}"
+            )
         return primary, bundle_accepted, judged_rows, accepted_rows
 
     def _repair_bundle(
@@ -510,10 +559,11 @@ class Pipeline:
             grouped.setdefault(row["scenario_id"], []).append(row)
 
         used_cue_families: set[str] = set()
-        judged: List[Dict[str, Any]] = []
-        accepted_rows: List[Dict[str, Any]] = []
+        lock = threading.Lock()
+        max_workers = int(self.config["pipeline"].get("max_workers", 1))
 
-        for scenario_id, bundle in grouped.items():
+        def _one(item: tuple) -> tuple:
+            scenario_id, bundle = item
             ladder = ladder_map.get(scenario_id)
             verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
                 trait, scenario_id, bundle, system, min_score
@@ -522,17 +572,28 @@ class Pipeline:
                 if accepted or ladder is None:
                     break
                 print(f"  Retrying {scenario_id} (attempt {attempt + 1}/{max_retries})")
-                repaired = self._repair_bundle(trait, ladder, per_level, verdict, used_cue_families)
+                with lock:
+                    avoid = set(used_cue_families)
+                repaired = self._repair_bundle(trait, ladder, per_level, verdict, avoid)
                 if repaired is None:
                     break
                 verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
                     trait, scenario_id, repaired, system, min_score
                 )
+            with lock:
+                for r in accepted_bundle:
+                    if r.get("cue_family"):
+                        used_cue_families.add(r["cue_family"])
+            return judged_bundle, accepted_bundle
+
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            results = list(ex.map(_one, sorted(grouped.items())))
+
+        judged: List[Dict[str, Any]] = []
+        accepted_rows: List[Dict[str, Any]] = []
+        for judged_bundle, accepted_bundle in results:
             judged.extend(judged_bundle)
             accepted_rows.extend(accepted_bundle)
-            for r in accepted_bundle:
-                if r.get("cue_family"):
-                    used_cue_families.add(r["cue_family"])
 
         jsonl_write(self.trait_dir(trait) / "judged.jsonl", judged)
         jsonl_write(self.trait_dir(trait) / "accepted.jsonl", accepted_rows)
@@ -557,7 +618,11 @@ class Pipeline:
         return flagged
 
     def _regenerate_shortcut_scenarios(
-        self, trait: str, scenario_ids: List[str], forbidden_ngrams: List[str]
+        self,
+        trait: str,
+        scenario_ids: List[str],
+        forbidden_ngrams: List[str],
+        used_cue_families: set[str],
     ) -> None:
         """Regenerate paraphrases and re-judge for shortcut-flagged scenarios."""
         ladders = jsonl_read(self.trait_dir(trait) / "ladders.jsonl")
@@ -578,7 +643,7 @@ class Pipeline:
             if ladder is None:
                 continue
             user = (
-                self._paraphrase_user_prompt(ladder, per_level, set())
+                self._paraphrase_user_prompt(ladder, per_level, used_cue_families)
                 + f"\n\nIMPORTANT: do not use these shortcut expressions: {forbidden_str}."
             )
             schema_hint = json.dumps(
@@ -648,7 +713,7 @@ class Pipeline:
             y = df["level"]
             n_splits = min(5, y.value_counts().min())
             if n_splits >= 2:
-                clf = LogisticRegression(max_iter=2000, multi_class="auto")
+                clf = LogisticRegression(max_iter=2000)
                 cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=7)
                 preds = cross_val_predict(clf, X, y, cv=cv)
                 lexical_accuracy = float(accuracy_score(y, preds))
@@ -659,6 +724,10 @@ class Pipeline:
                     level_top = [vocab[i] for i in top_ids]
                     top_ngrams.append({"level": label, "top_positive_ngrams": level_top})
                     shortcut_ngrams.extend(level_top[:5])
+
+        used_cue_families: set[str] = {
+            r["cue_family"] for r in rows if r.get("cue_family")
+        }
 
         # Hard gate: if lexical accuracy is too high, trigger targeted regeneration
         if (
@@ -673,7 +742,7 @@ class Pipeline:
                     f"Shortcut gate (round {_repair_round + 1}/{max_rounds}): "
                     f"regenerating {len(flagged)} scenarios"
                 )
-                self._regenerate_shortcut_scenarios(trait, flagged, shortcut_ngrams)
+                self._regenerate_shortcut_scenarios(trait, flagged, shortcut_ngrams, used_cue_families)
                 self.audit(trait, _repair_round=_repair_round + 1)
                 return
 
@@ -683,6 +752,29 @@ class Pipeline:
             .reset_index(name="count")
             .to_dict(orient="records")
         )
+
+        df["text_len"] = df["text"].str.len()
+        df["word_count"] = df["text"].str.split().str.len()
+        char_len_by_level = df.groupby("level")["text_len"].mean().to_dict()
+        word_len_by_level = df.groupby("level")["word_count"].mean().to_dict()
+        max_ratio = float(self.config["pipeline"].get("max_length_ratio", 1.2))
+        char_lengths = list(char_len_by_level.values())
+        word_lengths = list(word_len_by_level.values())
+        char_imbalanced = (
+            bool(max(char_lengths) > min(char_lengths) * max_ratio)
+            if len(char_lengths) >= 2 and min(char_lengths) > 0 else False
+        )
+        word_imbalanced = (
+            bool(max(word_lengths) > min(word_lengths) * max_ratio)
+            if len(word_lengths) >= 2 and min(word_lengths) > 0 else False
+        )
+        length_imbalanced = char_imbalanced or word_imbalanced
+        if length_imbalanced:
+            print(
+                f"WARNING: length imbalance (>{max_ratio}×) across levels — "
+                f"chars={char_len_by_level}, words={word_len_by_level}"
+            )
+
         report = {
             "trait": trait,
             "num_rows": len(rows),
@@ -693,6 +785,10 @@ class Pipeline:
             "lexical_baseline_warning": lexical_accuracy is not None and lexical_accuracy >= warning_acc,
             "top_ngrams_by_level": top_ngrams,
             "scenario_level_balance": scenario_balance,
+            "mean_char_length_by_level": {k: round(v, 1) for k, v in char_len_by_level.items()},
+            "mean_word_count_by_level": {k: round(v, 2) for k, v in word_len_by_level.items()},
+            "length_ratio_threshold": max_ratio,
+            "length_imbalance_warning": length_imbalanced,
         }
         with (self.trait_dir(trait) / "audit_report.json").open("w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
@@ -731,28 +827,23 @@ class Pipeline:
 
         if self.config["pipeline"].get("use_bws_exports", True):
             items = [r for r in rows if r["scenario_id"] in sampled]
-            by_level = {lvl: [r for r in items if r["level"] == lvl] for lvl in self.levels}
-            available_levels = [lvl for lvl in self.levels if by_level[lvl]]
             bws_rows: List[Dict[str, Any]] = []
             rng = random.Random(11)
-            for i in range(min(100, max(0, len(items) // 2))):
-                if len(available_levels) < 2:
-                    break
-                # Pick one item per available level, then a 4th from any level
-                quad = [rng.choice(by_level[lvl]) for lvl in available_levels]
-                if len(quad) < 4:
-                    quad.append(rng.choice(items))
-                rng.shuffle(quad)
-                bws_rows.append({
-                    "task_id": f"{trait}-bws-{i:03d}",
-                    "trait": trait,
-                    "item_a": quad[0]["text"],
-                    "item_b": quad[1]["text"] if len(quad) > 1 else "",
-                    "item_c": quad[2]["text"] if len(quad) > 2 else "",
-                    "item_d": quad[3]["text"] if len(quad) > 3 else "",
-                    "most_target_like": "",
-                    "least_target_like": "",
-                })
+            if len(items) >= 4:
+                for i in range(min(100, max(0, len(items) // 2))):
+                    quad = rng.sample(items, 4)
+                    bws_rows.append({
+                        "task_id": f"{trait}-bws-{i:03d}",
+                        "trait": trait,
+                        "item_a": quad[0]["text"],
+                        "item_b": quad[1]["text"],
+                        "item_c": quad[2]["text"],
+                        "item_d": quad[3]["text"],
+                        "most_target_like": "",
+                        "least_target_like": "",
+                    })
+            else:
+                print(f"WARNING: only {len(items)} items in BWS pool; skipping BWS export (need ≥4)")
             pd.DataFrame(bws_rows).to_csv(self.trait_dir(trait) / "bws_tasks.csv", index=False)
 
         print(f"Exported human validation files for {trait}")

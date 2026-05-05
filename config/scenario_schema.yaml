@@ -1,16 +1,28 @@
-version: 1
-name: ordinal_trait_scenario_schema_v1
+version: 2
+name: ordinal_trait_scenario_schema_v2
+rubric_version: "construct_rubric.md@v1"
 
 definitions:
   shared_fields:
-    scenario_id: "unique stable identifier"
+    scenario_id: "unique stable identifier, e.g. politeness-001"
     trait: "politeness | hedging_confidence"
+    rubric_version: "must match the rubric file version used at generation time"
+    split: "train | val | test — pre-registered for held-out transfer experiments"
     domain: "workplace | academia | customer_support | healthcare_general | education | everyday"
+    topic_cluster: "short topical tag finer than domain, e.g. 'budget_request', 'deadline_extension', 'medical_diagnosis_uncertainty'. Used to enforce cross-topic transfer splits."
     audience_relation: "peer | senior | junior | customer | reviewer | stranger | unspecified"
-    communicative_goal: "what the speaker is trying to accomplish"
+    register: "formal | neutral | informal"
+    communicative_goal: "what the speaker is trying to accomplish in one sentence"
     proposition_or_request: "canonical content that must remain invariant across levels"
-    allowed_named_entities: []
-    forbidden_content_changes: []
+    content_probe:
+      description: "Yes/no question whose answer must be identical across all levels of the ladder. Used as a mechanical content-preservation check by the judge and downstream audits."
+      schema:
+        question: "string"
+        expected_answer: "yes | no"
+    allowed_named_entities: "list of named entities that may appear; empty list means no proper nouns are required"
+    forbidden_content_changes: "list of content shifts that must never occur across levels (e.g., 'do not change deadline date')"
+    forbidden_cue_tokens: "list of surface tokens/phrases that must NOT be used as the dominant trait cue (e.g., 'please', 'maybe'). Generator must distribute these across levels or avoid them. Audit will flag if any token here correlates with level."
+    target_word_count: "integer — desired word count for every paraphrase in this scenario; all levels and paraphrases must fall within ±20% of this number"
     notes: "free text"
 
 traits:
@@ -24,14 +36,16 @@ traits:
     field_descriptions:
       requested_action: "The exact action or information being requested. Must not change across levels."
       imposition_level: "low | medium | high"
-      urgency_level: "low | medium | high"
+      urgency_level: "low | medium | high — must remain constant across levels"
       social_distance: "close | moderate | distant"
     generation_constraints:
       - "Keep the requested action fixed across levels and paraphrases."
-      - "Do not change urgency across levels."
+      - "Keep urgency_level constant across levels."
       - "Do not add insults, threats, or profanity."
       - "Use request-like utterances only."
-      - "Allow multiple realizations of politeness: directness, deference, gratitude framing, softeners, impersonalization."
+      - "Diversify politeness realization across: directness, deference, gratitude framing, softeners, impersonalization. Do not let any single token in forbidden_cue_tokens dominate one level."
+      - "All paraphrases at all levels must satisfy the content_probe with the same expected_answer."
+      - "Word count of every paraphrase must be within ±20% of target_word_count."
 
   hedging_confidence:
     speech_act: "assertion_or_answer"
@@ -42,7 +56,7 @@ traits:
       - consequence_sensitivity
     field_descriptions:
       proposition: "The exact proposition that must stay fixed across levels."
-      evidence_state: "brief description of the evidence basis that should remain conceptually fixed."
+      evidence_state: "brief description of the evidence basis; the *amount* of evidence claimed must not change across levels."
       answer_type: "assertion | recommendation | explanation | forecast"
       consequence_sensitivity: "low | medium | high"
     generation_constraints:
@@ -50,7 +64,9 @@ traits:
       - "Do not change the answer polarity or recommended action."
       - "Do not introduce numerical probabilities unless explicitly allowed."
       - "Use ordinary natural language hedging and commitment cues."
-      - "Allow cue diversity: lexical hedges, evidential framing, modality, syntax."
+      - "Diversify cues across: lexical hedges, evidential framing, modal verbs, syntactic structure. Avoid letting forbidden_cue_tokens become level markers."
+      - "All paraphrases at all levels must satisfy the content_probe with the same expected_answer."
+      - "Word count of every paraphrase must be within ±20% of target_word_count."
 
 json_schema:
   type: object
@@ -60,14 +76,33 @@ json_schema:
     trait:
       type: string
       enum: [politeness, hedging_confidence]
+    rubric_version:
+      type: string
+    split:
+      type: string
+      enum: [train, val, test]
     domain:
+      type: string
+    topic_cluster:
       type: string
     audience_relation:
       type: string
+    register:
+      type: string
+      enum: [formal, neutral, informal]
     communicative_goal:
       type: string
     proposition_or_request:
       type: string
+    content_probe:
+      type: object
+      properties:
+        question:
+          type: string
+        expected_answer:
+          type: string
+          enum: [yes, no]
+      required: [question, expected_answer]
     allowed_named_entities:
       type: array
       items:
@@ -76,6 +111,14 @@ json_schema:
       type: array
       items:
         type: string
+    forbidden_cue_tokens:
+      type: array
+      items:
+        type: string
+    target_word_count:
+      type: integer
+      minimum: 4
+      maximum: 60
     speech_act:
       type: string
     requested_action:
@@ -104,7 +147,32 @@ json_schema:
   required:
     - scenario_id
     - trait
+    - rubric_version
+    - split
     - domain
+    - topic_cluster
+    - audience_relation
+    - register
     - communicative_goal
     - proposition_or_request
+    - content_probe
+    - forbidden_cue_tokens
+    - target_word_count
     - speech_act
+  allOf:
+    - if:
+        properties: { trait: { const: politeness } }
+      then:
+        required:
+          - requested_action
+          - imposition_level
+          - urgency_level
+          - social_distance
+    - if:
+        properties: { trait: { const: hedging_confidence } }
+      then:
+        required:
+          - proposition
+          - evidence_state
+          - answer_type
+          - consequence_sensitivity

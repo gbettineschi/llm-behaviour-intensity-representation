@@ -16,3 +16,6 @@ output/
 
 .DS_Store
 CLAUDE.md
+
+/output_smoke
+*.pdf

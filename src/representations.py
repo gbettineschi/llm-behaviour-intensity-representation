@@ -22,9 +22,89 @@ def load_model(model_name: str, device: str):
     tokenizer : AutoTokenizer
     """
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.float32)
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16)
     model.eval().to(device)
     return model, tokenizer
+
+
+def extract_activations_multilayer(
+    samples: list[Sample],
+    model,
+    tokenizer,
+    layer_indices: list[int],
+    device: str,
+    batch_size: int = 8,
+) -> dict[tuple[str, str, int], torch.Tensor]:
+    """Extract mean content-token activations at multiple transformer layers in one pass.
+
+    Runs prompts through *model* in batches with ``output_hidden_states=True`` so
+    every requested layer is captured per forward pass. For each ``(trait,
+    intensity, layer)`` group, mean-pools over content tokens (excluding BOS,
+    EOS, and pad tokens) and averages across prompts in the group.
+
+    Parameters
+    ----------
+    samples : list[Sample]
+    model : AutoModelForCausalLM
+    tokenizer : AutoTokenizer
+    layer_indices : list[int]
+        Indices into ``model.model.layers``.
+    device : str
+    batch_size : int
+
+    Returns
+    -------
+    dict[tuple[str, str, int], torch.Tensor]
+        Maps ``(trait, intensity, layer)`` to a mean activation vector ``(hidden_dim,)``.
+    """
+    layers = sorted(set(layer_indices))
+    special_ids = {
+        tid for tid in (
+            tokenizer.bos_token_id,
+            tokenizer.eos_token_id,
+            tokenizer.pad_token_id,
+        )
+        if tid is not None
+    }
+
+    bucket: dict[tuple[str, str, int], list[torch.Tensor]] = {}
+
+    for start in range(0, len(samples), batch_size):
+        batch = samples[start:start + batch_size]
+        texts = [s.prompt for s in batch]
+        enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            out = model(**enc, output_hidden_states=True)
+        hidden_states = out.hidden_states  # tuple length num_layers+1
+
+        token_ids = enc["input_ids"]
+        attention_mask = enc["attention_mask"].bool()
+        valid = attention_mask.clone()
+        for sid in special_ids:
+            valid &= token_ids != sid
+        empty_rows = valid.sum(dim=1) == 0
+        if empty_rows.any():
+            valid[empty_rows] = attention_mask[empty_rows]
+
+        weights = valid.to(hidden_states[0].dtype).unsqueeze(-1)  # (B, L, 1)
+        counts = weights.sum(dim=1).clamp(min=1)  # (B, 1)
+
+        # Pool every requested layer on-device, stack, then a single cross-device copy.
+        per_layer = [
+            (hidden_states[layer + 1] * weights).sum(dim=1) / counts
+            for layer in layers
+        ]
+        stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
+        # stacked: (num_layers, B, D)
+
+        for li, layer in enumerate(layers):
+            for i, sample in enumerate(batch):
+                key = (sample.trait, sample.intensity, layer)
+                bucket.setdefault(key, []).append(stacked[li, i])
+
+    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
 
 
 def extract_activations(
@@ -34,48 +114,15 @@ def extract_activations(
     layer_index: int,
     device: str,
 ) -> dict[tuple[str, str], torch.Tensor]:
-    """Extract mean last-token activations at a given transformer layer.
+    """Mean content-token activations at a single layer.
 
-    For each ``(trait, intensity)`` group, runs all corresponding prompts through
-    *model*, captures the hidden state at *layer_index*, takes the last-token vector,
-    and returns the mean across prompts in that group.
-
-    Parameters
-    ----------
-    samples : list[Sample]
-        Prompts with trait/intensity labels.
-    model : AutoModelForCausalLM
-    tokenizer : AutoTokenizer
-    layer_index : int
-        Index into ``model.model.layers``.
-    device : str
-
-    Returns
-    -------
-    dict[tuple[str, str], torch.Tensor]
-        Maps ``(trait, intensity)`` to a mean activation vector of shape ``(hidden_dim,)``.
+    Thin wrapper over :func:`extract_activations_multilayer` for one layer.
+    Returns a dict keyed by ``(trait, intensity)`` (no layer index).
     """
-    bucket: dict[tuple[str, str], list[torch.Tensor]] = {}
-    captured: list[torch.Tensor] = []
-
-    def hook(module, input, output):
-        hidden = output[0] if isinstance(output, tuple) else output
-        captured.append(hidden.detach().cpu())
-
-    layer = model.model.layers[layer_index]
-
-    for sample in samples:
-        captured.clear()
-        handle = layer.register_forward_hook(hook)
-        inputs = tokenizer(sample.prompt, return_tensors="pt").to(device)
-        with torch.no_grad():
-            model(**inputs)
-        handle.remove()
-
-        last_token = captured[0][0, -1, :]  # (hidden_dim,)
-        bucket.setdefault((sample.trait, sample.intensity), []).append(last_token)
-
-    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+    multi = extract_activations_multilayer(
+        samples, model, tokenizer, [layer_index], device
+    )
+    return {(t, i): vec for (t, i, _), vec in multi.items()}
 
 
 def save_activations(

@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import itertools
 import json
 import math
-import os
 import random
 import re
-import statistics
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 import yaml
@@ -164,6 +161,8 @@ class Pipeline:
             if self.config["validation"].get("warn_if_same_family_generator_and_judge", True):
                 print(f"WARNING: {msg}")
 
+    # ── Scenario generation ────────────────────────────────────────────────────
+
     def _scenario_system_prompt(self, trait: str) -> str:
         return (
             "You are building a research dataset for representation geometry. "
@@ -217,6 +216,8 @@ class Pipeline:
         jsonl_write(self.trait_dir(trait) / "scenarios.jsonl", cleaned)
         print(f"Wrote {len(cleaned)} scenarios to {self.trait_dir(trait) / 'scenarios.jsonl'}")
 
+    # ── Ladder generation ──────────────────────────────────────────────────────
+
     def _ladder_system_prompt(self, trait: str) -> str:
         rubric = (self.root / "config" / "construct_rubric.md").read_text(encoding="utf-8")
         return (
@@ -257,6 +258,8 @@ class Pipeline:
         jsonl_write(self.trait_dir(trait) / "ladders.jsonl", out_rows)
         print(f"Wrote {len(out_rows)} ladders")
 
+    # ── Paraphrase generation (with cross-ladder cue-family diversity) ─────────
+
     def _paraphrase_system_prompt(self, trait: str) -> str:
         return (
             "You generate paraphrases for a representation-geometry benchmark. "
@@ -264,15 +267,56 @@ class Pipeline:
             "Do not produce near-duplicates. Use different cue families when possible."
         )
 
-    def _paraphrase_user_prompt(self, ladder_obj: Dict[str, Any], per_level: int) -> str:
-        return (
-            f"Given this canonical 3-level ladder:\n{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
+    def _paraphrase_user_prompt(
+        self,
+        ladder_obj: Dict[str, Any],
+        per_level: int,
+        used_cue_families: set[str],
+    ) -> str:
+        avoid = sorted(used_cue_families - {""})
+        prompt = (
+            f"Given this canonical 3-level ladder:\n"
+            f"{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
             f"Generate {per_level} paraphrases per level.\n"
             "For each paraphrase, provide: level, cue_family, text.\n"
-            "Cue families should differ when possible, such as lexical marker, syntactic framing, gratitude framing, evidential framing, indirectness, modal framing.\n"
+            "Cue families should differ when possible, such as lexical marker, syntactic "
+            "framing, gratitude framing, evidential framing, indirectness, modal framing.\n"
             "Keep the proposition or requested action unchanged.\n"
             "Return JSON with keys: scenario_id, trait, items."
         )
+        if avoid:
+            prompt += (
+                f"\n\nAlready used in this dataset — vary away from these cue families: {avoid}."
+            )
+        return prompt
+
+    def _repair_paraphrases_user_prompt(
+        self,
+        ladder_obj: Dict[str, Any],
+        per_level: int,
+        judge_result: Dict[str, Any],
+        used_cue_families: set[str],
+    ) -> str:
+        failed = [
+            k for k, v in judge_result.get("checks", {}).items()
+            if v is False or v == "high"
+        ]
+        notes = judge_result.get("notes", "no notes provided")
+        avoid = sorted(used_cue_families - {""})
+        prompt = (
+            f"The previous paraphrases for this ladder were rejected by the validation judge.\n"
+            f"Failed checks: {failed or 'none listed'}.\n"
+            f"Judge notes: {notes}\n\n"
+            f"Canonical ladder:\n"
+            f"{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
+            f"Generate {per_level} corrected paraphrases per level, addressing the issues above.\n"
+            "For each paraphrase, provide: level, cue_family, text.\n"
+            "Keep the proposition or requested action unchanged.\n"
+            "Return JSON with keys: scenario_id, trait, items."
+        )
+        if avoid:
+            prompt += f"\nAvoid these already-used cue families: {avoid}."
+        return prompt
 
     def make_paraphrases(self, trait: str) -> None:
         ladders = jsonl_read(self.trait_dir(trait) / "ladders.jsonl")
@@ -281,43 +325,46 @@ class Pipeline:
         per_level = int(self.config["pipeline"]["paraphrases_per_level"])
         system = self._paraphrase_system_prompt(trait)
         rows: List[Dict[str, Any]] = []
+        used_cue_families: set[str] = set()
         for ladder in ladders:
             schema_hint = json.dumps(
                 {
                     "scenario_id": ladder["scenario_id"],
                     "trait": trait,
-                    "items": [
-                        {
-                            "level": "low",
-                            "cue_family": "syntactic indirectness",
-                            "text": "...",
-                        }
-                    ],
+                    "items": [{"level": "low", "cue_family": "syntactic indirectness", "text": "..."}],
                 },
                 ensure_ascii=False,
             )
-            obj = self.generator.call_json(system, self._paraphrase_user_prompt(ladder, per_level), schema_hint)
+            obj = self.generator.call_json(
+                system,
+                self._paraphrase_user_prompt(ladder, per_level, used_cue_families),
+                schema_hint,
+            )
             scenario_id = obj["scenario_id"]
             for idx, item in enumerate(obj["items"], start=1):
-                row = {
+                cue_family = item.get("cue_family", "unspecified")
+                used_cue_families.add(cue_family)
+                rows.append({
                     "scenario_id": scenario_id,
                     "trait": trait,
                     "level": item["level"],
-                    "cue_family": item.get("cue_family", "unspecified"),
+                    "cue_family": cue_family,
                     "text": normalize_text(item["text"]),
                     "canonical": ladder["ladder"][item["level"]],
                     "invariant_content": ladder.get("invariant_content", ""),
                     "paraphrase_id": f"{scenario_id}-{item['level']}-{idx:02d}",
-                }
-                rows.append(row)
+                })
         jsonl_write(self.trait_dir(trait) / "paraphrases.jsonl", rows)
         print(f"Wrote {len(rows)} paraphrase rows")
+
+    # ── Judging (with per-scenario retry using judge feedback) ─────────────────
 
     def _judge_system_prompt(self) -> str:
         rubric = (self.root / "config" / "construct_rubric.md").read_text(encoding="utf-8")
         return (
             "You are an independent validation judge for a benchmark. "
-            "Your job is to reject content drift, wrong ordering, poor fluency, weak cue diversity, and shortcut-heavy bundles.\n\n"
+            "Your job is to reject content drift, wrong ordering, poor fluency, "
+            "weak cue diversity, and shortcut-heavy bundles.\n\n"
             f"Rubric:\n{rubric}"
         )
 
@@ -326,85 +373,266 @@ class Pipeline:
         return (
             f"Validate this bundle for trait '{trait}' and scenario '{scenario_id}'.\n"
             f"Texts by level:\n{json.dumps(grouped, ensure_ascii=False, indent=2)}\n\n"
-            "Check: proposition/request preservation, correct low<mid<high ordering, naturalness, paraphrase diversity, and obvious lexical shortcut risk.\n"
+            "Check: proposition/request preservation, correct low<mid<high ordering, "
+            "naturalness, paraphrase diversity, and obvious lexical shortcut risk.\n"
             "Return JSON with keys: scenario_id, accepted, overall_score, checks, notes, item_scores.\n"
-            "'checks' must include content_preservation, monotonic_order, naturalness, cue_diversity, shortcut_risk.\n"
+            "'checks' must include content_preservation, monotonic_order, naturalness, "
+            "cue_diversity, shortcut_risk.\n"
             "'item_scores' must be a list with paraphrase_id and score in [0,1]."
         )
+
+    def _judge_scenario_bundle(
+        self,
+        trait: str,
+        scenario_id: str,
+        bundle: List[Dict[str, Any]],
+        system: str,
+        min_score: float,
+    ) -> Tuple[Dict[str, Any], bool, List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Run primary + optional tie-breaker judgment for one scenario bundle.
+
+        Returns (verdict, bundle_accepted, all_judged_rows, accepted_rows).
+        """
+        schema_hint = json.dumps(
+            {
+                "scenario_id": scenario_id,
+                "accepted": True,
+                "overall_score": 0.92,
+                "checks": {
+                    "content_preservation": True,
+                    "monotonic_order": True,
+                    "naturalness": True,
+                    "cue_diversity": True,
+                    "shortcut_risk": "low",
+                },
+                "notes": "brief explanation",
+                "item_scores": [
+                    {"paraphrase_id": bundle[0]["paraphrase_id"] if bundle else "x", "score": 0.91}
+                ],
+            },
+            ensure_ascii=False,
+        )
+        primary = self.judge.call_json(
+            system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
+        )
+        bundle_accepted = (
+            bool(primary.get("accepted", False))
+            and float(primary.get("overall_score", 0.0)) >= min_score
+        )
+        if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - 0.15):
+            tie = self.tie_breaker.call_json(
+                system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
+            )
+            bundle_accepted = (
+                bool(tie.get("accepted", False))
+                and float(tie.get("overall_score", 0.0)) >= min_score
+            )
+            primary["tie_breaker"] = tie
+        item_scores = {
+            x["paraphrase_id"]: x["score"]
+            for x in primary.get("item_scores", [])
+            if "paraphrase_id" in x
+        }
+        judged_rows: List[Dict[str, Any]] = []
+        accepted_rows: List[Dict[str, Any]] = []
+        for row in bundle:
+            rec = dict(row)
+            rec["judge"] = primary
+            rec["accepted"] = bundle_accepted and item_scores.get(row["paraphrase_id"], 0.0) >= min_score
+            rec["item_score"] = item_scores.get(row["paraphrase_id"])
+            judged_rows.append(rec)
+            if rec["accepted"]:
+                accepted_rows.append(rec)
+        return primary, bundle_accepted, judged_rows, accepted_rows
+
+    def _repair_bundle(
+        self,
+        trait: str,
+        ladder: Dict[str, Any],
+        per_level: int,
+        judge_result: Dict[str, Any],
+        used_cue_families: set[str],
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Regenerate paraphrases for a rejected bundle using the judge's critique."""
+        scenario_id = ladder["scenario_id"]
+        system = self._paraphrase_system_prompt(trait)
+        user = self._repair_paraphrases_user_prompt(ladder, per_level, judge_result, used_cue_families)
+        schema_hint = json.dumps(
+            {
+                "scenario_id": scenario_id,
+                "trait": trait,
+                "items": [{"level": "low", "cue_family": "...", "text": "..."}],
+            },
+            ensure_ascii=False,
+        )
+        try:
+            obj = self.generator.call_json(system, user, schema_hint)
+        except Exception as exc:
+            print(f"  Repair generation failed for {scenario_id}: {exc}")
+            return None
+        return [
+            {
+                "scenario_id": scenario_id,
+                "trait": trait,
+                "level": item["level"],
+                "cue_family": item.get("cue_family", "unspecified"),
+                "text": normalize_text(item["text"]),
+                "canonical": ladder["ladder"].get(item["level"], ""),
+                "invariant_content": ladder.get("invariant_content", ""),
+                "paraphrase_id": f"{scenario_id}-{item['level']}-r{idx:02d}",
+            }
+            for idx, item in enumerate(obj.get("items", []), start=1)
+        ]
 
     def judge_bundles(self, trait: str) -> None:
         rows = jsonl_read(self.trait_dir(trait) / "paraphrases.jsonl")
         if not rows:
             raise FileNotFoundError("Run make-paraphrases first.")
+        ladders = jsonl_read(self.trait_dir(trait) / "ladders.jsonl")
+        ladder_map = {l["scenario_id"]: l for l in ladders}
+
         system = self._judge_system_prompt()
         min_score = float(self.config["pipeline"]["min_acceptance_score"])
+        per_level = int(self.config["pipeline"]["paraphrases_per_level"])
+        max_retries = int(self.config["pipeline"].get("max_retries", 3))
+
         grouped: Dict[str, List[Dict[str, Any]]] = {}
         for row in rows:
             grouped.setdefault(row["scenario_id"], []).append(row)
 
+        used_cue_families: set[str] = set()
         judged: List[Dict[str, Any]] = []
         accepted_rows: List[Dict[str, Any]] = []
+
         for scenario_id, bundle in grouped.items():
-            schema_hint = json.dumps(
-                {
-                    "scenario_id": scenario_id,
-                    "accepted": True,
-                    "overall_score": 0.92,
-                    "checks": {
-                        "content_preservation": True,
-                        "monotonic_order": True,
-                        "naturalness": True,
-                        "cue_diversity": True,
-                        "shortcut_risk": "low",
-                    },
-                    "notes": "brief explanation",
-                    "item_scores": [
-                        {"paraphrase_id": bundle[0]["paraphrase_id"], "score": 0.91}
-                    ],
-                },
-                ensure_ascii=False,
+            ladder = ladder_map.get(scenario_id)
+            verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
+                trait, scenario_id, bundle, system, min_score
             )
-            primary = self.judge.call_json(system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint)
-            accepted = bool(primary.get("accepted", False)) and float(primary.get("overall_score", 0.0)) >= min_score
-            if not accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - 0.15):
-                tie = self.tie_breaker.call_json(system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint)
-                accepted = bool(tie.get("accepted", False)) and float(tie.get("overall_score", 0.0)) >= min_score
-                primary["tie_breaker"] = tie
-            item_scores = {x["paraphrase_id"]: x["score"] for x in primary.get("item_scores", []) if "paraphrase_id" in x}
-            for row in bundle:
-                rec = dict(row)
-                rec["judge"] = primary
-                rec["accepted"] = accepted and item_scores.get(row["paraphrase_id"], 0.0) >= min_score
-                rec["item_score"] = item_scores.get(row["paraphrase_id"], None)
-                judged.append(rec)
-                if rec["accepted"]:
-                    accepted_rows.append(rec)
+            for attempt in range(max_retries):
+                if accepted or ladder is None:
+                    break
+                print(f"  Retrying {scenario_id} (attempt {attempt + 1}/{max_retries})")
+                repaired = self._repair_bundle(trait, ladder, per_level, verdict, used_cue_families)
+                if repaired is None:
+                    break
+                verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
+                    trait, scenario_id, repaired, system, min_score
+                )
+            judged.extend(judged_bundle)
+            accepted_rows.extend(accepted_bundle)
+            for r in accepted_bundle:
+                if r.get("cue_family"):
+                    used_cue_families.add(r["cue_family"])
+
         jsonl_write(self.trait_dir(trait) / "judged.jsonl", judged)
         jsonl_write(self.trait_dir(trait) / "accepted.jsonl", accepted_rows)
         print(f"Judged {len(judged)} rows; accepted {len(accepted_rows)} rows")
 
-    def audit(self, trait: str) -> None:
+    # ── Audit (with shortcut hard gate that triggers targeted regeneration) ────
+
+    def _find_shortcut_scenarios(
+        self, rows: List[Dict[str, Any]], shortcut_ngrams: List[str]
+    ) -> List[str]:
+        """Return scenario IDs where a shortcut n-gram appears at only one level."""
+        by_scenario: Dict[str, List[Dict[str, Any]]] = {}
+        for row in rows:
+            by_scenario.setdefault(row["scenario_id"], []).append(row)
+        flagged = []
+        for sid, bundle in by_scenario.items():
+            for ngram in shortcut_ngrams:
+                levels_with = {r["level"] for r in bundle if ngram in r["text"].lower()}
+                if len(levels_with) == 1:
+                    flagged.append(sid)
+                    break
+        return flagged
+
+    def _regenerate_shortcut_scenarios(
+        self, trait: str, scenario_ids: List[str], forbidden_ngrams: List[str]
+    ) -> None:
+        """Regenerate paraphrases and re-judge for shortcut-flagged scenarios."""
+        ladders = jsonl_read(self.trait_dir(trait) / "ladders.jsonl")
+        ladder_map = {l["scenario_id"]: l for l in ladders}
+        per_level = int(self.config["pipeline"]["paraphrases_per_level"])
+        min_score = float(self.config["pipeline"]["min_acceptance_score"])
+        system_para = self._paraphrase_system_prompt(trait)
+        system_judge = self._judge_system_prompt()
+        forbidden_str = ", ".join(forbidden_ngrams[:10])
+
+        accepted = [
+            r for r in jsonl_read(self.trait_dir(trait) / "accepted.jsonl")
+            if r["scenario_id"] not in scenario_ids
+        ]
+
+        for sid in scenario_ids:
+            ladder = ladder_map.get(sid)
+            if ladder is None:
+                continue
+            user = (
+                self._paraphrase_user_prompt(ladder, per_level, set())
+                + f"\n\nIMPORTANT: do not use these shortcut expressions: {forbidden_str}."
+            )
+            schema_hint = json.dumps(
+                {
+                    "scenario_id": sid,
+                    "trait": trait,
+                    "items": [{"level": "low", "cue_family": "...", "text": "..."}],
+                },
+                ensure_ascii=False,
+            )
+            try:
+                obj = self.generator.call_json(system_para, user, schema_hint)
+            except Exception as exc:
+                print(f"  Shortcut repair generation failed for {sid}: {exc}")
+                continue
+            new_rows = [
+                {
+                    "scenario_id": sid,
+                    "trait": trait,
+                    "level": item["level"],
+                    "cue_family": item.get("cue_family", "unspecified"),
+                    "text": normalize_text(item["text"]),
+                    "canonical": ladder["ladder"].get(item["level"], ""),
+                    "invariant_content": ladder.get("invariant_content", ""),
+                    "paraphrase_id": f"{sid}-{item['level']}-s{idx:02d}",
+                }
+                for idx, item in enumerate(obj.get("items", []), start=1)
+            ]
+            try:
+                _, _, _, new_accepted = self._judge_scenario_bundle(
+                    trait, sid, new_rows, system_judge, min_score
+                )
+            except Exception as exc:
+                print(f"  Shortcut repair judging failed for {sid}: {exc}")
+                continue
+            accepted.extend(new_accepted)
+
+        jsonl_write(self.trait_dir(trait) / "accepted.jsonl", accepted)
+        print(f"Shortcut repair done; accepted.jsonl now has {len(accepted)} rows")
+
+    def audit(self, trait: str, _repair_round: int = 0) -> None:
         rows = jsonl_read(self.trait_dir(trait) / "accepted.jsonl")
         if not rows:
             raise FileNotFoundError("Run judge first.")
         max_dup = float(self.config["pipeline"]["max_duplicate_jaccard"])
         warning_acc = float(self.config["pipeline"]["lexical_baseline_warning_accuracy"])
+        max_rounds = int(self.config["pipeline"].get("max_shortcut_repair_rounds", 2))
 
         duplicates: List[Dict[str, Any]] = []
         for a, b in itertools.combinations(rows, 2):
             score = jaccard(a["text"], b["text"])
             if score >= max_dup:
-                duplicates.append(
-                    {
-                        "a": a["paraphrase_id"],
-                        "b": b["paraphrase_id"],
-                        "jaccard": round(score, 4),
-                    }
-                )
+                duplicates.append({
+                    "a": a["paraphrase_id"],
+                    "b": b["paraphrase_id"],
+                    "jaccard": round(score, 4),
+                })
 
         df = pd.DataFrame(rows)
         lexical_accuracy = None
         top_ngrams: List[Dict[str, Any]] = []
+        shortcut_ngrams: List[str] = []
+
         if len(df) >= 12 and df["level"].nunique() >= 2:
             vectorizer = CountVectorizer(ngram_range=(1, 2), min_df=1)
             X = vectorizer.fit_transform(df["text"])
@@ -417,23 +645,39 @@ class Pipeline:
                 lexical_accuracy = float(accuracy_score(y, preds))
                 clf.fit(X, y)
                 vocab = vectorizer.get_feature_names_out()
-                coef = clf.coef_
                 for idx, label in enumerate(clf.classes_):
-                    top_ids = coef[idx].argsort()[-10:][::-1]
-                    top_ngrams.append(
-                        {
-                            "level": label,
-                            "top_positive_ngrams": [vocab[i] for i in top_ids],
-                        }
-                    )
+                    top_ids = clf.coef_[idx].argsort()[-10:][::-1]
+                    level_top = [vocab[i] for i in top_ids]
+                    top_ngrams.append({"level": label, "top_positive_ngrams": level_top})
+                    shortcut_ngrams.extend(level_top[:5])
+
+        # Hard gate: if lexical accuracy is too high, trigger targeted regeneration
+        if (
+            lexical_accuracy is not None
+            and lexical_accuracy >= warning_acc
+            and _repair_round < max_rounds
+            and shortcut_ngrams
+        ):
+            flagged = self._find_shortcut_scenarios(rows, shortcut_ngrams)
+            if flagged:
+                print(
+                    f"Shortcut gate (round {_repair_round + 1}/{max_rounds}): "
+                    f"regenerating {len(flagged)} scenarios"
+                )
+                self._regenerate_shortcut_scenarios(trait, flagged, shortcut_ngrams)
+                self.audit(trait, _repair_round=_repair_round + 1)
+                return
 
         scenario_balance = (
-            df.groupby(["scenario_id", "level"]).size().reset_index(name="count").to_dict(orient="records")
+            df.groupby(["scenario_id", "level"])
+            .size()
+            .reset_index(name="count")
+            .to_dict(orient="records")
         )
-
         report = {
             "trait": trait,
             "num_rows": len(rows),
+            "shortcut_repair_rounds": _repair_round,
             "duplicate_pairs_over_threshold": duplicates,
             "num_duplicate_pairs": len(duplicates),
             "lexical_baseline_accuracy": lexical_accuracy,
@@ -444,6 +688,8 @@ class Pipeline:
         with (self.trait_dir(trait) / "audit_report.json").open("w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
         print(f"Wrote audit report to {self.trait_dir(trait) / 'audit_report.json'}")
+
+    # ── Human validation export (stratified BWS tasks) ─────────────────────────
 
     def export_human_validation(self, trait: str) -> None:
         rows = jsonl_read(self.trait_dir(trait) / "accepted.jsonl")
@@ -460,43 +706,49 @@ class Pipeline:
 
         human_rows: List[Dict[str, Any]] = []
         for sid in sampled:
-            bundle = grouped[sid]
-            for row in bundle:
-                human_rows.append(
-                    {
-                        "scenario_id": sid,
-                        "paraphrase_id": row["paraphrase_id"],
-                        "trait": row["trait"],
-                        "level": row["level"],
-                        "text": row["text"],
-                        "check_order_within_bundle": "",
-                        "check_content_preserved": "",
-                        "check_natural": "",
-                        "comments": "",
-                    }
-                )
+            for row in grouped[sid]:
+                human_rows.append({
+                    "scenario_id": sid,
+                    "paraphrase_id": row["paraphrase_id"],
+                    "trait": row["trait"],
+                    "level": row["level"],
+                    "text": row["text"],
+                    "check_order_within_bundle": "",
+                    "check_content_preserved": "",
+                    "check_natural": "",
+                    "comments": "",
+                })
         pd.DataFrame(human_rows).to_csv(self.trait_dir(trait) / "human_validation.csv", index=False)
 
         if self.config["pipeline"].get("use_bws_exports", True):
-            bws_rows: List[Dict[str, Any]] = []
             items = [r for r in rows if r["scenario_id"] in sampled]
+            by_level = {lvl: [r for r in items if r["level"] == lvl] for lvl in self.levels}
+            available_levels = [lvl for lvl in self.levels if by_level[lvl]]
+            bws_rows: List[Dict[str, Any]] = []
             rng = random.Random(11)
             for i in range(min(100, max(0, len(items) // 2))):
-                quad = rng.sample(items, 4)
-                bws_rows.append(
-                    {
-                        "task_id": f"{trait}-bws-{i:03d}",
-                        "trait": trait,
-                        "item_a": quad[0]["text"],
-                        "item_b": quad[1]["text"],
-                        "item_c": quad[2]["text"],
-                        "item_d": quad[3]["text"],
-                        "most_target_like": "",
-                        "least_target_like": "",
-                    }
-                )
+                if len(available_levels) < 2:
+                    break
+                # Pick one item per available level, then a 4th from any level
+                quad = [rng.choice(by_level[lvl]) for lvl in available_levels]
+                if len(quad) < 4:
+                    quad.append(rng.choice(items))
+                rng.shuffle(quad)
+                bws_rows.append({
+                    "task_id": f"{trait}-bws-{i:03d}",
+                    "trait": trait,
+                    "item_a": quad[0]["text"],
+                    "item_b": quad[1]["text"] if len(quad) > 1 else "",
+                    "item_c": quad[2]["text"] if len(quad) > 2 else "",
+                    "item_d": quad[3]["text"] if len(quad) > 3 else "",
+                    "most_target_like": "",
+                    "least_target_like": "",
+                })
             pd.DataFrame(bws_rows).to_csv(self.trait_dir(trait) / "bws_tasks.csv", index=False)
+
         print(f"Exported human validation files for {trait}")
+
+    # ── Export to main pipeline format ────────────────────────────────────────
 
     def export_prompts(self, out_path: Optional[Path] = None) -> None:
         """Export accepted paraphrases from all traits to data/prompts.json.

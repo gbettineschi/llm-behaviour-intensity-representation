@@ -1,5 +1,5 @@
-project_name: ordinal_geometry_dataset_v1
-output_dir: output
+project_name: ordinal_geometry_dataset_smoke
+output_dir: output_smoke
 traits:
   - politeness
   - hedging_confidence
@@ -22,13 +22,13 @@ models:
     max_output_tokens: 1400
 
 pipeline:
-  scenarios_per_trait: 40
-  paraphrases_per_level: 2
+  scenarios_per_trait: 3
+  paraphrases_per_level: 1
   levels: [low, mid, high]
-  min_acceptance_score: 0.8
-  max_retries: 3
-  max_shortcut_repair_rounds: 2
-  human_validation_fraction: 0.25
+  min_acceptance_score: 0.6
+  max_retries: 1
+  max_shortcut_repair_rounds: 0
+  human_validation_fraction: 1.0
   max_duplicate_jaccard: 0.85
   lexical_baseline_warning_accuracy: 0.7
   require_cross_family_judge: true

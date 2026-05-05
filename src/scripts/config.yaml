@@ -1,9 +1,9 @@
 model: google/gemma-2-2b
 layer: 18
 traits:
-  - name: sentiment
-    intensities: [negative, neutral, positive]
-  - name: formality
-    intensities: [informal, neutral, formal]
+  - name: politeness
+    intensities: [low, mid, high]
+  - name: hedging_confidence
+    intensities: [low, mid, high]
 n_prompts_per_condition: 10
 results_dir: output/

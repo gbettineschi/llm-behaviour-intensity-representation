@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from data import Sample
 
 
-def load_model(model_name: str, device: str):
+def load_model(model_name: str, device: str, quantization: str | None = None):
     """Load a causal LM and its tokenizer onto *device*.
 
     Parameters
@@ -15,17 +15,32 @@ def load_model(model_name: str, device: str):
         HuggingFace model identifier (e.g. ``"google/gemma-2-2b"``).
     device : str
         Target device string (``"cpu"``, ``"cuda"``, etc.).
+    quantization : str | None
+        ``"4bit"``, ``"8bit"``, or ``None`` (default bfloat16).
+        4/8-bit require ``bitsandbytes``.
 
     Returns
     -------
     model : AutoModelForCausalLM
     tokenizer : AutoTokenizer
     """
+    from transformers import BitsAndBytesConfig
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16)
-    model.eval().to(device)
+
+    kwargs: dict = {}
+    if quantization == "4bit":
+        kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
+    elif quantization == "8bit":
+        kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
+    else:
+        kwargs["dtype"] = torch.bfloat16
+
+    model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+    model.to(device)
+    model.eval()
     return model, tokenizer
 
 

@@ -1,0 +1,110 @@
+version: 1
+name: ordinal_trait_scenario_schema_v1
+
+definitions:
+  shared_fields:
+    scenario_id: "unique stable identifier"
+    trait: "politeness | hedging_confidence"
+    domain: "workplace | academia | customer_support | healthcare_general | education | everyday"
+    audience_relation: "peer | senior | junior | customer | reviewer | stranger | unspecified"
+    communicative_goal: "what the speaker is trying to accomplish"
+    proposition_or_request: "canonical content that must remain invariant across levels"
+    allowed_named_entities: []
+    forbidden_content_changes: []
+    notes: "free text"
+
+traits:
+  politeness:
+    speech_act: "request"
+    required_fields:
+      - requested_action
+      - imposition_level
+      - urgency_level
+      - social_distance
+    field_descriptions:
+      requested_action: "The exact action or information being requested. Must not change across levels."
+      imposition_level: "low | medium | high"
+      urgency_level: "low | medium | high"
+      social_distance: "close | moderate | distant"
+    generation_constraints:
+      - "Keep the requested action fixed across levels and paraphrases."
+      - "Do not change urgency across levels."
+      - "Do not add insults, threats, or profanity."
+      - "Use request-like utterances only."
+      - "Allow multiple realizations of politeness: directness, deference, gratitude framing, softeners, impersonalization."
+
+  hedging_confidence:
+    speech_act: "assertion_or_answer"
+    required_fields:
+      - proposition
+      - evidence_state
+      - answer_type
+      - consequence_sensitivity
+    field_descriptions:
+      proposition: "The exact proposition that must stay fixed across levels."
+      evidence_state: "brief description of the evidence basis that should remain conceptually fixed."
+      answer_type: "assertion | recommendation | explanation | forecast"
+      consequence_sensitivity: "low | medium | high"
+    generation_constraints:
+      - "Keep the proposition fixed across levels and paraphrases."
+      - "Do not change the answer polarity or recommended action."
+      - "Do not introduce numerical probabilities unless explicitly allowed."
+      - "Use ordinary natural language hedging and commitment cues."
+      - "Allow cue diversity: lexical hedges, evidential framing, modality, syntax."
+
+json_schema:
+  type: object
+  properties:
+    scenario_id:
+      type: string
+    trait:
+      type: string
+      enum: [politeness, hedging_confidence]
+    domain:
+      type: string
+    audience_relation:
+      type: string
+    communicative_goal:
+      type: string
+    proposition_or_request:
+      type: string
+    allowed_named_entities:
+      type: array
+      items:
+        type: string
+    forbidden_content_changes:
+      type: array
+      items:
+        type: string
+    speech_act:
+      type: string
+    requested_action:
+      type: string
+    imposition_level:
+      type: string
+      enum: [low, medium, high]
+    urgency_level:
+      type: string
+      enum: [low, medium, high]
+    social_distance:
+      type: string
+      enum: [close, moderate, distant]
+    proposition:
+      type: string
+    evidence_state:
+      type: string
+    answer_type:
+      type: string
+      enum: [assertion, recommendation, explanation, forecast]
+    consequence_sensitivity:
+      type: string
+      enum: [low, medium, high]
+    notes:
+      type: string
+  required:
+    - scenario_id
+    - trait
+    - domain
+    - communicative_goal
+    - proposition_or_request
+    - speech_act

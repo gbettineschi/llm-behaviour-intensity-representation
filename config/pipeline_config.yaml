@@ -1,0 +1,41 @@
+project_name: ordinal_geometry_dataset_v1
+output_dir: output
+traits:
+  - politeness
+  - hedging_confidence
+
+models:
+  generator:
+    model: gemini/gemini-2.5-flash-lite
+    family: gemini
+    temperature: 0.7
+    max_output_tokens: 1400
+  judge:
+    model: mistral/ministral-3b-2501
+    family: mistral
+    temperature: 0.0
+    max_output_tokens: 1400
+  tie_breaker_judge:
+    model: openai/gpt-4o-mini
+    family: openai
+    temperature: 0.0
+    max_output_tokens: 1400
+
+pipeline:
+  scenarios_per_trait: 40
+  paraphrases_per_level: 2
+  levels: [low, mid, high]
+  min_acceptance_score: 0.8
+  human_validation_fraction: 0.25
+  max_duplicate_jaccard: 0.85
+  lexical_baseline_warning_accuracy: 0.7
+  require_cross_family_judge: true
+  use_bws_exports: true
+
+validation:
+  require_content_preservation: true
+  require_monotonic_order: true
+  require_naturalness: true
+  require_cue_diversity: true
+  reject_if_same_family_generator_and_judge: false
+  warn_if_same_family_generator_and_judge: true

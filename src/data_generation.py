@@ -18,6 +18,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 try:
+    import litellm
+    litellm.suppress_debug_info = True
     from litellm import completion
 except Exception:  # pragma: no cover
     completion = None
@@ -125,12 +127,18 @@ class LLMClient:
 
 
 class Pipeline:
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, model_override: Optional[str] = None):
         self.config = load_yaml(config_path)
         self.config_path = config_path
         self.root = config_path.parent.parent
         self.output_root = self.root / self.config.get("output_dir", "output")
         ensure_dir(self.output_root)
+
+        if model_override:
+            family = model_override.split("/")[0]
+            for role in ("generator", "judge", "tie_breaker_judge"):
+                self.config["models"][role]["model"] = model_override
+                self.config["models"][role]["family"] = family
 
         gen_cfg = self.config["models"]["generator"]
         judge_cfg = self.config["models"]["judge"]
@@ -141,7 +149,8 @@ class Pipeline:
         self.tie_breaker = LLMClient(ModelSpec(**tiebreak_cfg))
 
         self.levels: List[str] = list(self.config["pipeline"].get("levels", LEVELS))
-        self._validate_model_separation()
+        if not model_override:
+            self._validate_model_separation()
 
     def trait_dir(self, trait: str) -> Path:
         out = self.output_root / trait
@@ -789,12 +798,18 @@ def parse_args() -> argparse.Namespace:
     ])
     parser.add_argument("--config", required=True, help="Path to pipeline_config.yaml")
     parser.add_argument("--trait", choices=TRAITS)
+    parser.add_argument(
+        "--model",
+        help="Override all model roles with a single litellm model string, e.g. anthropic/claude-haiku-4-5-20251001",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    pipe = Pipeline(Path(args.config))
+    if args.command != "export-prompts" and args.trait is None:
+        raise SystemExit("error: --trait is required for this command")
+    pipe = Pipeline(Path(args.config), model_override=args.model)
     if args.command == "make-scenarios":
         pipe.make_scenarios(args.trait)
     elif args.command == "make-ladders":

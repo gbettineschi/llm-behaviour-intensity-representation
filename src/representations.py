@@ -71,8 +71,9 @@ def extract_activations_multilayer(
 
     Returns
     -------
-    dict[tuple[str, str, int], torch.Tensor]
-        Maps ``(trait, intensity, layer)`` to a mean activation vector ``(hidden_dim,)``.
+    dict[tuple[str, str, str, int], torch.Tensor]
+        Maps ``(trait, intensity, scenario_id, layer)`` to a mean activation vector
+        ``(hidden_dim,)``. Samples sharing the same scenario_id+intensity are averaged.
     """
     layers = sorted(set(layer_indices))
     special_ids = {
@@ -84,7 +85,7 @@ def extract_activations_multilayer(
         if tid is not None
     }
 
-    bucket: dict[tuple[str, str, int], list[torch.Tensor]] = {}
+    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
 
     for start in range(0, len(samples), batch_size):
         batch = samples[start:start + batch_size]
@@ -116,7 +117,7 @@ def extract_activations_multilayer(
 
         for li, layer in enumerate(layers):
             for i, sample in enumerate(batch):
-                key = (sample.trait, sample.intensity, layer)
+                key = (sample.trait, sample.intensity, sample.scenario_id, layer)
                 bucket.setdefault(key, []).append(stacked[li, i])
 
     return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
@@ -137,7 +138,7 @@ def extract_activations(
     multi = extract_activations_multilayer(
         samples, model, tokenizer, [layer_index], device
     )
-    return {(t, i): vec for (t, i, _), vec in multi.items()}
+    return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
 
 
 def save_activations(

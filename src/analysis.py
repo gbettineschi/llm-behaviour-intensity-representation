@@ -12,28 +12,45 @@ def cosine_sim(a: torch.Tensor, b: torch.Tensor) -> float:
 
 
 def compute_difference_vectors(
-    activations: dict[tuple[str, str], torch.Tensor],
+    activations: dict[tuple[str, str, str], torch.Tensor],
     traits: list[dict],
 ) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Compute consecutive-intensity difference vectors for each trait.
+    """Compute all-pairs intensity difference vectors, averaged across scenarios.
+
+    For every ordered pair (lo, hi) of intensities, the difference vector is
+    computed per scenario as ``activation[hi] - activation[lo]``, then averaged
+    across all scenarios that have both levels.
 
     Parameters
     ----------
-    activations : dict[tuple[str, str], torch.Tensor]
-        Maps ``(trait, intensity)`` to a mean activation vector.
+    activations : dict[tuple[str, str, str], torch.Tensor]
+        Maps ``(trait, intensity, scenario_id)`` to an activation vector.
     traits : list[dict]
         Config entries with keys ``"name"`` and ``"intensities"`` (ordered low → high).
 
     Returns
     -------
     dict[tuple[str, str, str], torch.Tensor]
-        Maps ``(trait, intensity_lo, intensity_hi)`` to ``activation[hi] - activation[lo]``.
+        Maps ``(trait, lo, hi)`` to the mean of ``activation[hi] - activation[lo]``
+        across all scenarios.
     """
     diffs = {}
     for trait_cfg in traits:
         name, intensities = trait_cfg["name"], trait_cfg["intensities"]
-        for lo, hi in zip(intensities, intensities[1:]):
-            diffs[(name, lo, hi)] = activations[(name, hi)] - activations[(name, lo)]
+        # Order: consecutive pairs descending (high-mid, mid-low), then full spans (high-low, ...)
+        for step in range(1, len(intensities)):
+            for j in range(len(intensities) - 1, step - 1, -1):
+                lo, hi = intensities[j - step], intensities[j]
+                lo_scenarios = {s for (t, lv, s) in activations if t == name and lv == lo}
+                hi_scenarios = {s for (t, lv, s) in activations if t == name and lv == hi}
+                shared = sorted(lo_scenarios & hi_scenarios)
+                if not shared:
+                    continue
+                per_scenario = [
+                    activations[(name, hi, sid)] - activations[(name, lo, sid)]
+                    for sid in shared
+                ]
+                diffs[(name, lo, hi)] = torch.stack(per_scenario).mean(dim=0)
     return diffs
 
 
@@ -55,7 +72,7 @@ def similarity_matrix(
         Cosine similarities; ``matrix[i, j] == cosine_sim(diffs[i], diffs[j])``.
     """
     keys = list(diffs.keys())
-    labels = [f"{t}:{lo}→{hi}" for t, lo, hi in keys]
+    labels = [f"{t}:{hi}-{lo}" for t, lo, hi in keys]
     n = len(keys)
     matrix = np.zeros((n, n))
     for i, j in itertools.product(range(n), range(n)):

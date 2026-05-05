@@ -7,6 +7,7 @@ class Sample(NamedTuple):
     prompt: str
     trait: str
     intensity: str
+    scenario_id: str = ""
 
 
 def load_prompts(path: str | Path) -> list[Sample]:

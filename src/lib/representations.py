@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from data import Sample
+from lib.data_typing import Sample
 
 
 def load_model(model_name: str, device: str, quantization: str | None = None):

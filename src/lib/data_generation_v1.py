@@ -25,9 +25,7 @@ try:
 except Exception:  # pragma: no cover
     completion = None
 
-
-LEVELS = ["low", "mid", "high"]
-TRAITS = ["politeness", "hedging_confidence"]
+from lib.data_typing import LEVELS, TRAITS
 
 SCENARIO_SCHEMA: Dict[str, Any] = {
     "rubric_version": "construct_rubric.md@v2",
@@ -634,7 +632,7 @@ class LLMClient:
 class Pipeline:
     def __init__(self, config: Dict[str, Any], model_override: Optional[str] = None):
         self.config = config
-        self.root = Path(__file__).parent.parent
+        self.root = Path(__file__).parent.parent.parent
         self.output_root = self.root / self.config.get("output_dir", "output")
         ensure_dir(self.output_root)
 

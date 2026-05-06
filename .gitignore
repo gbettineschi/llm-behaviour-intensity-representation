@@ -12,6 +12,9 @@ wheels/
 # Experiment outputs
 output/
 
+# Secrets
+.env
+
 
 .DS_Store
 CLAUDE.md

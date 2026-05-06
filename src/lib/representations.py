@@ -142,30 +142,30 @@ def extract_activations(
 
 
 def save_activations(
-    activations: dict[tuple[str, str], torch.Tensor],
+    activations: dict[tuple[str, str, str], torch.Tensor],
     out_dir: Path,
 ) -> None:
-    """Save each activation tensor to ``out_dir/<trait>__<intensity>.pt``."""
+    """Save each activation tensor to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    for (trait, intensity), tensor in activations.items():
-        torch.save(tensor, out_dir / f"{trait}__{intensity}.pt")
+    for (trait, intensity, scenario_id), tensor in activations.items():
+        torch.save(tensor, out_dir / f"{trait}__{intensity}__{scenario_id}.pt")
 
 
-def load_activations(act_dir: Path) -> dict[tuple[str, str], torch.Tensor]:
+def load_activations(act_dir: Path) -> dict[tuple[str, str, str], torch.Tensor]:
     """Load activation tensors saved by :func:`save_activations`.
 
     Parameters
     ----------
     act_dir : Path
-        Directory containing ``<trait>__<intensity>.pt`` files.
+        Directory containing ``<trait>__<intensity>__<scenario_id>.pt`` files.
 
     Returns
     -------
-    dict[tuple[str, str], torch.Tensor]
-        Maps ``(trait, intensity)`` to its activation vector.
+    dict[tuple[str, str, str], torch.Tensor]
+        Maps ``(trait, intensity, scenario_id)`` to its activation vector.
     """
     result = {}
     for path in sorted(act_dir.glob("*.pt")):
-        trait, intensity = path.stem.split("__")
-        result[(trait, intensity)] = torch.load(path, weights_only=True)
+        trait, intensity, scenario_id = path.stem.split("__")
+        result[(trait, intensity, scenario_id)] = torch.load(path, weights_only=True)
     return result

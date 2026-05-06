@@ -10,7 +10,7 @@ from lib.representations import load_model, extract_activations, save_activation
 from lib.analysis import compute_difference_vectors, similarity_matrix, plot_similarity_matrix
 
 CONFIG = Path(__file__).parent / "config.yaml"
-DATA   = Path("data/prompts.json")
+DATA   = Path("data/v1/prompts.json")
 
 
 def main():

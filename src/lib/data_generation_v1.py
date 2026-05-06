@@ -18,6 +18,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
+from dotenv import load_dotenv
+load_dotenv()
+
 try:
     import litellm
     litellm.suppress_debug_info = True
@@ -633,7 +636,7 @@ class Pipeline:
     def __init__(self, config: Dict[str, Any], model_override: Optional[str] = None):
         self.config = config
         self.root = Path(__file__).parent.parent.parent
-        self.output_root = self.root / self.config.get("output_dir", "output")
+        self.output_root = self.root / self.config.get("output_dir", "data/v1")
         ensure_dir(self.output_root)
 
         if model_override:
@@ -1891,7 +1894,7 @@ class Pipeline:
         Produces the {prompt, trait, intensity} format consumed by src/data.py.
         """
         if out_path is None:
-            out_path = self.root / "data" / "prompts.json"
+            out_path = self.output_root / "prompts.json"
         rows = []
         for trait in self.config["traits"]:
             for rec in jsonl_read(self.trait_dir(trait) / "accepted.jsonl"):

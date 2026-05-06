@@ -17,7 +17,7 @@ def load_prompts(path: str | Path) -> list[Sample]:
     """Load samples from the canonical export format (data/prompts.json)."""
     with open(path) as f:
         records = json.load(f)
-    return [Sample(r["prompt"], r["trait"], r["intensity"]) for r in records]
+    return [Sample(r["prompt"], r["trait"], r["intensity"], r.get("scenario_id", "")) for r in records]
 
 
 def load_accepted(path: str | Path) -> list[Sample]:

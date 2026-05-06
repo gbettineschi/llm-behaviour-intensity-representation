@@ -11,7 +11,12 @@ wheels/
 
 # Experiment outputs
 output/
-*.pt
-*.npy
+
+# Secrets
+.env
+
 
 .DS_Store
+CLAUDE.md
+.claude
+.vscode

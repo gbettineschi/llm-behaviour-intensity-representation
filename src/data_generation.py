@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 import yaml
+from jsonschema import Draft202012Validator
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -98,7 +99,110 @@ class LLMClient:
                 "litellm is not installed. Install requirements before using the pipeline."
             )
 
+    def _iter_balanced_json(self, raw: str) -> Iterable[str]:
+        """Yield every top-level balanced JSON value (object or array) in raw."""
+        i = 0
+        n = len(raw)
+        while i < n:
+            ch = raw[i]
+            if ch != "{" and ch != "[":
+                i += 1
+                continue
+            opener = ch
+            closer = "}" if ch == "{" else "]"
+            depth = 1
+            j = i + 1
+            in_string = False
+            escaped = False
+            while j < n and depth > 0:
+                cj = raw[j]
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif cj == "\\":
+                        escaped = True
+                    elif cj == '"':
+                        in_string = False
+                else:
+                    if cj == '"':
+                        in_string = True
+                    elif cj == opener:
+                        depth += 1
+                    elif cj == closer:
+                        depth -= 1
+                j += 1
+            if depth == 0:
+                yield raw[i:j]
+                i = j
+            else:
+                return
+
+    def _extract_balanced_json(self, raw: str) -> str:
+        """Return the longest balanced top-level JSON value found in raw."""
+        candidates = list(self._iter_balanced_json(raw))
+        if not candidates:
+            raise json.JSONDecodeError("Could not find a complete JSON value", raw, 0)
+        candidates.sort(key=len, reverse=True)
+        return candidates[0]
+
+    def _recover_partial_array(self, raw: str) -> Optional[List[Any]]:
+        """If raw looks like a truncated JSON array, salvage the complete object elements.
+
+        Models sometimes hit max_tokens mid-array; the outer ']' never arrives.
+        We scan for balanced top-level objects/arrays and attempt to JSON-parse each.
+        """
+        s = raw.lstrip()
+        if not s.startswith("["):
+            return None
+        # Scan inside the outer '[' for balanced inner values.
+        inner = s[1:]
+        items: List[Any] = []
+        for chunk in self._iter_balanced_json(inner):
+            try:
+                items.append(json.loads(chunk))
+            except json.JSONDecodeError:
+                continue
+        return items if items else None
+
+    def _recover_partial_object(self, raw: str) -> Optional[Dict[str, Any]]:
+        """Salvage a top-level object whose inner array (e.g. 'items') was truncated.
+
+        Returns a dict with as many top-level scalar fields as parseable, plus an 'items'
+        list of every complete object found inside the array.
+        """
+        s = raw.lstrip()
+        if not s.startswith("{"):
+            return None
+        # Find the array key (default 'items', also try 'scenarios', 'data').
+        array_key = None
+        array_start = -1
+        for key in ("items", "scenarios", "data", "paraphrases"):
+            m = re.search(r'"' + re.escape(key) + r'"\s*:\s*\[', s)
+            if m:
+                array_key = key
+                array_start = m.end()
+                break
+        if array_key is None:
+            return None
+        salvaged_items: List[Any] = []
+        for chunk in self._iter_balanced_json(s[array_start:]):
+            try:
+                salvaged_items.append(json.loads(chunk))
+            except json.JSONDecodeError:
+                continue
+        # Try to extract simple top-level string fields before the array.
+        prefix = s[1:s.index('"' + array_key + '"')]
+        meta: Dict[str, Any] = {}
+        for k, v in re.findall(r'"([A-Za-z_][\w\-]*)"\s*:\s*"((?:[^"\\]|\\.)*)"', prefix):
+            meta[k] = bytes(v, "utf-8").decode("unicode_escape", errors="replace")
+        if not salvaged_items and not meta:
+            return None
+        meta[array_key] = salvaged_items
+        return meta
+
     def _extract_json(self, raw: str) -> Any:
+        if raw is None:
+            raise json.JSONDecodeError("API returned None content", "", 0)
         raw = raw.strip()
         if raw.startswith("```"):
             raw = re.sub(r"^```(?:json)?", "", raw).strip()
@@ -106,26 +210,56 @@ class LLMClient:
         try:
             return json.loads(raw)
         except json.JSONDecodeError:
-            match = re.search(r"(\{.*\}|\[.*\])", raw, flags=re.DOTALL)
-            if not match:
+            try:
+                balanced = self._extract_balanced_json(raw)
+                return json.loads(balanced)
+            except json.JSONDecodeError:
+                # Last resort: a truncated array, or an object with a truncated inner array.
+                salvaged_arr = self._recover_partial_array(raw)
+                if salvaged_arr:
+                    return salvaged_arr
+                salvaged_obj = self._recover_partial_object(raw)
+                if salvaged_obj:
+                    return salvaged_obj
                 raise
-            return json.loads(match.group(1))
 
     def call_json(self, system: str, user: str, schema_hint: Optional[str] = None) -> Any:
-        prompt = user
+        base_prompt = user
         if schema_hint:
-            prompt = f"{user}\n\nReturn JSON only. Expected structure:\n{schema_hint}"
-        resp = completion(
-            model=self.spec.model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=self.spec.temperature,
-            max_tokens=self.spec.max_output_tokens,
-        )
-        content = resp["choices"][0]["message"]["content"]
-        return self._extract_json(content)
+            base_prompt = f"{user}\n\nReturn JSON only. Expected structure:\n{schema_hint}"
+        last_error: Exception | None = None
+        for attempt in range(3):
+            prompt = base_prompt
+            temperature = self.spec.temperature
+            if attempt > 0:
+                # Nudge the model away from the previous broken response.
+                prompt = (
+                    base_prompt
+                    + "\n\nYour previous response was not valid JSON. "
+                    "Return ONLY a JSON value, with no prose, no markdown, no comments."
+                )
+                # Add a small jitter so a deterministic miss doesn't repeat verbatim.
+                temperature = min(1.0, max(self.spec.temperature, 0.0) + 0.2 * attempt)
+            resp = completion(
+                model=self.spec.model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=temperature,
+                max_tokens=self.spec.max_output_tokens,
+            )
+            content = resp["choices"][0]["message"]["content"]
+            try:
+                return self._extract_json(content)
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                if attempt < 2:
+                    preview = content[:200] if len(content) <= 200 else content[:197] + "..."
+                    print(f"  [retry {attempt+1}/3] JSON parse failed. Response preview: {preview}")
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("call_json failed without producing an error")
 
 
 class Pipeline:
@@ -154,6 +288,12 @@ class Pipeline:
         if not model_override:
             self._validate_model_separation()
 
+        self.scenario_schema = load_yaml(self.root / "config" / "scenario_schema.yaml")
+        self._validator = Draft202012Validator(self.scenario_schema["json_schema"])
+        self.dataset_version = str(self.scenario_schema.get("dataset_version", "v3"))
+        self.rubric_version = str(self.scenario_schema.get("rubric_version", "construct_rubric.md@v2"))
+        self.random_seed = int(self.config["pipeline"].get("random_seed", 17))
+
     def trait_dir(self, trait: str) -> Path:
         out = self.output_root / trait
         ensure_dir(out)
@@ -172,61 +312,441 @@ class Pipeline:
             if self.config["validation"].get("warn_if_same_family_generator_and_judge", True):
                 print(f"WARNING: {msg}")
 
+    # ── Run-control helpers ────────────────────────────────────────────────────
+
+    def _resume_enabled(self) -> bool:
+        return bool(self.config["pipeline"].get("resume", True))
+
+    # ── Schema helpers ─────────────────────────────────────────────────────────
+
+    def _trait_info(self, trait: str) -> Dict[str, Any]:
+        try:
+            return self.scenario_schema["traits"][trait]
+        except KeyError as e:
+            raise KeyError(f"Trait '{trait}' is not defined in scenario_schema.yaml") from e
+
+    def _speech_acts_for(self, trait: str) -> List[Dict[str, Any]]:
+        acts = self._trait_info(trait).get("speech_acts", [])
+        if not acts:
+            raise ValueError(f"No speech_acts configured for trait '{trait}'")
+        return acts
+
+    def _build_speech_act_queue(self, trait: str, n: int) -> List[str]:
+        """Return a stratified, deterministic list of speech_act ids of length n."""
+        acts = [a["id"] for a in self._speech_acts_for(trait)]
+        per = n // len(acts)
+        rem = n - per * len(acts)
+        queue = []
+        for a in acts:
+            queue.extend([a] * per)
+        # Distribute remainder round-robin across acts (deterministic).
+        for i in range(rem):
+            queue.append(acts[i % len(acts)])
+        rng = random.Random(self.random_seed + sum(ord(c) for c in trait))
+        rng.shuffle(queue)
+        return queue
+
+    def _content_invariant(self, scenario: Dict[str, Any]) -> str:
+        """Return the invariant content string for a scenario, regardless of trait."""
+        for key in ("speech_act_target", "proposition", "proposition_or_request", "requested_action"):
+            v = scenario.get(key)
+            if isinstance(v, str) and v.strip():
+                return v
+        return ""
+
+    def _validate_scenario(self, scenario: Dict[str, Any]) -> Tuple[bool, List[str]]:
+        errors = [e.message for e in self._validator.iter_errors(scenario)]
+        return (not errors, errors)
+
+    def _seed_example(self, trait: str) -> Dict[str, Any]:
+        """A trait-aware seed example used when no scenarios exist yet."""
+        if trait == "politeness":
+            return {
+                "scenario_id": f"{trait}-001",
+                "trait": trait,
+                "rubric_version": self.rubric_version,
+                "dataset_version": self.dataset_version,
+                "speech_act": "request",
+                "domain": "workplace",
+                "topic_cluster": "budget_request",
+                "audience_relation": "peer",
+                "register": "neutral",
+                "communicative_goal": "ask a teammate to share the latest budget spreadsheet",
+                "speech_act_target": "send the latest budget spreadsheet by end of day",
+                "content_probes": [
+                    {"question": "Is the speaker asking for the budget spreadsheet?", "expected_answer": "yes"},
+                    {"question": "Is the speaker offering to do something for the listener?", "expected_answer": "no"},
+                ],
+                "allowed_named_entities": [],
+                "forbidden_content_changes": ["do not change the requested document", "do not change the deadline"],
+                "forbidden_cue_tokens": ["please", "kindly"],
+                "forbidden_lexical_shortcuts": ["if you don't mind"],
+                "target_word_count": 18,
+                "length_tolerance_pct": 20,
+                "imposition_level": "medium",
+                "urgency_level": "low",
+                "social_distance": "moderate",
+                "notes": "keep target action and deadline fixed across rewrites",
+            }
+        if trait == "hedging_confidence":
+            return {
+                "scenario_id": f"{trait}-001",
+                "trait": trait,
+                "rubric_version": self.rubric_version,
+                "dataset_version": self.dataset_version,
+                "speech_act": "forecast",
+                "domain": "workplace",
+                "topic_cluster": "quarterly_forecast",
+                "audience_relation": "senior",
+                "register": "neutral",
+                "communicative_goal": "tell a manager whether churn will rise next quarter",
+                "speech_act_target": "predict that customer churn will rise next quarter",
+                "content_probes": [
+                    {"question": "Does the speaker predict that churn will rise?", "expected_answer": "yes"},
+                    {"question": "Does the speaker give a numerical probability?", "expected_answer": "no"},
+                ],
+                "allowed_named_entities": [],
+                "forbidden_content_changes": ["do not flip the predicted direction", "do not introduce numbers"],
+                "forbidden_cue_tokens": ["maybe", "definitely"],
+                "forbidden_lexical_shortcuts": ["I'm not sure but"],
+                "target_word_count": 18,
+                "length_tolerance_pct": 20,
+                "proposition": "customer churn will rise next quarter",
+                "evidence_state": "internal usage and renewal data trends",
+                "answer_type": "forecast",
+                "consequence_sensitivity": "medium",
+                "notes": "vary only confidence in the forecast across levels",
+            }
+        return {
+            "scenario_id": f"{trait}-001",
+            "trait": trait,
+            "rubric_version": self.rubric_version,
+            "dataset_version": self.dataset_version,
+            "speech_act": self._speech_acts_for(trait)[0]["id"],
+            "domain": "workplace",
+            "topic_cluster": "general",
+            "audience_relation": "peer",
+            "register": "neutral",
+            "communicative_goal": "placeholder",
+            "content_probes": [{"question": "placeholder?", "expected_answer": "yes"}],
+            "forbidden_cue_tokens": [],
+            "target_word_count": 18,
+        }
+
     # ── Scenario generation ────────────────────────────────────────────────────
 
     def _scenario_system_prompt(self, trait: str) -> str:
         return (
             "You are building a research dataset for representation geometry. "
             "Create base scenarios, not labels or explanations. "
-            "Scenarios must keep future ordinal rewrites content-controlled."
+            "Scenarios must keep future ordinal rewrites content-controlled.\n\n"
+            "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
+            "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
-    def _scenario_user_prompt(self, trait: str, n: int) -> str:
-        schema = load_yaml(self.root / "config" / "scenario_schema.yaml")
-        shared = schema["definitions"]["shared_fields"]
-        trait_info = schema["traits"][trait]
+    def _scenario_user_prompt_batched(
+        self,
+        trait: str,
+        speech_act_ids: List[str],
+        previous_scenarios: List[Dict[str, Any]],
+    ) -> str:
+        """Build the per-batch prompt. Each scenario's assigned speech_act is fixed up front."""
+        trait_info = self._trait_info(trait)
+        shared = self.scenario_schema["definitions"]["shared_fields"]
         levels_str = ", ".join(self.levels)
-        return (
-            f"Generate {n} base scenarios for the trait '{trait}'.\n"
-            f"Use {len(self.levels)}-level ordinal rewriting later: {levels_str}.\n"
-            f"Speech-act restriction: {trait_info['speech_act']}.\n"
-            f"Required trait-specific fields: {trait_info['required_fields']}.\n"
-            f"Generation constraints: {trait_info['generation_constraints']}.\n"
-            f"Shared fields to fill: {list(shared.keys())}.\n"
-            "Return a JSON array of scenario objects. Each object must contain concise field values."
+        n = len(speech_act_ids)
+
+        # Build per-scenario assignment lines and per-act guidance blocks.
+        acts_by_id = {a["id"]: a for a in self._speech_acts_for(trait)}
+        assignment_lines = "\n".join(
+            f"  scenario {i + 1}: speech_act = {sid}" for i, sid in enumerate(speech_act_ids)
         )
+        unique_acts = sorted(set(speech_act_ids))
+        act_blocks = []
+        for sid in unique_acts:
+            a = acts_by_id[sid]
+            block = f"- {sid}: {a.get('description', '')}"
+            example_goal = a.get("example_communicative_goal")
+            if example_goal:
+                block += f"\n  example communicative_goal: {example_goal}"
+            extra = a.get("extra_constraints") or []
+            if extra:
+                block += "\n  per-act constraints:\n" + "\n".join(f"    - {c}" for c in extra)
+            act_blocks.append(block)
+
+        prompt = (
+            f"Generate exactly {n} base scenarios for the trait '{trait}'.\n"
+            f"Trait description: {trait_info.get('description', '')}\n"
+            f"Future ordinal rewriting will use levels: {levels_str}.\n\n"
+            f"Each scenario MUST use the speech_act assigned to it below. Do not reassign or merge speech acts:\n"
+            f"{assignment_lines}\n\n"
+            f"Speech-act guide (only the acts you need this batch):\n"
+            + "\n".join(act_blocks)
+            + "\n\n"
+            f"Required trait-specific fields: {trait_info['required_fields']}.\n"
+            f"Trait-level generation constraints:\n"
+            + "\n".join(f"  - {c}" for c in trait_info["generation_constraints"])
+            + "\n\n"
+            f"Shared fields each scenario must fill: {list(shared.keys())}.\n"
+            "Hard requirements for every scenario object:\n"
+            "  - scenario_id is a stable string (you may use 'auto' and the pipeline will reassign).\n"
+            "  - trait must equal the trait above.\n"
+            f"  - rubric_version = '{self.rubric_version}', dataset_version = '{self.dataset_version}'.\n"
+            "  - content_probes is a list of 1-3 yes/no questions, each with expected_answer in [yes, no].\n"
+            "  - target_word_count is an integer between 8 and 40.\n"
+            "  - length_tolerance_pct is an integer (default 20).\n"
+            "  - forbidden_cue_tokens is a list of surface tokens that must not dominate any single level.\n"
+            "  - speech_act MUST equal the value assigned above for that scenario index.\n"
+            "  - Vary domains, topic_clusters, audience_relations, registers across the batch.\n"
+        )
+        if previous_scenarios:
+            slim = [
+                {
+                    "scenario_id": s.get("scenario_id"),
+                    "speech_act": s.get("speech_act"),
+                    "domain": s.get("domain"),
+                    "topic_cluster": s.get("topic_cluster"),
+                    "communicative_goal": s.get("communicative_goal"),
+                }
+                for s in previous_scenarios[-3:]
+            ]
+            prompt += (
+                f"\nRECENT SCENARIOS — DO NOT repeat these topics/goals:\n"
+                f"{json.dumps(slim, indent=2, ensure_ascii=False)}\n"
+            )
+        prompt += "\nReturn a JSON array of scenario objects only. No prose, no markdown."
+        return prompt
 
     def make_scenarios(self, trait: str) -> None:
-        n = int(self.config["pipeline"]["scenarios_per_trait"])
+        total_n = int(self.config["pipeline"]["scenarios_per_trait"])
+        batch_size = int(self.config["pipeline"].get("scenario_batch_size", 5))
+        max_batch_retries = int(self.config["pipeline"].get("max_scenario_batch_retries", 3))
+        max_dup_jaccard = float(self.config["pipeline"].get("max_duplicate_jaccard_scenarios", 0.85))
         system = self._scenario_system_prompt(trait)
-        user = self._scenario_user_prompt(trait, n)
-        schema_hint = json.dumps(
-            [
-                {
-                    "scenario_id": f"{trait}-001",
-                    "trait": trait,
-                    "domain": "workplace",
-                    "audience_relation": "peer",
-                    "communicative_goal": "request a file",
-                    "proposition_or_request": "speaker requests the latest budget spreadsheet",
-                    "speech_act": "request",
-                    "requested_action": "send the latest budget spreadsheet",
-                    "imposition_level": "medium",
-                    "urgency_level": "low",
-                    "social_distance": "moderate",
-                    "notes": "keep requested action fixed across rewrites",
-                }
-            ],
-            ensure_ascii=False,
+
+        scenarios_file = self.trait_dir(trait) / "scenarios.jsonl"
+        failed_batches_file = self.trait_dir(trait) / "failed_batches.jsonl"
+        failed_scenarios_file = self.trait_dir(trait) / "failed_scenarios.jsonl"
+
+        if not self._resume_enabled():
+            for path in (scenarios_file, failed_batches_file, failed_scenarios_file):
+                if path.exists():
+                    path.unlink()
+            print(f"resume=false → starting fresh for trait '{trait}'")
+            cleaned: List[Dict[str, Any]] = []
+        else:
+            cleaned = jsonl_read(scenarios_file)
+            if cleaned:
+                print(f"resume=true → {len(cleaned)} scenarios already on disk, target={total_n}")
+
+        # Build the full speech_act queue, then slice past what's already been done.
+        full_queue = self._build_speech_act_queue(trait, total_n)
+        # Honour speech_acts already recorded for existing scenarios (don't double-assign).
+        # We just take the suffix corresponding to remaining slots.
+        remaining_queue = full_queue[len(cleaned):]
+        all_act_ids = [a["id"] for a in self._speech_acts_for(trait)]
+        # Safety cap to prevent runaway loops on persistent model failures or repeated dedup hits.
+        max_total_batches = max(8, ((total_n + batch_size - 1) // batch_size) * 4)
+        consecutive_empty_batches = 0
+
+        invariant_strings: set[str] = {
+            normalize_text(self._content_invariant(s)).lower()
+            for s in cleaned
+            if self._content_invariant(s)
+        }
+
+        succeeded_batches = 0
+        attempted_batches = 0
+        batch_index = 0
+        consecutive_failed_batches = 0
+        FATAL_ERROR_PATTERNS = (
+            "more credits",
+            "insufficient_quota",
+            "insufficient credits",
+            "billing",
+            "401",
+            "403",
         )
-        scenarios = self.generator.call_json(system, user, schema_hint)
-        cleaned: List[Dict[str, Any]] = []
-        for i, row in enumerate(scenarios, start=1):
-            row["trait"] = trait
-            row.setdefault("scenario_id", f"{trait}-{i:03d}")
-            cleaned.append(row)
-        jsonl_write(self.trait_dir(trait) / "scenarios.jsonl", cleaned)
-        print(f"Wrote {len(cleaned)} scenarios to {self.trait_dir(trait) / 'scenarios.jsonl'}")
+
+        while len(cleaned) < total_n:
+            if attempted_batches >= max_total_batches:
+                print(f"  ! reached safety cap of {max_total_batches} batches; stopping at {len(cleaned)}/{total_n}.")
+                break
+            if consecutive_empty_batches >= 5:
+                print(f"  ! 5 consecutive empty batches; stopping at {len(cleaned)}/{total_n}.")
+                break
+            batch_index += 1
+            # Refill the queue if we burned through it but still need scenarios.
+            if not remaining_queue:
+                needed = total_n - len(cleaned)
+                # Round-robin top-up, deterministic per (trait, batch_index).
+                rng = random.Random(self.random_seed + 1000 * batch_index + sum(ord(c) for c in trait))
+                topup = [all_act_ids[(rng.randrange(len(all_act_ids)) + i) % len(all_act_ids)] for i in range(needed)]
+                rng.shuffle(topup)
+                remaining_queue = topup
+            batch_acts = remaining_queue[:batch_size]
+            remaining_queue = remaining_queue[batch_size:]
+            batch_n = len(batch_acts)
+            attempted_batches += 1
+
+            user = self._scenario_user_prompt_batched(trait, batch_acts, cleaned)
+            schema_hint = json.dumps(
+                cleaned[-2:] if cleaned else [self._seed_example(trait)],
+                ensure_ascii=False,
+            )
+
+            scenarios_raw = None
+            last_err: Optional[Exception] = None
+            for batch_retry in range(max_batch_retries):
+                try:
+                    scenarios_raw = self.generator.call_json(system, user, schema_hint)
+                    break
+                except Exception as e:
+                    last_err = e
+                    print(
+                        f"  [batch {batch_index} retry {batch_retry + 1}/{max_batch_retries}] "
+                        f"{type(e).__name__}: {str(e)[:160]}"
+                    )
+
+            if scenarios_raw is None:
+                # Skip & continue. Persist failure record, push acts back to queue front.
+                err_msg = str(last_err) if last_err else ""
+                failure_record = {
+                    "trait": trait,
+                    "batch_index": batch_index,
+                    "speech_acts": batch_acts,
+                    "error_type": type(last_err).__name__ if last_err else "Unknown",
+                    "error_message": err_msg[:500],
+                }
+                with failed_batches_file.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(failure_record, ensure_ascii=False) + "\n")
+                print(f"  ! batch {batch_index} ({batch_acts}) skipped after {max_batch_retries} retries.")
+                consecutive_failed_batches += 1
+                # Bail immediately on credit/quota/auth errors — retrying just burns time.
+                if any(p in err_msg.lower() for p in FATAL_ERROR_PATTERNS):
+                    print(
+                        f"  ! fatal API error detected (credits/quota/auth). Stopping at {len(cleaned)}/{total_n}.\n"
+                        f"    {err_msg[:240]}"
+                    )
+                    break
+                if consecutive_failed_batches >= 3:
+                    print(f"  ! 3 consecutive failed batches; stopping at {len(cleaned)}/{total_n}.")
+                    break
+                continue
+            consecutive_failed_batches = 0
+
+            if not isinstance(scenarios_raw, list):
+                # Some models wrap the array under a key. Try common shapes.
+                if isinstance(scenarios_raw, dict):
+                    for key in ("scenarios", "items", "data"):
+                        if isinstance(scenarios_raw.get(key), list):
+                            scenarios_raw = scenarios_raw[key]
+                            break
+            if not isinstance(scenarios_raw, list):
+                with failed_batches_file.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "trait": trait, "batch_index": batch_index,
+                        "speech_acts": batch_acts, "error_type": "BadShape",
+                        "error_message": "generator did not return a JSON array",
+                    }, ensure_ascii=False) + "\n")
+                print(f"  ! batch {batch_index} produced non-list output; skipping.")
+                continue
+
+            kept_in_batch = 0
+            for i, raw_row in enumerate(scenarios_raw):
+                if not isinstance(raw_row, dict):
+                    continue
+                # Force fields that the pipeline owns.
+                row = dict(raw_row)
+                row["trait"] = trait
+                row.setdefault("rubric_version", self.rubric_version)
+                row.setdefault("dataset_version", self.dataset_version)
+                row.setdefault("length_tolerance_pct", 20)
+                # Assign / overwrite speech_act from the queue (defensive).
+                if i < len(batch_acts):
+                    row["speech_act"] = batch_acts[i]
+                # Generate scenario_id deterministically.
+                next_idx = len(cleaned) + 1
+                act_slug = slugify(str(row.get("speech_act", "act")))
+                row["scenario_id"] = f"{trait}-{act_slug}-{next_idx:03d}"
+                # Coerce content_probes if model returned a single dict.
+                cp = row.get("content_probes")
+                if isinstance(cp, dict):
+                    row["content_probes"] = [cp]
+                # Coerce list-typed fields if absent.
+                row.setdefault("forbidden_cue_tokens", [])
+                row.setdefault("forbidden_content_changes", [])
+                row.setdefault("forbidden_lexical_shortcuts", [])
+                row.setdefault("allowed_named_entities", [])
+
+                ok, errors = self._validate_scenario(row)
+                if not ok:
+                    with failed_scenarios_file.open("a", encoding="utf-8") as f:
+                        f.write(json.dumps({
+                            "trait": trait, "batch_index": batch_index,
+                            "scenario_attempt": row, "errors": errors,
+                        }, ensure_ascii=False) + "\n")
+                    continue
+
+                # Deduplication on invariant content.
+                inv = normalize_text(self._content_invariant(row)).lower()
+                if inv:
+                    duplicate = False
+                    for prev in invariant_strings:
+                        if jaccard(inv, prev) >= max_dup_jaccard:
+                            duplicate = True
+                            break
+                    if duplicate:
+                        with failed_scenarios_file.open("a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "trait": trait, "batch_index": batch_index,
+                                "scenario_attempt": row, "errors": ["near-duplicate invariant content"],
+                            }, ensure_ascii=False) + "\n")
+                        continue
+                    invariant_strings.add(inv)
+
+                cleaned.append(row)
+                kept_in_batch += 1
+                if len(cleaned) >= total_n:
+                    break
+
+            jsonl_write(scenarios_file, cleaned)
+            succeeded_batches += 1
+            if kept_in_batch == 0:
+                consecutive_empty_batches += 1
+            else:
+                consecutive_empty_batches = 0
+            print(
+                f"  batch {batch_index}: kept {kept_in_batch}/{batch_n} "
+                f"(total {len(cleaned)}/{total_n})"
+            )
+
+        # Diversity report: counts per (speech_act, domain).
+        per_act: Dict[str, int] = {}
+        per_domain: Dict[str, int] = {}
+        for s in cleaned:
+            per_act[s.get("speech_act", "?")] = per_act.get(s.get("speech_act", "?"), 0) + 1
+            per_domain[s.get("domain", "?")] = per_domain.get(s.get("domain", "?"), 0) + 1
+        diversity_path = self.trait_dir(trait) / "diversity_report.json"
+        with diversity_path.open("w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "trait": trait,
+                    "total_scenarios": len(cleaned),
+                    "by_speech_act": per_act,
+                    "by_domain": per_domain,
+                    "attempted_batches": attempted_batches,
+                    "succeeded_batches": succeeded_batches,
+                },
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
+        print(
+            f"Wrote {len(cleaned)}/{total_n} scenarios to {scenarios_file}. "
+            f"Batches: {succeeded_batches}/{attempted_batches} ok. "
+            f"Speech-act distribution: {per_act}"
+        )
 
     # ── Ladder generation ──────────────────────────────────────────────────────
 
@@ -235,16 +755,22 @@ class Pipeline:
         return (
             "You create controlled ordinal ladders for NLP research. "
             "Keep content fixed and vary only trait intensity.\n\n"
-            f"Rubric:\n{rubric}"
+            f"Rubric:\n{rubric}\n\n"
+            "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
+            "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
     def _ladder_user_prompt(self, trait: str, scenario: Dict[str, Any]) -> str:
         levels_str = ", ".join(self.levels)
+        invariant = self._content_invariant(scenario)
+        speech_act = scenario.get("speech_act", "")
         return (
-            f"Create one {len(self.levels)}-level canonical ladder for trait '{trait}'.\n"
+            f"Create one {len(self.levels)}-level canonical ladder for trait '{trait}', "
+            f"speech_act '{speech_act}'.\n"
             f"Scenario:\n{json.dumps(scenario, ensure_ascii=False, indent=2)}\n\n"
             f"Levels must be {levels_str}.\n"
-            "The proposition or requested action must remain invariant.\n"
+            f"The invariant content '{invariant}' must remain identical in meaning across levels.\n"
+            "Vary only the trait intensity. Keep all paraphrases similar in length.\n"
             "Return JSON with keys: scenario_id, trait, invariant_content, ladder.\n"
             f"'ladder' must map each of these levels to a single sentence: {levels_str}."
         )
@@ -256,24 +782,63 @@ class Pipeline:
         system = self._ladder_system_prompt(trait)
         max_workers = int(self.config["pipeline"].get("max_workers", 1))
 
+        ladders_file = self.trait_dir(trait) / "ladders.jsonl"
+        if not self._resume_enabled():
+            if ladders_file.exists():
+                ladders_file.unlink()
+            existing_ladders: List[Dict[str, Any]] = []
+            print(f"resume=false → regenerating all ladders for trait '{trait}'")
+        else:
+            existing_ladders = jsonl_read(ladders_file)
+            if existing_ladders:
+                print(f"resume=true → {len(existing_ladders)} ladders already on disk")
+        done_ids = {l["scenario_id"] for l in existing_ladders}
+        scenarios = [s for s in scenarios if s["scenario_id"] not in done_ids]
+        if not scenarios:
+            print("All ladders already generated")
+            return
+
         def _one(scenario: Dict[str, Any]) -> Dict[str, Any]:
             schema_hint = json.dumps(
                 {
                     "scenario_id": scenario["scenario_id"],
                     "trait": trait,
-                    "invariant_content": scenario.get("proposition_or_request", ""),
+                    "invariant_content": self._content_invariant(scenario),
                     "ladder": {lvl: "..." for lvl in self.levels},
                 },
                 ensure_ascii=False,
             )
             obj = self.generator.call_json(system, self._ladder_user_prompt(trait, scenario), schema_hint)
+            # Ensure ladder has all required levels; if not, raise so the worker captures it.
+            ladder = obj.get("ladder") if isinstance(obj, dict) else None
+            if not isinstance(ladder, dict) or any(lvl not in ladder for lvl in self.levels):
+                raise ValueError(
+                    f"Ladder for {scenario.get('scenario_id')} missing levels; got {list(ladder) if isinstance(ladder, dict) else type(ladder).__name__}"
+                )
             obj["scenario"] = scenario
             return obj
 
+        failed_ladders_file = self.trait_dir(trait) / "failed_ladders.jsonl"
+
+        def _safe_one(scenario: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            try:
+                return _one(scenario)
+            except Exception as exc:
+                with failed_ladders_file.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "scenario_id": scenario.get("scenario_id"),
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc)[:500],
+                    }, ensure_ascii=False) + "\n")
+                print(f"  ! ladder failed for {scenario.get('scenario_id')}: {type(exc).__name__}: {str(exc)[:120]}")
+                return None
+
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            out_rows = list(ex.map(_one, scenarios))
-        jsonl_write(self.trait_dir(trait) / "ladders.jsonl", out_rows)
-        print(f"Wrote {len(out_rows)} ladders")
+            out_rows = [r for r in ex.map(_safe_one, scenarios) if r is not None]
+        all_rows = existing_ladders + out_rows
+        jsonl_write(ladders_file, all_rows)
+        skipped = len(scenarios) - len(out_rows)
+        print(f"Wrote {len(out_rows)} new ladders ({len(all_rows)} total). Skipped {skipped}.")
 
     # ── Paraphrase generation (with cross-ladder cue-family diversity) ─────────
 
@@ -284,7 +849,9 @@ class Pipeline:
             "Do not produce near-duplicates. Use different cue families when possible. "
             "Critical: all paraphrases must be similar in length across levels. "
             "Do not use sentence length or verbosity as a cue for the trait level. "
-            "A high-intensity paraphrase must not be longer than a low-intensity one."
+            "A high-intensity paraphrase must not be longer than a low-intensity one.\n\n"
+            "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
+            "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
     def _paraphrase_user_prompt(
@@ -350,6 +917,27 @@ class Pipeline:
         system = self._paraphrase_system_prompt(trait)
         max_workers = int(self.config["pipeline"].get("max_workers", 1))
 
+        # Load existing paraphrases to avoid re-processing
+        paraphrases_file = self.trait_dir(trait) / "paraphrases.jsonl"
+        existing_paraphrases: List[Dict[str, Any]] = []
+        processed_scenario_ids: set[str] = set()
+
+        if not self._resume_enabled():
+            if paraphrases_file.exists():
+                paraphrases_file.unlink()
+            print(f"resume=false → regenerating all paraphrases for trait '{trait}'")
+        elif paraphrases_file.exists():
+            existing_paraphrases = jsonl_read(paraphrases_file)
+            processed_scenario_ids = {row["scenario_id"] for row in existing_paraphrases}
+            print(f"resume=true → {len(processed_scenario_ids)} scenarios already processed")
+        
+        # Filter to remaining ladders
+        remaining_ladders = [l for l in ladders if l["scenario_id"] not in processed_scenario_ids]
+        
+        if not remaining_ladders:
+            print("All paraphrases already generated")
+            return
+
         used_cue_families: set[str] = set()
         lock = threading.Lock()
 
@@ -388,11 +976,28 @@ class Pipeline:
                     used_cue_families.add(r["cue_family"])
             return batch
 
+        failed_paraphrases_file = self.trait_dir(trait) / "failed_paraphrases.jsonl"
+
+        def _safe_one(ladder: Dict[str, Any]) -> List[Dict[str, Any]]:
+            try:
+                return _one(ladder)
+            except Exception as exc:
+                with failed_paraphrases_file.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "scenario_id": ladder.get("scenario_id"),
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc)[:500],
+                    }, ensure_ascii=False) + "\n")
+                print(f"  ! paraphrases failed for {ladder.get('scenario_id')}: {type(exc).__name__}: {str(exc)[:120]}")
+                return []
+
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            results = list(ex.map(_one, ladders))
-        rows = [row for batch in results for row in batch]
-        jsonl_write(self.trait_dir(trait) / "paraphrases.jsonl", rows)
-        print(f"Wrote {len(rows)} paraphrase rows")
+            results = list(ex.map(_safe_one, remaining_ladders))
+        new_rows = [row for batch in results for row in batch]
+        all_rows = existing_paraphrases + new_rows
+        jsonl_write(paraphrases_file, all_rows)
+        skipped = sum(1 for r in results if not r)
+        print(f"Wrote {len(new_rows)} new paraphrase rows (total: {len(all_rows)}). Skipped {skipped} ladders.")
 
     # ── Judging (with per-scenario retry using judge feedback) ─────────────────
 
@@ -402,7 +1007,9 @@ class Pipeline:
             "You are an independent validation judge for a benchmark. "
             "Your job is to reject content drift, wrong ordering, poor fluency, "
             "weak cue diversity, and shortcut-heavy bundles.\n\n"
-            f"Rubric:\n{rubric}"
+            f"Rubric:\n{rubric}\n\n"
+            "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
+            "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
     def _judge_user_prompt(self, trait: str, scenario_id: str, bundle: List[Dict[str, Any]]) -> str:
@@ -467,6 +1074,23 @@ class Pipeline:
             bool(primary.get("accepted", False))
             and float(primary.get("overall_score", 0.0)) >= min_score
         )
+        # Hard programmatic length-balance gate. Don't trust the judge LLM alone.
+        max_ratio = float(self.config["pipeline"].get("max_length_ratio", 1.2))
+        word_counts_by_level: Dict[str, List[int]] = {}
+        for r in bundle:
+            word_counts_by_level.setdefault(r["level"], []).append(len(r["text"].split()))
+        if word_counts_by_level:
+            mean_words = [sum(v) / len(v) for v in word_counts_by_level.values() if v]
+            if len(mean_words) >= 2 and min(mean_words) > 0:
+                if max(mean_words) > min(mean_words) * max_ratio:
+                    primary["length_balance_hard_gate"] = False
+                    primary.setdefault("notes", "")
+                    primary["notes"] = (primary["notes"] or "") + (
+                        f" [length-balance hard gate fired: per-level mean words {dict(zip(word_counts_by_level.keys(), [round(m, 1) for m in mean_words]))}]"
+                    )
+                    bundle_accepted = False
+                else:
+                    primary["length_balance_hard_gate"] = True
         if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin):
             tie = self.tie_breaker.call_json(
                 system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
@@ -554,9 +1178,35 @@ class Pipeline:
         per_level = int(self.config["pipeline"]["paraphrases_per_level"])
         max_retries = int(self.config["pipeline"].get("max_retries", 3))
 
+        # Load existing results to avoid re-judging
+        judged_file = self.trait_dir(trait) / "judged.jsonl"
+        accepted_file = self.trait_dir(trait) / "accepted.jsonl"
+        existing_judged: List[Dict[str, Any]] = []
+        existing_accepted: List[Dict[str, Any]] = []
+        processed_scenario_ids: set[str] = set()
+        
+        if not self._resume_enabled():
+            for path in (judged_file, accepted_file):
+                if path.exists():
+                    path.unlink()
+            print(f"resume=false → re-judging all bundles for trait '{trait}'")
+        elif judged_file.exists() and accepted_file.exists():
+            existing_judged = jsonl_read(judged_file)
+            existing_accepted = jsonl_read(accepted_file)
+            processed_scenario_ids = {row["scenario_id"] for row in existing_judged}
+            print(f"resume=true → {len(processed_scenario_ids)} scenarios already judged")
+
         grouped: Dict[str, List[Dict[str, Any]]] = {}
         for row in rows:
             grouped.setdefault(row["scenario_id"], []).append(row)
+
+        # Filter to remaining bundles
+        remaining_bundles = [(sid, bundle) for sid, bundle in sorted(grouped.items()) 
+                            if sid not in processed_scenario_ids]
+        
+        if not remaining_bundles:
+            print("All bundles already judged")
+            return
 
         used_cue_families: set[str] = set()
         lock = threading.Lock()
@@ -586,18 +1236,37 @@ class Pipeline:
                         used_cue_families.add(r["cue_family"])
             return judged_bundle, accepted_bundle
 
+        failed_judged_file = self.trait_dir(trait) / "failed_judged.jsonl"
+
+        def _safe_one(item: tuple) -> tuple:
+            try:
+                return _one(item)
+            except Exception as exc:
+                sid = item[0] if isinstance(item, tuple) else "?"
+                with failed_judged_file.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "scenario_id": sid,
+                        "error_type": type(exc).__name__,
+                        "error_message": str(exc)[:500],
+                    }, ensure_ascii=False) + "\n")
+                print(f"  ! judging failed for {sid}: {type(exc).__name__}: {str(exc)[:120]}")
+                return ([], [])
+
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            results = list(ex.map(_one, sorted(grouped.items())))
+            results = list(ex.map(_safe_one, remaining_bundles))
 
-        judged: List[Dict[str, Any]] = []
-        accepted_rows: List[Dict[str, Any]] = []
+        new_judged: List[Dict[str, Any]] = []
+        new_accepted: List[Dict[str, Any]] = []
         for judged_bundle, accepted_bundle in results:
-            judged.extend(judged_bundle)
-            accepted_rows.extend(accepted_bundle)
+            new_judged.extend(judged_bundle)
+            new_accepted.extend(accepted_bundle)
 
-        jsonl_write(self.trait_dir(trait) / "judged.jsonl", judged)
-        jsonl_write(self.trait_dir(trait) / "accepted.jsonl", accepted_rows)
-        print(f"Judged {len(judged)} rows; accepted {len(accepted_rows)} rows")
+        all_judged = existing_judged + new_judged
+        all_accepted = existing_accepted + new_accepted
+        
+        jsonl_write(judged_file, all_judged)
+        jsonl_write(accepted_file, all_accepted)
+        print(f"Judged {len(new_judged)} new rows (total: {len(all_judged)}); accepted {len(new_accepted)} new rows (total: {len(all_accepted)})")
 
     # ── Audit (with shortcut hard gate that triggers targeted regeneration) ────
 
@@ -860,7 +1529,12 @@ class Pipeline:
         rows = []
         for trait in self.config["traits"]:
             for rec in jsonl_read(self.trait_dir(trait) / "accepted.jsonl"):
-                rows.append({"prompt": rec["text"], "trait": rec["trait"], "intensity": rec["level"]})
+                rows.append({
+                    "prompt": rec["text"],
+                    "trait": rec["trait"],
+                    "intensity": rec["level"],
+                    "scenario_id": rec.get("scenario_id", ""),
+                })
         ensure_dir(out_path.parent)
         with out_path.open("w", encoding="utf-8") as f:
             json.dump(rows, f, ensure_ascii=False, indent=2)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import itertools
 import json
 import math
@@ -13,7 +12,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
-import yaml
 from jsonschema import Draft202012Validator
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -31,10 +29,381 @@ except Exception:  # pragma: no cover
 LEVELS = ["low", "mid", "high"]
 TRAITS = ["politeness", "hedging_confidence"]
 
+SCENARIO_SCHEMA: Dict[str, Any] = {
+    "rubric_version": "construct_rubric.md@v2",
+    "dataset_version": "v3",
+    "traits": {
+        "politeness": {
+            "description": "Mitigation of face threat, deference, social consideration. Low = direct/blunt; high = strongly mitigated/respectful.",
+            "required_fields": ["speech_act_target", "imposition_level", "urgency_level", "social_distance"],
+            "field_descriptions": {
+                "speech_act_target": "The exact action / refusal target / news / criticism etc. that must remain invariant across levels.",
+                "imposition_level": "low | medium | high — how costly the act is for the listener",
+                "urgency_level": "low | medium | high — must remain constant across levels",
+                "social_distance": "close | moderate | distant",
+            },
+            "speech_acts": [
+                {
+                    "id": "request",
+                    "description": "Asking the listener to do or provide something.",
+                    "example_communicative_goal": "ask a colleague to send a file",
+                    "extra_constraints": [
+                        "Keep the requested action fixed across levels.",
+                        "Do not change urgency or scope across levels.",
+                    ],
+                },
+                {
+                    "id": "refusal",
+                    "description": "Declining a request, invitation, proposal, or offer made by the listener.",
+                    "example_communicative_goal": "turn down a meeting invitation",
+                    "extra_constraints": [
+                        "The refusal target (what is being declined) must remain identical across levels.",
+                        "Do not change the refusal into a partial acceptance or a counter-offer.",
+                    ],
+                },
+                {
+                    "id": "disagreement",
+                    "description": "Expressing a contrary opinion, correction, or pushback on a claim.",
+                    "example_communicative_goal": "push back on a colleague's analysis",
+                    "extra_constraints": [
+                        "The point of disagreement must remain identical across levels.",
+                        "Do not soften disagreement into agreement at any level.",
+                    ],
+                },
+                {
+                    "id": "criticism_or_feedback",
+                    "description": "Pointing out a problem with the listener's work, output, or behaviour.",
+                    "example_communicative_goal": "tell a junior their report needs rework",
+                    "extra_constraints": [
+                        "The criticised aspect must remain identical across levels.",
+                        "Do not turn criticism into pure praise.",
+                    ],
+                },
+                {
+                    "id": "bad_news_delivery",
+                    "description": "Telling the listener something they will not want to hear (denial, rejection, negative outcome).",
+                    "example_communicative_goal": "inform a customer their refund is denied",
+                    "extra_constraints": [
+                        "The bad news content must remain identical across levels.",
+                        "Do not change a denial into an approval or a hedged maybe.",
+                    ],
+                },
+                {
+                    "id": "apology",
+                    "description": "Acknowledging fault or expressing regret for a specific wrongdoing.",
+                    "example_communicative_goal": "apologise for missing a deadline",
+                    "extra_constraints": [
+                        "The thing being apologised for must remain identical across levels.",
+                        "Do not change which party is at fault.",
+                    ],
+                },
+            ],
+            "generation_constraints": [
+                "Speech_act_target must be fixed across levels and paraphrases.",
+                "Urgency_level and imposition scope must be constant across levels.",
+                "No insults, threats, profanity even at low politeness.",
+                "Diversify politeness realisation across: directness, deference, gratitude framing, softeners, impersonalisation. Do not let any single token in forbidden_cue_tokens dominate one level.",
+                "All paraphrases at all levels must satisfy every content_probe with the same expected_answer.",
+                "Word count of every paraphrase must be within ±length_tolerance_pct of target_word_count.",
+            ],
+        },
+        "hedging_confidence": {
+            "description": "Speaker commitment to a proposition. Low = tentative/hedged; high = strongly committed/direct.",
+            "required_fields": ["proposition", "evidence_state", "answer_type", "consequence_sensitivity"],
+            "field_descriptions": {
+                "proposition": "The exact proposition that must stay fixed across levels.",
+                "evidence_state": "Brief description of evidence basis; the *amount* of evidence claimed must not change across levels.",
+                "answer_type": "assertion | recommendation | explanation | forecast | answer | estimate",
+                "consequence_sensitivity": "low | medium | high",
+            },
+            "speech_acts": [
+                {
+                    "id": "factual_assertion",
+                    "description": "Stating a proposition as true.",
+                    "example_communicative_goal": "state that the new policy reduces costs",
+                    "extra_constraints": ["Polarity of the assertion must not flip across levels."],
+                },
+                {
+                    "id": "recommendation",
+                    "description": "Advising a particular course of action.",
+                    "example_communicative_goal": "advise switching vendors",
+                    "extra_constraints": ["The recommended action must remain identical across levels."],
+                },
+                {
+                    "id": "forecast",
+                    "description": "Predicting a future outcome.",
+                    "example_communicative_goal": "predict next quarter's churn will rise",
+                    "extra_constraints": [
+                        "The predicted outcome and its direction must remain identical.",
+                        "Do not introduce numerical probabilities unless the scenario explicitly allows them.",
+                    ],
+                },
+                {
+                    "id": "causal_explanation",
+                    "description": "Explaining why something happened.",
+                    "example_communicative_goal": "explain why the deployment failed",
+                    "extra_constraints": ["The causal claim must remain identical across levels."],
+                },
+                {
+                    "id": "yes_no_answer",
+                    "description": "Answering a direct yes/no question.",
+                    "example_communicative_goal": "answer whether the data supports the hypothesis",
+                    "extra_constraints": ["The polarity of the answer (yes/no) must not flip across levels."],
+                },
+                {
+                    "id": "estimation",
+                    "description": "Giving a qualitative or coarse quantitative estimate.",
+                    "example_communicative_goal": "estimate how long the migration will take",
+                    "extra_constraints": [
+                        "The central estimate (rough magnitude) must remain identical across levels.",
+                        "Hedging modifies confidence in the estimate, not its value.",
+                    ],
+                },
+            ],
+            "generation_constraints": [
+                "Proposition must be fixed across levels and paraphrases.",
+                "Do not change the answer polarity or recommended action.",
+                "Do not introduce numerical probabilities unless explicitly allowed.",
+                "Use ordinary natural-language hedging and commitment cues.",
+                "Diversify cues across: lexical hedges, evidential framing, modal verbs, syntactic structure. Avoid letting forbidden_cue_tokens become level markers.",
+                "All paraphrases at all levels must satisfy every content_probe with the same expected_answer.",
+                "Word count of every paraphrase must be within ±length_tolerance_pct of target_word_count.",
+            ],
+        },
+    },
+    "json_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": True,
+        "properties": {
+            "scenario_id": {"type": "string", "minLength": 3},
+            "trait": {"type": "string", "enum": ["politeness", "hedging_confidence"]},
+            "rubric_version": {"type": "string"},
+            "dataset_version": {"type": "string"},
+            "split": {"type": "string", "enum": ["train", "val", "test"]},
+            "speech_act": {"type": "string", "minLength": 2},
+            "domain": {"type": "string", "minLength": 2},
+            "topic_cluster": {"type": "string", "minLength": 2},
+            "audience_relation": {"type": "string"},
+            "register": {"type": "string", "enum": ["formal", "neutral", "informal"]},
+            "communicative_goal": {"type": "string", "minLength": 5},
+            "speech_act_target": {"type": "string", "minLength": 3},
+            "proposition_or_request": {"type": "string"},
+            "content_probes": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string", "minLength": 5},
+                        "expected_answer": {"type": "string", "enum": ["yes", "no"]},
+                    },
+                    "required": ["question", "expected_answer"],
+                },
+            },
+            "allowed_named_entities": {"type": "array", "items": {"type": "string"}},
+            "forbidden_content_changes": {"type": "array", "items": {"type": "string"}},
+            "forbidden_cue_tokens": {"type": "array", "items": {"type": "string"}},
+            "forbidden_lexical_shortcuts": {"type": "array", "items": {"type": "string"}},
+            "target_word_count": {"type": "integer", "minimum": 4, "maximum": 60},
+            "length_tolerance_pct": {"type": "integer", "minimum": 5, "maximum": 50},
+            "imposition_level": {"type": "string", "enum": ["low", "medium", "high"]},
+            "urgency_level": {"type": "string", "enum": ["low", "medium", "high"]},
+            "social_distance": {"type": "string", "enum": ["close", "moderate", "distant"]},
+            "proposition": {"type": "string"},
+            "evidence_state": {"type": "string"},
+            "answer_type": {"type": "string", "enum": ["assertion", "recommendation", "explanation", "forecast", "answer", "estimate"]},
+            "consequence_sensitivity": {"type": "string", "enum": ["low", "medium", "high"]},
+            "notes": {"type": "string"},
+        },
+        "required": [
+            "scenario_id", "trait", "speech_act", "domain", "topic_cluster",
+            "audience_relation", "register", "communicative_goal",
+            "content_probes", "forbidden_cue_tokens", "target_word_count",
+        ],
+        "allOf": [
+            {
+                "if": {"properties": {"trait": {"const": "politeness"}}, "required": ["trait"]},
+                "then": {"required": ["speech_act_target", "imposition_level", "urgency_level", "social_distance"]},
+            },
+            {
+                "if": {"properties": {"trait": {"const": "hedging_confidence"}}, "required": ["trait"]},
+                "then": {"required": ["proposition", "evidence_state", "answer_type", "consequence_sensitivity"]},
+            },
+        ],
+    },
+}
 
-def load_yaml(path: Path) -> Dict[str, Any]:
-    with path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+CONSTRUCT_RUBRIC = """\
+# Construct Rubric (3-Level Benchmark) — v2
+
+This rubric is written for a **representation-geometry benchmark**, not a generic classification dataset. The key requirement is that all levels within a ladder preserve the same underlying content while varying only the target trait. The rubric is now multi–speech-act: each trait is realised across several speech acts, and intensity is defined consistently across all of them.
+
+---
+
+## Trait A: Politeness
+
+### Core construct
+Politeness is the degree to which an utterance mitigates face threat, softens imposition, signals respect or deference, and frames the act in a socially considerate way. It applies to any speech act whose surface form is socially loaded.
+
+### Scope
+Politeness is realised across the following speech acts (same construct, different acts):
+- **request** — asking for an action or item
+- **refusal** — declining an offer/request
+- **disagreement** — pushing back on a claim
+- **criticism_or_feedback** — pointing out a problem with someone's work
+- **bad_news_delivery** — telling the listener something they will not want to hear
+- **apology** — acknowledging fault or expressing regret
+
+### What must remain constant across levels (per scenario)
+- the speech-act target (what is requested / refused / criticised / forecast / etc.)
+- named entities, dates, deadlines
+- core practical intent and truth conditions
+- the polarity of the act (a refusal stays a refusal; an apology stays an apology)
+
+### What may vary
+- directness vs indirectness
+- mitigation and softening
+- deference and respect markers
+- gratitude or appreciation framing
+- imposition acknowledgment
+- syntactic form
+
+### What must not vary
+- urgency or scope
+- amount of work / cost imposed
+- whether the act is optional
+- sentiment unrelated to the act
+- sentence length — high-politeness paraphrases must not be substantially longer than low-politeness ones
+
+### Three-level scale (universal across speech acts)
+
+#### Level 0 — Low politeness
+- direct, blunt realisation of the act
+- little or no mitigation
+- terse but never abusive, insulting, or profane
+
+#### Level 1 — Mid politeness
+- clear realisation with moderate mitigation
+- neutral-professional register
+- some softeners ("could you", "I'm afraid", "please") but not strongly deferential
+
+#### Level 2 — High politeness
+- clearly respectful and mitigated
+- strong face-saving framing
+- appreciation, deference, imposition acknowledgment without changing what is being said
+
+### Per-speech-act guidance
+
+**request.** Low: imperative or near-imperative ("Send me the file."). Mid: modal request with light softener ("Could you send me the file when you have a moment?"). High: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance.").
+
+**refusal.** Low: bare "no" plus minimal reason ("I can't make it."). Mid: softened decline with brief reason ("I won't be able to make it, sorry."). High: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
+
+**disagreement.** Low: flat contradiction ("That's wrong."). Mid: hedged contradiction ("I don't think that's quite right."). High: respectful disagreement with framing ("I see your point, but I'd respectfully push back — I don't think that holds."). The disagreed-with claim stays identical.
+
+**criticism_or_feedback.** Low: direct judgment ("This report is inadequate."). Mid: feedback with mitigation ("This report needs more work in places."). High: appreciative, face-saving feedback ("There's a lot of good material here; I think the report would benefit from some additional work in a few places."). The criticised aspect stays identical.
+
+**bad_news_delivery.** Low: blunt delivery ("Your refund is denied."). Mid: softened delivery with brief reason ("Unfortunately we can't approve your refund."). High: empathetic delivery with appreciation and apology ("I'm really sorry to have to tell you this, but we won't be able to approve your refund."). The bad news stays identical.
+
+**apology.** Low: minimal acknowledgement ("Sorry I missed the deadline."). Mid: ordinary apology with brief explanation ("I'm sorry I missed the deadline — I should have flagged it earlier."). High: full face-restoring apology with acknowledgment of impact ("I really do apologise for missing the deadline; I know it put extra pressure on the team and I should have raised it sooner."). The apologised-for action stays identical.
+
+### Cue-diversity requirement
+For a given level, do not rely on one marker repeatedly. Spread realisations across:
+- lexical courtesy markers
+- syntactic indirectness
+- gratitude framing
+- imposition acknowledgment
+- depersonalised or softened phrasing
+
+---
+
+## Trait B: Hedging / Linguistic Confidence
+
+### Core construct
+Hedging/confidence is the degree of speaker commitment to a proposition. The low end expresses uncertainty or tentativeness; the high end expresses strong commitment.
+
+### Scope
+Hedging is realised across the following speech acts:
+- **factual_assertion** — stating something as true
+- **recommendation** — advising a course of action
+- **forecast** — predicting a future outcome
+- **causal_explanation** — explaining why something happened
+- **yes_no_answer** — answering a yes/no question
+- **estimation** — giving a qualitative or coarse quantitative estimate
+
+### What must remain constant across levels
+- the proposition / recommended action / forecast outcome / causal claim / yes-or-no polarity / central estimate
+- named entities and factual content
+- the amount of evidence claimed (unless the scenario explicitly varies it — it should not)
+
+### What may vary
+- strength of commitment
+- epistemic stance and evidential framing
+- hedge markers and modal verbs
+- discourse framing of uncertainty
+
+### What must not vary
+- the proposition itself
+- polarity or factual answer
+- specificity of the recommendation
+- whether numerical probabilities are introduced (forbidden unless explicitly allowed)
+
+### Three-level scale (universal across speech acts)
+
+#### Level 0 — Low confidence / strongly hedged
+- tentative stance, explicit uncertainty
+- usable but clearly cautious
+- "I think it might…", "based on what I can tell…", "it's possible that…"
+
+#### Level 1 — Mid confidence
+- balanced commitment
+- ordinary qualified claim
+- "it's likely…", "I think…", "it seems…"
+
+#### Level 2 — High confidence / minimally hedged
+- strong commitment, direct statement
+- still natural, not boastful or aggressive
+- "it is…", "I'm confident that…", a bare assertion
+
+### Per-speech-act guidance
+
+**factual_assertion.** Low: "It might be that the policy reduces costs." Mid: "It looks like the policy reduces costs." High: "The policy reduces costs." Polarity stays identical.
+
+**recommendation.** Low: "You might want to consider switching vendors." Mid: "I'd suggest switching vendors." High: "You should switch vendors." The recommended action stays identical.
+
+**forecast.** Low: "Churn could rise next quarter." Mid: "Churn is likely to rise next quarter." High: "Churn will rise next quarter." Direction of the prediction stays identical; do not insert numbers.
+
+**causal_explanation.** Low: "The deployment may have failed because of the config change." Mid: "The deployment likely failed because of the config change." High: "The deployment failed because of the config change." The causal claim stays identical.
+
+**yes_no_answer.** Low: "I think the answer is probably yes, though I'm not certain." Mid: "I'd say yes." High: "Yes." Polarity stays identical.
+
+**estimation.** Low: "It might take roughly two weeks, give or take." Mid: "It'll likely take about two weeks." High: "It'll take two weeks." The central estimate stays identical; only confidence in it varies.
+
+### Cue-diversity requirement
+Diversify across:
+- lexical hedges
+- evidential framing
+- modal verbs
+- discourse-softening phrases
+- syntax and clause structure
+
+Avoid mapping one level to one token (e.g. "maybe" ↔ low only).
+
+---
+
+## Universal acceptance criteria
+
+Every final item must satisfy all of the following:
+
+1. **Content preservation**: same core content (target / proposition / answer / forecast / cause / estimate) across levels. Every content_probe must have the same expected_answer at every level.
+2. **Ordered intensity**: human or validated judge ordering matches low < mid < high for the target trait.
+3. **Naturalness**: each sentence is fluent and plausible in ordinary usage.
+4. **No overt artifacts**: no single cue or template uniquely identifies one level across the dataset.
+5. **Paraphrase diversity**: at least two distinct phrasings per level, not near-duplicates.
+6. **No domain leakage**: scenario metadata, topic, named entities, or speech act do not uniquely determine the level.
+7. **Length balance**: paraphrase length must not correlate with level. All paraphrases within a scenario must be within ±length_tolerance_pct of target_word_count.
+"""
 
 
 def ensure_dir(path: Path) -> None:
@@ -263,10 +632,9 @@ class LLMClient:
 
 
 class Pipeline:
-    def __init__(self, config_path: Path, model_override: Optional[str] = None):
-        self.config = load_yaml(config_path)
-        self.config_path = config_path
-        self.root = config_path.parent.parent
+    def __init__(self, config: Dict[str, Any], model_override: Optional[str] = None):
+        self.config = config
+        self.root = Path(__file__).parent.parent
         self.output_root = self.root / self.config.get("output_dir", "output")
         ensure_dir(self.output_root)
 
@@ -288,7 +656,7 @@ class Pipeline:
         if not model_override:
             self._validate_model_separation()
 
-        self.scenario_schema = load_yaml(self.root / "config" / "scenario_schema.yaml")
+        self.scenario_schema = SCENARIO_SCHEMA
         self._validator = Draft202012Validator(self.scenario_schema["json_schema"])
         self.dataset_version = str(self.scenario_schema.get("dataset_version", "v3"))
         self.rubric_version = str(self.scenario_schema.get("rubric_version", "construct_rubric.md@v2"))
@@ -751,7 +1119,7 @@ class Pipeline:
     # ── Ladder generation ──────────────────────────────────────────────────────
 
     def _ladder_system_prompt(self, trait: str) -> str:
-        rubric = (self.root / "config" / "construct_rubric.md").read_text(encoding="utf-8")
+        rubric = CONSTRUCT_RUBRIC
         return (
             "You create controlled ordinal ladders for NLP research. "
             "Keep content fixed and vary only trait intensity.\n\n"
@@ -1002,7 +1370,7 @@ class Pipeline:
     # ── Judging (with per-scenario retry using judge feedback) ─────────────────
 
     def _judge_system_prompt(self) -> str:
-        rubric = (self.root / "config" / "construct_rubric.md").read_text(encoding="utf-8")
+        rubric = CONSTRUCT_RUBRIC
         return (
             "You are an independent validation judge for a benchmark. "
             "Your job is to reject content drift, wrong ordering, poor fluency, "
@@ -1549,51 +1917,3 @@ class Pipeline:
         self.export_human_validation(trait)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ordinal dataset creation pipeline")
-    parser.add_argument("command", choices=[
-        "make-scenarios",
-        "make-ladders",
-        "make-paraphrases",
-        "judge",
-        "audit",
-        "export-human-validation",
-        "export-prompts",
-        "make-all",
-    ])
-    parser.add_argument("--config", required=True, help="Path to pipeline_config.yaml")
-    parser.add_argument("--trait", choices=TRAITS)
-    parser.add_argument(
-        "--model",
-        help="Override all model roles with a single litellm model string, e.g. anthropic/claude-haiku-4-5-20251001",
-    )
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    if args.command != "export-prompts" and args.trait is None:
-        raise SystemExit("error: --trait is required for this command")
-    pipe = Pipeline(Path(args.config), model_override=args.model)
-    if args.command == "make-scenarios":
-        pipe.make_scenarios(args.trait)
-    elif args.command == "make-ladders":
-        pipe.make_ladders(args.trait)
-    elif args.command == "make-paraphrases":
-        pipe.make_paraphrases(args.trait)
-    elif args.command == "judge":
-        pipe.judge_bundles(args.trait)
-    elif args.command == "audit":
-        pipe.audit(args.trait)
-    elif args.command == "export-human-validation":
-        pipe.export_human_validation(args.trait)
-    elif args.command == "export-prompts":
-        pipe.export_prompts()
-    elif args.command == "make-all":
-        pipe.make_all(args.trait)
-    else:
-        raise ValueError(args.command)
-
-
-if __name__ == "__main__":
-    main()

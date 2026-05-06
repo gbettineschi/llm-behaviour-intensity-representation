@@ -11,11 +11,9 @@ wheels/
 
 # Experiment outputs
 output/
-*.pt
-*.npy
+
 
 .DS_Store
 CLAUDE.md
-
-*.pdf
 .claude
+.vscode

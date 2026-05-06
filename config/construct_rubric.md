@@ -1,211 +1,156 @@
-# Construct Rubric (3-Level Benchmark)
+# Construct Rubric (3-Level Benchmark) — v2
 
-This rubric is written for a **representation-geometry benchmark**, not for a generic classification dataset. The key requirement is that all levels within a ladder preserve the same underlying proposition or requested action while varying only the target trait.
+This rubric is written for a **representation-geometry benchmark**, not a generic classification dataset. The key requirement is that all levels within a ladder preserve the same underlying content while varying only the target trait. The rubric is now multi–speech-act: each trait is realised across several speech acts, and intensity is defined consistently across all of them.
 
 ---
 
 ## Trait A: Politeness
 
 ### Core construct
-Politeness is the degree to which the utterance mitigates face threat, softens imposition, signals respect or deference, and frames the request in a socially considerate way.
+Politeness is the degree to which an utterance mitigates face threat, softens imposition, signals respect or deference, and frames the act in a socially considerate way. It applies to any speech act whose surface form is socially loaded.
 
-### Scope restriction
-Use **requests and request-like directives only**.
-Do not mix in apologies, thanks-only utterances, praise, or general emotional warmth unless they are part of the request framing.
+### Scope
+Politeness is realised across the following speech acts (same construct, different acts):
+- **request** — asking for an action or item
+- **refusal** — declining an offer/request
+- **disagreement** — pushing back on a claim
+- **criticism_or_feedback** — pointing out a problem with someone's work
+- **bad_news_delivery** — telling the listener something they will not want to hear
+- **apology** — acknowledging fault or expressing regret
 
-### What must remain constant across levels
-- requested action
-- target object or information
-- named entities
-- core practical intent
-- truth conditions
+### What must remain constant across levels (per scenario)
+- the speech-act target (what is requested / refused / criticised / forecast / etc.)
+- named entities, dates, deadlines
+- core practical intent and truth conditions
+- the polarity of the act (a refusal stays a refusal; an apology stays an apology)
 
 ### What may vary
 - directness vs indirectness
 - mitigation and softening
 - deference and respect markers
-- framing with gratitude or appreciation
-- level of imposition management
-- syntactic form of the request
+- gratitude or appreciation framing
+- imposition acknowledgment
+- syntactic form
 
 ### What must not vary
-- urgency unless explicitly fixed in the scenario
-- amount of requested work
-- stance on whether the request is optional
-- sentiment unrelated to the request
-- extra content not present in the base scenario
-- sentence length — do not use verbosity or number of words as a politeness cue; high-politeness paraphrases must not be substantially longer than low-politeness ones
+- urgency or scope
+- amount of work / cost imposed
+- whether the act is optional
+- sentiment unrelated to the act
+- sentence length — high-politeness paraphrases must not be substantially longer than low-politeness ones
 
-### Three-level scale
+### Three-level scale (universal across speech acts)
 
-#### Level 0: Low politeness
-Characteristics:
-- direct or blunt request
+#### Level 0 — Low politeness
+- direct, blunt realisation of the act
 - little or no mitigation
-- no courtesy markers required
-- may sound terse or mildly imposing
-- still must remain plausible and not become abusive or insulting
+- terse but never abusive, insulting, or profane
 
-Allowed cues:
-- imperative or strongly direct form
-- minimal framing
-- absence of softeners
+#### Level 1 — Mid politeness
+- clear realisation with moderate mitigation
+- neutral-professional register
+- some softeners ("could you", "I'm afraid", "please") but not strongly deferential
 
-Forbidden failure modes:
-- open rudeness, insult, sarcasm, profanity
-- changing the action requested
-- making the request more urgent than the scenario specifies
+#### Level 2 — High politeness
+- clearly respectful and mitigated
+- strong face-saving framing
+- appreciation, deference, imposition acknowledgment without changing what is being said
 
-#### Level 1: Mid politeness
-Characteristics:
-- clear request with moderate mitigation
-- socially acceptable and neutral-professional
-- some softening, but not highly deferential
+### Per-speech-act guidance
 
-Allowed cues:
-- modal requests such as "could you"
-- light softeners such as "please" or "when you have a moment"
-- neutral professional framing
+**request.** Low: imperative or near-imperative ("Send me the file."). Mid: modal request with light softener ("Could you send me the file when you have a moment?"). High: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance.").
 
-Forbidden failure modes:
-- sounding as blunt as level 0
-- sounding strongly deferential or overly apologetic like level 2
+**refusal.** Low: bare "no" plus minimal reason ("I can't make it."). Mid: softened decline with brief reason ("I won't be able to make it, sorry."). High: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
 
-#### Level 2: High politeness
-Characteristics:
-- clearly respectful and mitigated request
-- stronger face-saving framing
-- signals appreciation or deference without changing the request
+**disagreement.** Low: flat contradiction ("That's wrong."). Mid: hedged contradiction ("I don't think that's quite right."). High: respectful disagreement with framing ("I see your point, but I'd respectfully push back — I don't think that holds."). The disagreed-with claim stays identical.
 
-Allowed cues:
-- appreciation framing such as "I'd appreciate it"
-- deferential modal constructions
-- acknowledgement of imposition
-- respectful softening and indirectness
+**criticism_or_feedback.** Low: direct judgment ("This report is inadequate."). Mid: feedback with mitigation ("This report needs more work in places."). High: appreciative, face-saving feedback ("There's a lot of good material here; I think the report would benefit from some additional work in a few places."). The criticised aspect stays identical.
 
-Forbidden failure modes:
-- changing the request into a suggestion or different action
-- adding excessive explanation that changes content
-- becoming florid or unnatural
+**bad_news_delivery.** Low: blunt delivery ("Your refund is denied."). Mid: softened delivery with brief reason ("Unfortunately we can't approve your refund."). High: empathetic delivery with appreciation and apology ("I'm really sorry to have to tell you this, but we won't be able to approve your refund."). The bad news stays identical.
+
+**apology.** Low: minimal acknowledgement ("Sorry I missed the deadline."). Mid: ordinary apology with brief explanation ("I'm sorry I missed the deadline — I should have flagged it earlier."). High: full face-restoring apology with acknowledgment of impact ("I really do apologise for missing the deadline; I know it put extra pressure on the team and I should have raised it sooner."). The apologised-for action stays identical.
 
 ### Cue-diversity requirement
-For a given level, do not rely on one marker repeatedly. Spread realizations across:
+For a given level, do not rely on one marker repeatedly. Spread realisations across:
 - lexical courtesy markers
 - syntactic indirectness
 - gratitude framing
 - imposition acknowledgment
-- depersonalized or softened phrasing
-
-### Canonical scenario types
-- ask colleague for file or document
-- request deadline extension
-- ask reviewer or teammate for clarification
-- ask someone to revise or resend something
-- ask for meeting reschedule
-- ask for access or permission
+- depersonalised or softened phrasing
 
 ---
 
 ## Trait B: Hedging / Linguistic Confidence
 
 ### Core construct
-Hedging/confidence is the degree of speaker commitment to the proposition. The low end expresses uncertainty or tentativeness; the high end expresses strong commitment or confidence.
+Hedging/confidence is the degree of speaker commitment to a proposition. The low end expresses uncertainty or tentativeness; the high end expresses strong commitment.
 
-### Scope restriction
-Use **assertions, answers, recommendations, forecasts, and explanations**.
-Do not mix in explicit probability numbers unless the scenario specifically allows them.
+### Scope
+Hedging is realised across the following speech acts:
+- **factual_assertion** — stating something as true
+- **recommendation** — advising a course of action
+- **forecast** — predicting a future outcome
+- **causal_explanation** — explaining why something happened
+- **yes_no_answer** — answering a yes/no question
+- **estimation** — giving a qualitative or coarse quantitative estimate
 
 ### What must remain constant across levels
-- underlying proposition
-- recommended action or answer
+- the proposition / recommended action / forecast outcome / causal claim / yes-or-no polarity / central estimate
 - named entities and factual content
-- intended semantic answer to the scenario
+- the amount of evidence claimed (unless the scenario explicitly varies it — it should not)
 
 ### What may vary
 - strength of commitment
-- epistemic stance
-- hedge markers
-- discourse framing of evidence or uncertainty
-- degree of tentativeness in recommendation or answer
+- epistemic stance and evidential framing
+- hedge markers and modal verbs
+- discourse framing of uncertainty
 
 ### What must not vary
-- proposition itself
-- amount of evidence claimed, unless the scenario explicitly encodes the same evidence base across levels
+- the proposition itself
 - polarity or factual answer
 - specificity of the recommendation
+- whether numerical probabilities are introduced (forbidden unless explicitly allowed)
 
-### Three-level scale
+### Three-level scale (universal across speech acts)
 
-#### Level 0: Low confidence / strongly hedged
-Characteristics:
-- tentative stance
-- explicit uncertainty or limited commitment
-- answer remains usable but clearly cautious
+#### Level 0 — Low confidence / strongly hedged
+- tentative stance, explicit uncertainty
+- usable but clearly cautious
+- "I think it might…", "based on what I can tell…", "it's possible that…"
 
-Allowed cues:
-- "it might be"
-- "I think it may"
-- "it seems possible"
-- "based on what I know"
-- tentative recommendation framing
+#### Level 1 — Mid confidence
+- balanced commitment
+- ordinary qualified claim
+- "it's likely…", "I think…", "it seems…"
 
-Forbidden failure modes:
-- changing the answer itself
-- making the speaker ignorant rather than uncertain
-- adding irrelevant justifications
+#### Level 2 — High confidence / minimally hedged
+- strong commitment, direct statement
+- still natural, not boastful or aggressive
+- "it is…", "I'm confident that…", a bare assertion
 
-#### Level 1: Mid confidence / moderate commitment
-Characteristics:
-- balanced answer
-- some uncertainty but not strongly hedged
-- sounds like an ordinary qualified claim
+### Per-speech-act guidance
 
-Allowed cues:
-- "it's likely"
-- "I think it's"
-- "it seems"
-- moderate commitment without categorical tone
+**factual_assertion.** Low: "It might be that the policy reduces costs." Mid: "It looks like the policy reduces costs." High: "The policy reduces costs." Polarity stays identical.
 
-Forbidden failure modes:
-- sounding as categorical as level 2
-- sounding as doubtful as level 0
+**recommendation.** Low: "You might want to consider switching vendors." Mid: "I'd suggest switching vendors." High: "You should switch vendors." The recommended action stays identical.
 
-#### Level 2: High confidence / minimally hedged
-Characteristics:
-- strong commitment to the same proposition
-- direct assertion or recommendation
-- still natural and not boastful
+**forecast.** Low: "Churn could rise next quarter." Mid: "Churn is likely to rise next quarter." High: "Churn will rise next quarter." Direction of the prediction stays identical; do not insert numbers.
 
-Allowed cues:
-- direct declarative answer
-- firm recommendation
-- explicit commitment without added aggression
+**causal_explanation.** Low: "The deployment may have failed because of the config change." Mid: "The deployment likely failed because of the config change." High: "The deployment failed because of the config change." The causal claim stays identical.
 
-Forbidden failure modes:
-- changing the proposition
-- adding evidence that changes scenario semantics
-- turning the answer into an imperative if it was originally an assertion
+**yes_no_answer.** Low: "I think the answer is probably yes, though I'm not certain." Mid: "I'd say yes." High: "Yes." Polarity stays identical.
+
+**estimation.** Low: "It might take roughly two weeks, give or take." Mid: "It'll likely take about two weeks." High: "It'll take two weeks." The central estimate stays identical; only confidence in it varies.
 
 ### Cue-diversity requirement
-For a given level, diversify across:
+Diversify across:
 - lexical hedges
 - evidential framing
 - modal verbs
 - discourse-softening phrases
 - syntax and clause structure
 
-Avoid mapping one level to one token such as:
-- level 0 always contains "maybe"
-- level 1 always contains "likely"
-- level 2 never contains first-person stance
-
-### Canonical scenario types
-- answer a factual question under ordinary uncertainty
-- give a recommendation
-- make a forecast
-- summarize a likely cause
-- give a diagnosis-style tentative explanation
-- state an interpretation of evidence
+Avoid mapping one level to one token (e.g. "maybe" ↔ low only).
 
 ---
 
@@ -213,9 +158,10 @@ Avoid mapping one level to one token such as:
 
 Every final item must satisfy all of the following:
 
-1. **Content preservation**: the same proposition or requested action is preserved across levels.
+1. **Content preservation**: same core content (target / proposition / answer / forecast / cause / estimate) across levels. Every content_probe must have the same expected_answer at every level.
 2. **Ordered intensity**: human or validated judge ordering matches low < mid < high for the target trait.
 3. **Naturalness**: each sentence is fluent and plausible in ordinary usage.
 4. **No overt artifacts**: no single cue or template uniquely identifies one level across the dataset.
-5. **Paraphrase diversity**: at least two distinct phrasings per level are not near-duplicates.
-6. **No domain leakage**: scenario metadata, topic, or named entities do not uniquely determine the level.
+5. **Paraphrase diversity**: at least two distinct phrasings per level, not near-duplicates.
+6. **No domain leakage**: scenario metadata, topic, named entities, or speech act do not uniquely determine the level.
+7. **Length balance**: paraphrase length must not correlate with level. All paraphrases within a scenario must be within ±length_tolerance_pct of target_word_count.

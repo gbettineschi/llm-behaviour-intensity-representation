@@ -22,7 +22,7 @@ models:
     max_output_tokens: 1400
 
 pipeline:
-  scenarios_per_trait: 40
+  scenarios_per_trait: 60
   paraphrases_per_level: 2
   levels: [low, mid, high]
   min_acceptance_score: 0.8
@@ -32,15 +32,20 @@ pipeline:
   max_shortcut_repair_rounds: 2
   human_validation_fraction: 0.25
   max_duplicate_jaccard: 0.85
+  max_duplicate_jaccard_scenarios: 0.80
   lexical_baseline_warning_accuracy: 0.45
   max_length_ratio: 1.2
   require_cross_family_judge: true
   use_bws_exports: true
+  scenario_batch_size: 5
+  max_scenario_batch_retries: 3
+  random_seed: 17
+  resume: true
 
 validation:
   require_content_preservation: true
   require_monotonic_order: true
   require_naturalness: true
   require_cue_diversity: true
-  reject_if_same_family_generator_and_judge: false
+  reject_if_same_family_generator_and_judge: true
   warn_if_same_family_generator_and_judge: true

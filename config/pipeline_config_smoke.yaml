@@ -6,24 +6,24 @@ traits:
 
 models:
   generator:
-    model: openrouter/openai/gpt-oss-120b:free
+    model: openrouter/openai/gpt-oss-120b
     family: openai
-    temperature: 0.7
-    max_output_tokens: 1400
+    temperature: 0.6
+    max_output_tokens: 4000
   judge:
     model: openrouter/qwen/qwen-2.5-7b-instruct
     family: qwen
     temperature: 0.0
-    max_output_tokens: 1400
+    max_output_tokens: 2000
   tie_breaker_judge:
     model: openrouter/mistralai/mistral-small-24b-instruct-2501
     family: mistral
     temperature: 0.0
-    max_output_tokens: 1400
+    max_output_tokens: 2000
 
 pipeline:
-  scenarios_per_trait: 10
-  paraphrases_per_level: 1
+  scenarios_per_trait: 50
+  paraphrases_per_level: 4
   levels: [low, mid, high]
   min_acceptance_score: 0.6
   tie_breaker_margin: 0.15
@@ -32,10 +32,15 @@ pipeline:
   max_shortcut_repair_rounds: 0
   human_validation_fraction: 1.0
   max_duplicate_jaccard: 0.85
+  max_duplicate_jaccard_scenarios: 0.85
   lexical_baseline_warning_accuracy: 0.45
   max_length_ratio: 1.2
   require_cross_family_judge: true
   use_bws_exports: true
+  scenario_batch_size: 5
+  max_scenario_batch_retries: 3
+  random_seed: 17
+  resume: true
 
 validation:
   require_content_preservation: true

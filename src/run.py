@@ -2,15 +2,15 @@ import sys
 import yaml
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))  # src/scripts/ -> src/
+sys.path.insert(0, str(Path(__file__).parent))  # adds src/ so `lib.*` imports resolve
 
 import torch
-from data import load_prompts
-from representations import load_model, extract_activations, save_activations
-from analysis import compute_difference_vectors, similarity_matrix, plot_similarity_matrix
+from lib.data_typing import load_prompts
+from lib.representations import load_model, extract_activations, save_activations
+from lib.analysis import compute_difference_vectors, similarity_matrix, plot_similarity_matrix
 
 CONFIG = Path(__file__).parent / "config.yaml"
-DATA   = Path("data/prompts.json")
+DATA   = Path("data/v1/prompts.json")
 
 
 def main():

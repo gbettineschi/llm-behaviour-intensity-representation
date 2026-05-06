@@ -1,8 +1,0 @@
-[
-  {"trait": "sentiment", "intensity": "negative", "prompt": "The weather today is"},
-  {"trait": "sentiment", "intensity": "neutral",  "prompt": "The weather today is"},
-  {"trait": "sentiment", "intensity": "positive", "prompt": "The weather today is"},
-  {"trait": "formality", "intensity": "informal", "prompt": "In response to your question,"},
-  {"trait": "formality", "intensity": "neutral",  "prompt": "In response to your question,"},
-  {"trait": "formality", "intensity": "formal",   "prompt": "In response to your question,"}
-]

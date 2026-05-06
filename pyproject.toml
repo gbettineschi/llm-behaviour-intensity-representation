@@ -16,4 +16,9 @@ dependencies = [
     "pyyaml",
     "jupyter>=1.1.1",
     "nb-clean>=4.0.1",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.5.0",
+    "litellm>=1.60.0",
+    "jsonschema>=4.20.0",
+    "python-dotenv>=1.0.0",
 ]

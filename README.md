@@ -29,7 +29,7 @@ _[placeholder]_
 
 All code is in `src/`.
 
-Exploration happens in `src/notebooks/`, where notebooks follow the naming convention `{index}_{DDMM}_{surname}` (e.g. `001_0405_bettineschi.ipynb`).
+Exploration happens in `src/notebooks/`. Let's give each notebook a decent name, always beginning with a numerical index `{index}_{title}.ipynb`.
 
 Once a block of code is validated and meant to be reused, it is consolidated in one of the `.py` files that live in `/src` directly. We have one module for loading data, one for handling the model and its internal representations, and one for analysing them.
 

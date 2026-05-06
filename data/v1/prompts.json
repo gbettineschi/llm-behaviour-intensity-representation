@@ -1,0 +1,3458 @@
+[
+  {
+    "prompt": "Unfortunately, I missed the assignment deadline and take full responsibility.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "The assignment deadline was missed by me, and I accept complete responsibility.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I must acknowledge that I missed the deadline and am wholly accountable.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I realize I failed to meet the assignment deadline and own the mistake fully.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I regret missing the assignment deadline and understand the inconvenience caused.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "Missing the assignment deadline, I regret it and recognize the trouble it creates.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I would like to express regret for missing the deadline and acknowledge the resulting inconvenience.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "It seems I have missed the assignment deadline, which I regret given the inconvenience it brings.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I sincerely regret missing the assignment deadline and greatly appreciate your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "Regrettably, I missed the assignment deadline and truly value your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I acknowledge my failure to meet the deadline and deeply thank you for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "Having missed the assignment deadline, I am profoundly sorry and grateful for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-006"
+  },
+  {
+    "prompt": "I’m sorry for missing the grading deadline; I realize it caused inconvenience to the students.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "Missing the grading deadline was my error, and I apologize for the trouble it caused the class.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I apologize and thank you for understanding the inconvenience my delayed grading caused the students.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I must apologize for missing the grading deadline, as it inconvenienced the students.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I sincerely regret missing the grading deadline, and I recognize the inconvenience it created for the class.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "It seems my delay in grading has inconvenienced the students, and I offer my sincere apology.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I sincerely apologize and appreciate your patience despite the inconvenience my grading delay caused.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I truly apologize for missing the grading deadline, acknowledging the disruption to the students.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I deeply apologize for missing the grading deadline and greatly appreciate your patience with the students’ inconvenience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I profoundly regret missing the grading deadline, fully aware of the significant inconvenience to the class, and thank you for your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "Having missed the grading deadline, I offer a heartfelt apology and value your tolerance of the students’ inconvenience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "Given the inconvenience caused by my delayed grading, I extend my sincere apology and am grateful for your continued patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-008"
+  },
+  {
+    "prompt": "I’m sorry for missing the milestone deadline and accept full responsibility for the project's delay.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Regarding the missed milestone, I apologise and acknowledge that the delay is entirely my fault.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "It turns out I failed to meet the milestone deadline, and I take complete responsibility for the resulting delay.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Unfortunately, I was unable to hit the milestone deadline, and I own the entire delay on this project.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "I apologise for missing the milestone deadline; I know it affects the team’s timeline and will strive to get us back on schedule.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Having missed the milestone deadline, I understand the schedule impact and commit to restoring progress promptly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Thank you for your patience; I’m sorry for the missed deadline and will work hard to realign the project schedule.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "I’m sorry for the missed milestone and recognize the disruption; I will take concrete steps to bring the project back on track.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "I sincerely apologise for missing the milestone deadline; I value everyone’s effort and will prioritize catching up to minimise disruption.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "My heartfelt apologies for the missed deadline; I’m grateful for the team’s hard work and will focus on rapid recovery.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Given that the milestone was missed, I deeply regret it, appreciate the team’s contributions, and will fast‑track remediation to limit impact.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "I truly apologise for the deadline slip; I acknowledge the team’s dedication and will make catching up my top priority to reduce any disturbance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-023"
+  },
+  {
+    "prompt": "Sorry, we mistakenly billed you at a higher room rate than what was advertised during your stay.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "We apologize that a higher room rate than advertised was applied to your recent reservation by error.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "It appears we charged you a higher room rate than the advertised amount during your stay, and we regret the mistake.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "Unfortunately, the rate applied to your recent booking was higher than advertised, which we acknowledge was an oversight.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "I’m sorry for the inconvenience; thank you for your patience as we correct the higher-than-advertised room rate we charged.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "We must apologize for mistakenly billing you at a higher room rate than advertised, and we will promptly adjust it.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "Our records show we inadvertently charged you a higher room rate than the advertised price, and we sincerely regret the error.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "Apologizing for the oversight, we acknowledge that the room rate you received exceeded the advertised amount, causing inconvenience.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "Please accept my heartfelt apology; we deeply regret charging a higher room rate than advertised and truly appreciate your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "I offer my sincere apologies for the erroneous overcharge on your room rate, and I am grateful for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "After reviewing the booking, we see we mistakenly applied a higher rate than advertised, and we earnestly thank you for your forgiveness.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "We would like to extend our deepest apologies for the overcharged room rate, and we sincerely value your continued patronage.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-024"
+  },
+  {
+    "prompt": "Sorry I sent the wrong financial report; I’ll resend the correct version to the team right away.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I’m afraid I forwarded an incorrect financial report, and I’ll get the proper one to the team promptly.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "It appears I attached the wrong financial report; I’ll immediately send the right file to the team.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I must have missed the error in the financial report, so I’ll quickly provide the correct version to the team.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "Thank you for your patience; I apologize for the incorrect financial report and will promptly share the corrected version with the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I’m sorry for the mistaken financial report; I regret the oversight and will send the accurate document to the team without delay.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "Upon review I realized the financial report was wrong; I sincerely apologize and will immediately dispatch the correct version to the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "Having sent the faulty financial report, I apologize and will ensure the proper version reaches the team promptly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I deeply regret sending the wrong financial report; I understand the inconvenience and will ensure accurate version reaches team instantly.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I appreciate understanding; I sincerely apologise for the erroneous financial report and will ensure the correct file reaches team promptly.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "My sincere apologies for faulty financial report; I acknowledge the disruption and will promptly provide precise version to the team.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I’ve learned the financial report sent was incorrect; I am sorry and will ensure exact version reaches the team immediately.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-032"
+  },
+  {
+    "prompt": "I take full responsibility for missing the meeting minutes; I’ll email them to you right away today.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "Just now I realized the minutes weren’t sent; I’ll forward them to you immediately.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "My oversight caused the minutes to be delayed; I’ll send them over to you this afternoon.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "Due to an oversight, the meeting minutes weren’t emailed; I’ll get them to you as soon as possible.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I humbly apologize for the delay in the minutes and will send them to you promptly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I’m committed to correcting this and will have the meeting minutes in your inbox shortly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "Please accept my apology for the missing minutes; I’ll deliver them to you without further delay.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "If you can bear with me a moment, I’ll email the meeting minutes right away.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I’m truly sorry for the lapse; I deeply regret the missing minutes and will forward them instantly.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I am profoundly apologetic for forgetting the minutes and greatly appreciate your patience as I send them immediately.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I sincerely beg your forgiveness for the oversight and will dispatch the meeting minutes to you at once.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "I recognize the inconvenience caused by the absent minutes and thank you for your understanding while I send them now.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-036"
+  },
+  {
+    "prompt": "Sorry for the double charge on your invoice; a refund will be sent within two business days.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "According to our billing policy, we recognize the duplicate charge and will process a refund promptly.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We acknowledge the invoice was charged twice and will return the amount without delay.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "Our team will correct the double billing and ensure the refund is issued quickly.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We understand this double charge is inconvenient, and we’re arranging a swift refund for you.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "Please accept our formal apology for the duplicate invoice charge; the refund will be executed promptly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "Rest assured, the double billing error will be rectified, and the refund will be processed immediately.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We regret the overcharge and will compensate by issuing a prompt refund to your account.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We deeply regret the accidental double charge and truly empathize with your inconvenience; a rapid refund is being arranged.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We take full ownership of the double‑billing mistake and are taking immediate action to refund the amount.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "We are profoundly sorry for unintentionally charging you twice and will ensure the refund is completed at once.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "Our sincere regret for the duplicate charge reflects how much we value your experience; we’ll expedite the refund immediately.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-040"
+  },
+  {
+    "prompt": "I’m sorry for handing in the assignment two days late; I accept the responsibility and realize this might inconvenience you.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "Please accept my apology for the two‑day delay in submitting the assignment; I acknowledge my fault and understand it may cause inconvenience.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "Although I submitted the assignment two days after the deadline, I am sorry and take full responsibility for any inconvenience incurred.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "I regret the two‑day tardiness in delivering the assignment and accept responsibility, hoping this does not trouble you.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "I apologize for the assignment’s two‑day lateness and regret any inconvenience caused.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "My apologies for turning in the assignment two days late; I regret any inconvenience this may have caused you.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "I’m sorry for the two‑day delay in submitting the assignment and regret any inconvenience you experienced.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "Apologizing for the assignment being submitted two days late, I regret any inconvenience that resulted.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "I sincerely regret the two‑day delay in submitting the assignment; I understand the inconvenience caused and thank you for your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "With sincere apologies for the assignment’s two‑day tardiness, I acknowledge the inconvenience and appreciate your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "Please accept my heartfelt apology for submitting the assignment two days late; I regret any inconvenience and am grateful for your consideration.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "I deeply regret handing in the assignment two days late; I recognize the inconvenience and value your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-apology-045"
+  },
+  {
+    "prompt": "Your biopsy results show malignant cells.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "The pathology report confirms the presence of malignant cells.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "Biopsy analysis indicates malignant cells.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "We have definitively identified malignant cells in your biopsy.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "I want to let you know that your biopsy has revealed malignant cells.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "I must convey that the findings of your biopsy are malignant.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "While many results are benign, yours indicates malignant cells.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "I’m informing you that your biopsy results point to malignant cells, and I’m here to discuss next steps.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "I recognize the seriousness of your biopsy results, which indicate malignant cells, and I’m prepared to support you.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "Your biopsy has revealed malignant cells; I want to ensure you have all the information and resources you need.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "The analysis confirms malignant cells, and I’m here to guide you through the implications and options.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "The pathology indicates malignant cells, and I understand the weight of this information; let’s discuss how to proceed together.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-007"
+  },
+  {
+    "prompt": "Your personal loan request is denied because your credit score is too low.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "We cannot approve your loan; your credit score does not reach the needed level.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Although you applied, the loan is rejected as your credit score falls below the required threshold.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Unfortunately, the loan cannot be granted due to an insufficient credit score.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "I regret to tell you that we are unable to approve your personal loan, as your credit score is below the required benchmark.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Please note that your loan application cannot be accepted because your credit score does not meet the necessary standard.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "We must inform you that your personal loan has not been approved, given that your credit score fails to satisfy the stipulated threshold.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "While we cannot approve this loan due to your current credit score, you may reapply once it improves.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Thank you for your interest; we appreciate your application, but must decline the loan as your credit score is not yet at the required level.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "We sincerely appreciate your request, yet we are compelled to refuse the loan because your credit score falls short of the threshold.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "We are grateful for your application and, while we cannot grant the loan now due to the credit score requirement, we hope to serve you in the future.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Your application is valued, but the loan cannot be approved because, in our assessment, the credit score does not meet the needed criteria.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-018"
+  },
+  {
+    "prompt": "Please be aware that your surgery has been rescheduled because the surgeon will not be available on the originally planned date.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Note that the surgery is now postponed due to the surgeon's unavailability on the date we had initially set.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Your operation has been moved to a later date as the surgeon cannot attend on the originally scheduled day.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "The planned surgery is postponed because the surgeon is unavailable on the original appointment date.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "I wanted to let you know gently that your surgery will be postponed since the surgeon won’t be available on the original date.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Just a quick update: your surgery is postponed because the surgeon cannot be present on the date we first arranged.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Due to the surgeon’s schedule conflict, we need to shift your surgery to a later time, moving it from the originally intended date.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Please note, as a courtesy, that your surgery has been postponed owing to the surgeon’s unavailability on the date we had planned.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "I understand this is disappointing; the surgery is postponed because the surgeon isn’t available on the date, and I appreciate your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Regret the inconvenience; the surgery must be delayed as the surgeon cannot attend on the date, and thank you for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "Thank you for your flexibility; the surgery is postponed because the surgeon is unavailable on the date, and we value your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "This change is tough; the surgery is moved because the surgeon is unavailable on the date, and thank you for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-021"
+  },
+  {
+    "prompt": "According to our current policy, your loan request does not satisfy the required credit standards, so it has been declined.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "Your loan application fails to meet the credit criteria, resulting in a denial at this time.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "We regret to tell you the loan you applied for doesn't align with our credit requirements, leading to a refusal.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "Unfortunately, we cannot approve your loan because it does not meet the credit criteria we use.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "We understand this may be disappointing, but your loan application does not meet our credit criteria and must be declined.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "After careful review, we find that your loan request falls short of the credit standards, so we cannot approve it.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "To clarify, the credit criteria for approval were not met by your application, resulting in a denial.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "While this application cannot be approved due to credit criteria, you may consider strengthening your credit profile for future requests.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "We appreciate your interest and encourage you to review the credit criteria; as it stands, we are unable to approve the loan now.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "Thank you for applying; our assessment shows the loan does not satisfy the credit requirements, so approval is not possible at this moment.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "Your application was evaluated against our credit guidelines, and because it does not meet them, we are unable to grant the loan at this time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "We value your request and suggest exploring alternative financing options, as the current loan does not meet our credit criteria.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-026"
+  },
+  {
+    "prompt": "Your request to modify the final grade has been examined and, according to policy, will not be approved.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "We have processed your grade change request, and the standard procedure dictates that it remain unchanged.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "The review of your final‑grade adjustment request concluded with a decision to keep the grade as is.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "After review, the final grade will stay the same; the request is denied.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Having considered your appeal to alter the final grade, I must inform you that the grade will stay unchanged.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Your appeal was evaluated, and the outcome is that the final grade will not be revised.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Following the established review process, the decision is to maintain the current final grade.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "The administration has examined your request and determined that the final grade will remain as recorded.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Thank you for seeking a review of your final grade; after thorough consideration, the decision is to uphold the original grade.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "We value your initiative in requesting a grade reassessment, yet the governing policy requires that the final grade stay unchanged.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Your request was carefully reviewed, and I can confirm that the final grade will be retained as originally assigned.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "I acknowledge your appeal and, in line with institutional guidelines, must convey that the final grade will not be altered.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-028"
+  },
+  {
+    "prompt": "Please be advised that the software delivery will be postponed for two weeks because of unexpected changes in our project timeline.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "We wish to notify you that the software delivery date has been shifted by two weeks due to unforeseen adjustments in our schedule.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "This is an update: the software delivery will occur two weeks later than planned, resulting from unanticipated schedule disruptions.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Notice: the software delivery is set to be delayed by two weeks owing to unforeseen circumstances affecting our operational timetable.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "We understand this may affect your plans, and inform you that the software delivery is now expected to be delayed by two weeks due to unforeseen schedule changes.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Recognizing the potential impact on your timeline, we let you know that the software delivery will be delayed by two weeks because of unexpected schedule issues.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Considering your expectations, we convey that the software delivery will be postponed by two weeks as a result of unforeseen circumstances in our schedule.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "With awareness of how this may inconvenience you, we share that the software delivery will be delayed by two weeks due to unexpected changes in our project schedule.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "We sincerely recognize the inconvenience this causes and share that, owing to unforeseen circumstances, the software delivery will be delayed by two weeks; thank you for your patience.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Understanding the disruption this may cause you, we convey that, because of unexpected schedule events, the software delivery will be postponed by two weeks; we appreciate your understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "With genuine concern for your workflow, we inform you that unforeseen circumstances have pushed the software delivery back by two weeks; we are grateful for your continued cooperation.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Feeling the impact of this delay, we let you know that unforeseen schedule issues will cause the software delivery to be delayed by two weeks; we value your patience and support.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-039"
+  },
+  {
+    "prompt": "Your biopsy has revealed cancer; it’s essential you recognize how serious this is and move forward with treatment right away.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "The biopsy results indicate cancer, so you must understand the gravity of this finding and begin appropriate action promptly.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "Cancer was found in your biopsy; please appreciate its seriousness and arrange immediate follow‑up steps without delay.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "Your test shows cancer, and it’s critical you grasp the seriousness and act quickly to plan the next steps.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "I regret to share that your biopsy indicates cancer; feel free to ask any questions you have right now.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "Unfortunately, the biopsy results point to cancer—please let me know if you’d like clarification or have concerns at this moment.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "I’m sorry to tell you the biopsy came back positive for cancer; tell me if anything is unclear or you need details.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "It’s with regret I inform you that cancer was detected; please voice any questions or worries you might have now.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "I’m truly sorry to convey that your biopsy shows cancer, and I’m here to listen and help you through this.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "With sincere sympathy I must tell you the biopsy reveals cancer; know that I’ll stand by you and answer any concerns.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "I deeply regret the news that cancer was found; please rely on my support and let me address whatever you need.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "It pains me to report cancer in your biopsy, and I’m committed to providing care and listening to any thoughts you share.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-bad-news-delivery-042"
+  },
+  {
+    "prompt": "Could the methodology section perhaps include a more detailed outline of the data preprocessing steps, so readers can follow the analysis more easily?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Compared to the current brief mention, a fuller description of the data preprocessing steps would make the methodology clearer for the audience.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Just as a recipe benefits from a step‑by‑step guide, the methodology would be clearer if the data preprocessing steps were described in more detail.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "It might be useful to add a clearer account of the data preprocessing steps in the methodology, which could help future readers understand the analysis.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Please consider expanding the methodology section with a clearer description of the data preprocessing steps to aid readers in following the analysis.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "If the methodology section included a more explicit overview of the data preprocessing steps, readers would find it easier to track the analysis.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "In my experience, a detailed account of data preprocessing in the methods greatly improves comprehension, so adding such detail would benefit the paper.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Studies show that papers with thorough preprocessing descriptions receive higher clarity scores; thus, enhancing this part of the methodology would help readers.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Providing a crystal‑clear roadmap of the data preprocessing steps in the methodology would illuminate the entire analysis for reviewers and readers alike.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "A clearer, more detailed, and more explicit description of the data preprocessing steps in the methodology would significantly boost reviewers' understanding.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Unlike the current vague outline, a precise and thorough description of the data preprocessing steps would dramatically improve the reviewers' grasp of the analysis.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "Highlighting the data preprocessing workflow with a clear, step‑by‑step description in the methodology is essential for reviewers to fully understand the analysis.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-001"
+  },
+  {
+    "prompt": "The slide deck is poorly organized; please reorganize it to improve its structure.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "Your slide deck lacks clear structure, so it should be reorganized for better flow.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "Rearrange the slide deck to give it a clearer, more logical structure.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "The current slide deck needs a structural overhaul; reorganize the slides accordingly.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "It might help to reorganize the slide deck for clearer structure and smoother flow.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "Could you consider reorganizing the slide deck to achieve clearer structure and better flow?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "I recommend reorganizing the slide deck; it would give clearer structure and improve flow.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "Perhaps reorganizing the slide deck would provide clearer structure and enhance the presentation flow.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "If you could kindly reorganize the slide deck, a clearer structure would be appreciated.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "Your assistance in reorganizing the slide deck would be greatly valued for clearer structure.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "May I ask you to reorganize the slide deck? A clearer structure would help.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "I would be thankful if you reorganized the slide deck to achieve clearer structure.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-005"
+  },
+  {
+    "prompt": "The latest commit contains loops that are inefficient and might reduce overall performance.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "In the recent commit, there are loops that operate inefficiently and could lower performance across the board.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "The current commit adds loops that run inefficiently, potentially affecting the system's performance.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "The new commit includes some inefficient loops that may impact overall performance.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "It appears that the recent commit has loops that are inefficient and could possibly impact performance.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "Given that the recent commit includes inefficient loops, we might see some performance degradation.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "The recent commit introduces loops that are inefficient, which may lead to a modest drop in performance.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "The latest commit's loops are inefficient and are likely to affect performance to some degree.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "Considering the tight schedule, it's critical to note that the loops added in the recent commit are inefficient and risk significantly harming performance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "Despite the deadline pressures, the inefficient loops in the recent commit pose a serious threat to performance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "While acknowledging the time constraints, the inefficient loops in the latest commit could substantially jeopardize performance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "Given the time pressure, the inefficient loops in the recent commit must be addressed immediately as they could impair performance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-010"
+  },
+  {
+    "prompt": "Compared with typical decks, these slides contain a bit more text, which can slow the audience’s flow.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "From what I saw, the slides lean toward heavy text, making it a little tough to keep up.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "The visual layout feels dense with words, so following along becomes slightly challenging for viewers.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "There’s a modest amount of text on the slides, which adds a minor hurdle to audience comprehension.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "These slides are noticeably more text‑laden than ideal, which renders them fairly hard to follow.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "In my view, the slides carry a considerable amount of text, resulting in a somewhat confusing experience.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "If the slides were trimmed down a bit, they would likely be easier for the audience to track.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "I find the current slide deck overly text‑heavy, which makes my own reading of it a bit cumbersome.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "Wow, the slides are packed with text, making them especially hard to follow!",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "It’s clear the slides are saturated with text, which significantly hampers audience comprehension.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "While earlier drafts were concise, the final slides turned into text‑heavy pages that now obstruct smooth following.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "Do you realize how the heavy text on these slides contrasts with the need for clear, quick audience understanding?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-011"
+  },
+  {
+    "prompt": "Your habit of cutting off customers is dragging down our satisfaction scores, so we need you to stop doing that.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Please stop cutting off customers; those interruptions are hurting our satisfaction numbers.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "I’m concerned that your frequent interruptions are dragging down our satisfaction scores, so we need you to cease them.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Your tendency to interrupt callers is lowering our satisfaction metrics; it must be corrected immediately.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "I’ve seen that interrupting customers is slightly pulling our satisfaction down; could you aim to pause before responding?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "It would help if you could pause before replying to customers, as occasional interruptions are slightly reducing satisfaction.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Imagine if we all let customers finish speaking; the small dip in satisfaction could be avoided.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "A quick reminder: try to let customers finish their thoughts to keep satisfaction from slipping further.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "I know you’re busy, but if you could hold back from interrupting customers, it would help keep our satisfaction high—thanks for your help.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Your effort to let customers speak fully will boost our satisfaction scores, and I appreciate your cooperation.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Together we can improve satisfaction by giving customers the space to finish; could you help by holding back interruptions?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "When customers aren’t interrupted, satisfaction rises; your assistance in this would be valuable.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-014"
+  },
+  {
+    "prompt": "Your paper doesn't present a clear thesis; it calls for a thorough reorganization.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "There's no distinct thesis in your essay, so a full restructure is required.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "The essay lacks a defined thesis, meaning it must be overhauled.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "Your draft misses a clear thesis, demanding a complete rework.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "I notice the essay doesn't articulate a clear thesis, so it will need some restructuring.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "It appears the thesis is unclear, which suggests a moderate reorganization.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "Given the absence of a clear thesis, a partial restructure seems necessary.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "The lack of a defined thesis points to a need for reshaping the essay.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "I truly value your hard work; however, the essay's missing clear thesis demands a substantial overhaul.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "Your effort shines, yet the absent thesis means we must undertake a major reworking.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "While I commend your dedication, the essay fails to present a clear thesis, requiring extensive restructuring.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "Your commitment is evident, but without a clear thesis the piece calls for a comprehensive rebuild.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-019"
+  },
+  {
+    "prompt": "The current homepage arrangement shows no obvious visual hierarchy, making it feel disorganized and in need of a redesign.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Right now the homepage looks muddled because the visual hierarchy is missing, so a structural overhaul is required.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "I notice the homepage lacks a defined visual hierarchy, which results in a confusing presentation that should be restructured.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "The page’s layout currently provides no clear visual ordering, leading to confusion and suggesting a reorganization.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Introducing a clearer visual hierarchy to the homepage would improve readability and reduce the current sense of confusion.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "A more defined visual hierarchy on the homepage could streamline the content and make the overall experience smoother.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "If the homepage incorporated a stronger visual hierarchy, users would find the information easier to scan and understand.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Enhancing the visual hierarchy of the homepage would help organize elements better and lift the present ambiguity.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Your work on the homepage is commendable; adding a clearer visual hierarchy would further guide users and elevate the design.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "I value the effort put into the homepage, and a more pronounced visual hierarchy could significantly boost user navigation.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "The homepage design shows strong potential; refining the visual hierarchy would help steer visitors more effectively.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Great job on the homepage layout; strengthening the visual hierarchy would enhance user flow and overall impact.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-029"
+  },
+  {
+    "prompt": "Just a reminder: the pull request is missing unit tests and needs to be revised before merging into the main branch.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "A quick nudge—the pull request lacks unit tests and should be updated prior to merging into the main branch.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "It is recommended that the pull request include unit tests; please revise it before merging into the main branch.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Advisory note: the pull request currently lacks unit tests and must be corrected before it can be merged into the main branch.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Could we address the missing unit tests in the pull request before proceeding with the merge into the main branch?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "To move forward, the pull request should be revised to add unit tests before we merge it into the main branch.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Let's ensure the pull request includes unit tests; revising it now will allow us to merge into the main branch smoothly.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "It would be helpful to add unit tests to the pull request before we merge it into the main branch.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "I value your contribution; noting that the pull request lacks unit tests, a brief revision would be beneficial before merging into the main branch.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Great effort on this pull request—adding the missing unit tests will strengthen it before we merge into the main branch.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Your work is appreciated; incorporating unit tests into the pull request will make it ready for merging into the main branch.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "Thank you for your work; the pull request would benefit from unit tests, so revising it now will aid the merge into the main branch.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-criticism-or-feedback-043"
+  },
+  {
+    "prompt": "I’m skeptical that this sorting algorithm truly maximizes efficiency on large datasets, based solely on the current metrics.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "If we assume the numbers are accurate, I doubt this sorting algorithm ranks as the most efficient for big data.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "Could it be that this sorting algorithm falls short of optimal efficiency when handling extensive datasets, given what we see?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "Analyzing the figures, it appears this sorting algorithm may not be the top performer for large-scale data processing.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "I’m not entirely convinced this sorting algorithm is the most efficient for large datasets; perhaps we should examine other options.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "There’s considerable uncertainty about whether this sorting algorithm truly offers the best efficiency for big data, so exploring alternatives seems wise.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "While the results look decent, I’m hesitant to assert this sorting algorithm is the most efficient for large datasets without trying other approaches.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "I’m concerned that this sorting algorithm may not deliver optimal efficiency for extensive datasets, and I think we should consider alternatives.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "Given your work on this sorting algorithm, could we probe if it maximizes efficiency for large datasets, or try alternatives?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "It seems that, despite your effort, this sorting algorithm isn’t the most efficient for large datasets; we might explore alternatives.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "I observe that, despite current implementation, this sorting algorithm isn’t the most efficient for large data; we should explore elsewhere.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "I’m inclined to investigate whether this sorting algorithm truly offers peak efficiency for large datasets, and suggest we examine alternatives.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-016"
+  },
+  {
+    "prompt": "I must plainly state that I disagree with the proposal to eliminate flexible working hours for the team as currently suggested.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "I am compelled to issue a firm rebuttal: the plan to remove flexible working hours for the team is unacceptable.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "From a principled standpoint, I object to the suggestion of ending flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "I express an unambiguous dissent regarding the proposal to discontinue flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "While I recognize the reasoning behind it, I maintain a balanced acknowledgment that I disagree with the proposal to eliminate flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "Considering the context, I offer a conditional nuance: I do not support the plan to remove flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "Given the circumstances, I present a situational objection to the suggestion of ending flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "I reflect on the rationale and arrive at a reflective dissent concerning the proposal to eliminate flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "I appreciate the thoughtful effort behind the suggestion and, with respectful appreciation, I must disagree with the proposal to eliminate flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "Your consideration is valued, yet I offer a valued consideration that the removal of flexible working hours for the team is not advisable.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "With courteous dissent, I acknowledge the initiative but must express disagreement with the plan to eliminate flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "I hold a thoughtful reservation: while the proposal is well‑intended, I respectfully disagree with eliminating flexible working hours for the team.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-017"
+  },
+  {
+    "prompt": "Could we consider that the chi‑square test may not suit this continuous data set, given the apparent violation of its assumptions?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "If the assumptions are indeed breached, the chi‑square test would likely be unsuitable for this continuous data set.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "There is a high probability that the chi‑square test is inappropriate for this continuous data set because its assumptions appear violated.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "We should be cautious about applying the chi‑square test to this continuous data set, as its assumptions seem to be violated.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "Unless we can verify the assumptions, the chi‑square test should not be applied to this continuous data set.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "The chi‑square test does not meet the methodological requirements for this continuous data set, as its assumptions are violated.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "Given the violation of its assumptions, the chi‑square test is not appropriate for analyzing this continuous data set.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "We need to reassess the use of the chi‑square test for this continuous data set because its assumptions are not satisfied.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "The data clearly show that the chi‑square test is unsuitable for this continuous data set, since its assumptions are violated and a different method is required.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "Unlike suitable scenarios, this continuous data set violates the chi‑square test assumptions, rendering the test unusable.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "Moving forward, we must replace the chi‑square test for this continuous data set, as its assumptions are breached.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "A critical evaluation reveals that the chi‑square test is unreliable for this continuous data set because its assumptions are violated.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-022"
+  },
+  {
+    "prompt": "I would like to note that the statistic quoted in the article appears inaccurate and could use correction.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "It seems the cited statistic in the article is off, and a correction would improve its accuracy.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "The statistic presented in the article does not match the source, so a correction is advisable.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "Please be aware that the article's quoted statistic is inaccurate and should be amended.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "I respectfully appeal for the correction of the quoted statistic in the article, as it currently contains an inaccuracy.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "May I request that the article's quoted statistic be corrected, given that it is presently inaccurate?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "Just a reminder that the statistic quoted in the article is inaccurate and would benefit from correction.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "I suggest we consider revising the quoted statistic in the article, as it appears to be inaccurate.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "I earnestly implore the editorial team to amend the quoted statistic in the article, which is demonstrably inaccurate and demands correction.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "Your assistance in rectifying the inaccurate statistic quoted in the article would be greatly appreciated.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "I kindly urge a prompt correction of the article’s quoted statistic, as its inaccuracy could mislead readers.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "It is imperative that the quoted statistic in the article be corrected immediately, given its clear inaccuracy.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-025"
+  },
+  {
+    "prompt": "The slogan fails; we must replace it for the campaign without delay now.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "That tagline isn’t working, so swap it out immediately for the campaign launch.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "Our current slogan falls flat; change it promptly to improve the campaign outcome.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "The existing slogan misses the mark; we need a new one right away.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "I believe the slogan could be stronger, so perhaps we should revise it.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "It seems the current slogan isn’t effective; let’s consider updating it soon.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "The slogan may not resonate well, so a revision might improve the campaign.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "Our slogan appears weak; could we explore a fresh version for the campaign?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "I value the team’s effort, yet the slogan seems lacking and needs refinement.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "Thank you for the work; however, the slogan could benefit from a revision.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "I appreciate the creativity, though the slogan falls short and need a tweak.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "Your input is valued, but the slogan could improve and need a tweak.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-030"
+  },
+  {
+    "prompt": "I cannot support the plan to raise the marketing budget; it doesn't align with our current results.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "Given the limited resources we have, expanding the marketing budget doesn't seem warranted right now.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "At this point in the fiscal year, increasing the marketing budget would be premature.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "While the idea has merit, boosting the marketing budget is not justified by our present performance.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "It appears unlikely that raising the marketing budget would be prudent given our current financial limits.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "If we were to consider expanding the marketing budget, we would first need to address our existing financial constraints.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "The cost‑benefit analysis suggests that an increase in the marketing budget may not deliver sufficient return under today's conditions.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "Balancing our goals with the present budget reality, I think the proposed increase to marketing spend is not advisable now.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "I value the team's initiative, yet ethically I must point out that increasing the marketing budget could strain our fiduciary responsibilities at this stage.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "Should our performance improve in the coming quarters, we could revisit the idea of a larger marketing budget.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "I appreciate the effort, yet I sense a low likelihood that a larger marketing budget would succeed given our current outcomes.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "Recognizing the strategic direction, I must advise restraint on increasing the marketing budget until we achieve stronger results.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-033"
+  },
+  {
+    "prompt": "I’m not on board with that forecast; the market won’t climb next quarter, and the figures don’t back it up.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "My view differs—there’s no reason to expect a rise next quarter, given the current data.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I’m skeptical about the predicted uptick; the numbers suggest the market will stay flat or fall.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I see things differently: the market is unlikely to go up next quarter, and the evidence points elsewhere.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "While you anticipate growth, I see the opposite; the data we have indicates the market probably won’t rise next quarter.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I’m not convinced the market will improve next quarter; the trends we’ve observed lean toward stagnation.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I question the outlook that the market will climb; the recent metrics actually argue against a rise in the coming quarter.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "Can we really expect a rise next quarter? The evidence I’ve reviewed suggests otherwise.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I respect your analysis, yet I must assert that the market will not ascend next quarter, as the underlying assumptions appear flawed.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "Your conclusions are noted, but I firmly disagree—my assessment is that the market will stay down next quarter, given the current fundamentals.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I acknowledge your perspective; however, I remain deeply skeptical about any upward movement next quarter, due to the weak supporting data.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I appreciate your effort, but I oppose the view that the market will rise; the projected figures and assumptions raise serious concerns for me.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-038"
+  },
+  {
+    "prompt": "I’m a bit skeptical about the claim that the new ad slogan will boost conversions, so I’m not convinced yet.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "Can we examine that claim? I’m not sure the new slogan will actually raise conversion rates.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "I remain reserved on the idea that the new ad slogan will increase conversions; I’m not ready to accept it.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "There’s a light doubt in my mind about the slogan improving conversions, so I’m holding back on endorsement.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "Honestly, I find the claim that the new slogan will lift conversions rather cynical and unlikely in our context.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "I see a counterpoint: the new ad slogan probably won’t deliver the conversion jump you expect.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "My analysis points to a contrasting skepticism—the slogan’s impact on conversions seems doubtful.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "From an empirical standpoint, I doubt the slogan will meaningfully raise conversion numbers.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "I must issue a firm rebuttal: the new ad slogan will not increase conversions.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "My position is a strong negation of the claim—the slogan won’t boost conversion rates.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "I offer a direct refutation: the new slogan cannot be expected to raise conversions.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "This is an assertive denial: the proposed slogan will not improve our conversion metrics.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-044"
+  },
+  {
+    "prompt": "I’m not convinced that buying Stock X aligns with our current risk parameters.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "Unfortunately, the suggestion to purchase Stock X seems at odds with the portfolio’s risk limits.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "Regrettably, I feel Stock X does not meet the risk criteria we’re targeting now.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "After review, I must note that Stock X falls outside our present risk tolerance.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "While I understand the rationale, acquiring Stock X may not satisfy the portfolio’s risk constraints.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "Having considered the proposal, I believe buying Stock X could conflict with our risk objectives.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "The recommendation to add Stock X appears misaligned with the risk profile we’ve established.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "I respect the idea, yet I see Stock X as unsuitable given our current risk parameters.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "I must decline the recommendation to purchase Stock X, as it clearly breaches our portfolio risk goals.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "I cannot endorse buying Stock X; it directly contradicts the risk framework we follow.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "The suggestion to acquire Stock X is incompatible with our risk‑management strategy, so I must oppose it.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "I reject the proposal to add Stock X because it fails to meet our defined risk criteria.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-046"
+  },
+  {
+    "prompt": "I wonder whether starting medication X is the right choice for me.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I see the idea, but I’m not convinced that medication X is appropriate.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "Perhaps we could consider alternatives before beginning medication X.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "Could we revisit the plan to start medication X?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "Compared to other options, I’m not sure medication X fits my situation.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "If we weigh the risks, I feel medication X may not be suitable right now.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I’ve reflected on the recommendation and think medication X might not be appropriate for me.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I would prefer to explore other treatments before committing to medication X.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "Thank you for the suggestion; I have concerns about medication X and would discuss.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I appreciate your advice, yet I’m uneasy about medication X; can we talk?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "Your recommendation means a lot, but I worry about medication X; could we review?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I’m grateful for your guidance, however I’m uneasy about medication X; let’s discuss.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-disagreement-048"
+  },
+  {
+    "prompt": "I cannot grant the overtime request for this weekend; the schedule is already full and cannot be altered.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Due to capacity limits, I’m unable to approve your weekend overtime request as the roster is completely booked.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "The current schedule leaves no room for additional shifts, so I must decline the overtime request for Saturday and Sunday.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Our operations are locked in for the weekend, meaning I cannot approve any extra overtime at this time.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "I regret that I’m unable to approve the overtime request for this weekend because of staffing constraints.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Unfortunately, staffing levels this weekend prevent me from approving your overtime request.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "At this moment, the timing of the weekend schedule conflicts with our staffing plan, so I can’t approve overtime.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Given the shortage of available staff, I must refuse the overtime request for the upcoming weekend.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "I recognize your willingness to work extra hours, yet I must decline the overtime request for this weekend.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Your eagerness to help is appreciated, but I’m unable to approve overtime for the weekend at this time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "While I value your commitment, the weekend schedule cannot accommodate additional overtime, so I must say no.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Thank you for your dedication; however, the weekend roster is fixed, and I cannot approve overtime now.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-002"
+  },
+  {
+    "prompt": "Due to logistical constraints, we are unable to offer a vegan‑only menu for this year's conference.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Our current budget limitations prevent us from supplying a vegan‑only menu at the upcoming conference.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Given the venue's capacity restrictions, we cannot accommodate a vegan‑only menu for the conference.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Contractual terms with our caterer do not allow a vegan‑only menu for the conference this year.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "In line with our organizational policy, we are unable to provide a vegan‑only menu for the conference.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "To remain compliant with our procedures, we cannot offer a vegan‑only menu for the upcoming conference.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Given our resource allocation priorities, a vegan‑only menu for the conference cannot be provided.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Our policy compliance requires us to decline the request for a vegan‑only menu at the conference.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "We appreciate your suggestion and acknowledge its value, yet we must decline providing a vegan‑only menu for the conference.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Thank you for bringing this up; respectfully, we must clarify that a vegan‑only menu cannot be offered at the conference.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "Your request is noted with gratitude, but a courteous explanation is that we cannot supply a vegan‑only menu for the conference.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "We thank you for your interest and, after careful consideration, must refuse to provide a vegan‑only menu for the conference.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-013"
+  },
+  {
+    "prompt": "I won’t be able to join the kickoff meeting on Monday because I have another commitment that day.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "I cannot attend the project kickoff on Monday; I’m already booked.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "My schedule on Monday is full, so I will miss the kickoff meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "I have a prior engagement on Monday and therefore cannot be at the kickoff.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "I’m sorry, but I have a prior engagement on Monday and won’t be able to attend the kickoff meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "Unfortunately, I must decline the Monday kickoff meeting as I am already committed elsewhere.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "I have a scheduling conflict on Monday and cannot join the kickoff meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "Unfortunately, I have another obligation on Monday, so I will be unable to participate in the project kickoff.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "I respectfully decline the invitation to the project kickoff on Monday, as I am already committed elsewhere.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "It is with sincere regret that I must forgo the Monday kickoff meeting due to an existing obligation.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "Please accept my formal declination of the Monday project kickoff meeting, as I have a prior commitment that precludes my attendance.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "In order to honor my existing responsibilities, I must refuse attendance at the Monday kickoff meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-015"
+  },
+  {
+    "prompt": "Unfortunately, we’re unable to add that feature right now as it isn’t part of our current roadmap.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "It appears that incorporating that feature isn’t feasible at the moment because it falls outside our roadmap.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "We might not be able to include that feature, given it’s not on the roadmap we’ve set.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "Due to our current capacity, we can’t implement that feature since it isn’t included in the roadmap.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "I’m sorry, but adding that feature isn’t possible as it lies beyond our present roadmap.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "While we value the idea, the feature can’t be added because it’s outside the scope of our roadmap.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "We appreciate your input; however, the feature cannot be added as it isn’t covered by our roadmap.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "The requested feature cannot be implemented at this time because it isn’t on our roadmap.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "Thank you for the suggestion; I truly appreciate it, yet I’m unable to add the feature as it falls outside our roadmap.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "I’m grateful for your idea, but unfortunately I can’t incorporate the feature since it isn’t part of our roadmap.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "Your suggestion means a lot, but I must decline adding the feature because it isn’t included in our roadmap.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "I sincerely thank you for bringing this up, though I’m unable to add the feature as it lies beyond our roadmap.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-020"
+  },
+  {
+    "prompt": "I’m tied up with other work right now, so I won’t join the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "My schedule clashes with the coffee‑break meeting, I have to skip it.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "I don’t have the bandwidth for the coffee‑break meeting today.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "I’m unavailable for the coffee‑break meeting this afternoon.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "I’m sorry I can’t make it to the coffee‑break meeting this time.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "Unfortunately I have to decline the coffee‑break meeting, hope it goes well.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "My current tasks take priority, so I won’t be at the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "The timing doesn’t work for me, I’ll miss the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "Thank you for inviting me; I truly value it, but I’m unable to attend the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "I appreciate the invitation and your effort, yet I must miss the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "Your invitation means a lot, however I regret I can’t be present at the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "Thanks for thinking of me; I’m honored, but I won’t be able to join the coffee‑break meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-027"
+  },
+  {
+    "prompt": "I have a scheduling conflict this weekend, so I won’t be able to take part in the project.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "My current workload leaves me without the capacity to join the weekend project, so I must pass.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I’m low on personal bandwidth right now and can’t commit to the weekend project.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I need to conserve my energy this week, so I’m unable to help with the weekend project.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "Unfortunately, I already have plans scheduled for the weekend, which means I can’t join the project this time.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I would love to help, but I might not be able to free up time for the weekend project.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "Thanks for thinking of me; I’m sorry I can’t fit the weekend project into my agenda.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I appreciate the invitation, yet I must decline because my weekend is already booked.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I’m truly grateful for the invitation and regret that I must decline the weekend project this time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "Thank you so much for including me; I’m disappointed I can’t participate in the weekend project.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "Your offer means a lot to me, but I’m sorry I have to pass on the weekend project.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I deeply appreciate being considered, yet I’m unable to join the weekend project on this occasion.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-031"
+  },
+  {
+    "prompt": "I’m sorry, but I’m unable to provide a discount on this order under our current policy and pricing.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "Regrettably, we cannot apply a discount to this purchase given the existing pricing structure and company rules.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "Unfortunately, I’m not in a position to offer a discount on this order due to the set pricing guidelines.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "I’m unable to extend a discount for this transaction as it conflicts with our current pricing policy.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "I understand your request, yet I’m still unable to approve a discount on this purchase at this moment.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "While I appreciate your interest, the current pricing rules prevent me from granting a discount right now.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "We value your business, but unfortunately I cannot provide a discount on this order under existing terms.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "I wish I could help, yet our policy limits me from offering a discount currently.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "Thank you for bringing this up; I sincerely regret that I’m unable to extend a discount, and I deeply value our partnership.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "I appreciate your inquiry and must express my regret that, in accordance with our pricing policy, a discount cannot be applied.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "Your request is important to us; however, I’m truly sorry we must adhere to the current pricing structure and cannot offer a discount.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "I regret any disappointment; despite my desire to assist, the established pricing guidelines prevent me from granting a discount at this time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-034"
+  },
+  {
+    "prompt": "Hey, I’m sorry but I can’t make the hike this weekend; I’ve got other plans.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "Sorry, I won’t be able to join the weekend hike – something else came up.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I’m afraid I can’t go on the hike Saturday; I have prior commitments.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I wish I could, but I’m tied up this weekend, so I’ll miss the hike.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "Thanks for the invite! I’m sorry I have to skip the hike this weekend, maybe next time.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I appreciate the offer; unfortunately I’m booked for the weekend, but I hope to join another hike soon.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I’m really sorry, I won’t be able to attend the hike on Saturday; I’ve got something else scheduled.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "Sorry I can’t be there for the weekend trek, but I’m looking forward to the next one.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "Thank you so much for thinking of me—unfortunately I can’t make it to the weekend hike, I’m truly sorry.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I’m deeply sorry, but I must decline the hike this weekend; I hope it’s a great time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "Regrettably, my schedule clashes with the hike this Saturday, and I won’t be able to join; I wish you an awesome outing.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I’m really grateful for the invitation, but I can’t attend this weekend’s hike; please keep me in mind for future trips.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-041"
+  },
+  {
+    "prompt": "I’m sorry, but I’m unable to join the public hearing as asked, and I regret any trouble this may cause.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Unfortunately I cannot attend the public hearing as requested; I apologize for any inconvenience.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "I appreciate the notice, yet I must miss the public hearing and am sorry for any disruption.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Regrettably I’m not available for the public hearing, and I hope this does not cause problems.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Thank you for the invitation; I regret that I will not be able to attend the public hearing.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "I’m grateful for being considered, but I must decline participation in the public hearing at this time.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "I’m sorry for the inconvenience, however I am unable to be present at the public hearing.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Your invitation is appreciated, though I’m unable to attend the public hearing as scheduled.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "I sincerely appreciate the invitation and must humbly apologize, as I am unable to attend the public hearing.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Thank you very much for the opportunity; I truly value it, yet I must decline attending the public hearing.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "I am honored by the request and thank you, but I must politely refuse to attend the public hearing.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "With heartfelt thanks for the invitation, I regret that I cannot be present at the public hearing.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-047"
+  },
+  {
+    "prompt": "Unfortunately I'm unable to join the weekend strategy workshop, and I thank you for the invitation.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I won't be able to attend the weekend strategy workshop; I appreciate your kind invitation.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "Regrettably I must miss the weekend strategy workshop, though I'm grateful for your invitation.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "Due to prior commitments I cannot attend the weekend strategy workshop, and I value your invitation.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I'm sorry I can't make it to the weekend strategy workshop; thank you for thinking of me.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "Apologies, I must decline the weekend strategy workshop, though I truly appreciate your consideration.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "Please accept my apologies, I am unable to attend the weekend strategy workshop, and I am grateful for the invite.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I regret that I have to pass on the weekend strategy workshop, and I thank you for including me.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I sincerely value the opportunity, yet I must decline the weekend strategy workshop despite my keen interest.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "With deep appreciation for the invitation, I unfortunately must turn down the weekend strategy workshop.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I am truly honored by the invitation, but I am compelled to decline the weekend strategy workshop.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "Thank you wholeheartedly for the offer; regrettably I cannot attend the weekend strategy workshop at this time.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-049"
+  },
+  {
+    "prompt": "I’m sorry, I won’t be able to attend Friday’s dinner.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Unfortunately I have to miss the Friday dinner.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Apologies, I can’t join the dinner on Friday.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Regretfully, I’ll be absent from Friday’s dinner.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "I’m sorry, but I won’t be able to make it to the Friday dinner this time.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Please accept my apologies; I’m unable to attend the Friday dinner as planned.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Unfortunately I must decline the invitation to Friday’s dinner, and I regret missing it.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "It’s a pity I can’t join the Friday dinner, sorry for any inconvenience.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Thank you very much for the invitation; I’m truly sorry I must miss the Friday dinner.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "I deeply appreciate the invite and sincerely regret that I won’t be able to attend Friday’s dinner.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Your kind invitation means a lot; unfortunately I have to miss the Friday dinner, my apologies.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Thanks for thinking of me—I'm very grateful, yet I’m forced to skip the Friday dinner.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-refusal-050"
+  },
+  {
+    "prompt": "Refill my hypertension medication by tomorrow per the prescription and have it ready for pickup.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "According to my prescription, the hypertension drug should be refilled by tomorrow and set aside for collection.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "By tomorrow, I require the hypertension medication refill, as indicated on my prescription, ready for pickup.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Hypertension meds need refilling by tomorrow; please ensure they're available for pickup.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Could you possibly refill my hypertension medication by tomorrow as per my prescription? I would really appreciate it.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "I would be grateful if you could refill my hypertension medication by tomorrow, following the prescription, and have it ready for pickup.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Would you mind refilling my hypertension medication by tomorrow according to the prescription, so I can pick it up? Thanks.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "If it’s not too much trouble, please refill my hypertension medication by tomorrow per the prescription and arrange for pickup.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "I would greatly appreciate it if you could refill my hypertension medication by tomorrow as indicated on my prescription, and thank you in advance for preparing it for pickup.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Kindly ensure the refill of my hypertension medication by tomorrow, in accordance with my prescription, and I extend my sincere thanks for arranging the pickup.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Your assistance in refilling my hypertension medication by tomorrow, as specified on the prescription, would be most appreciated; I thank you for handling the pickup.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "Based on the attached prescription, please refill my hypertension medication by tomorrow and have it ready for pickup; I am deeply grateful for your help.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-003"
+  },
+  {
+    "prompt": "I require a two‑day extension for the term paper; please approve it quickly as I’m unable to meet the current deadline.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "Could you issue a two‑day extension for my term paper? I would be unable to finish by the existing due date.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "May I kindly ask for a two‑day extension on the term paper? I cannot complete it by the original deadline.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I would appreciate it if you could grant a two‑day extension for the term paper, as I’m currently unable to meet the set deadline.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I would be grateful if you could provide a two‑day extension for the term paper; this would greatly ease my current workload.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "Granting a two‑day extension would allow me to produce a higher‑quality term paper and better reflect the effort I’ve invested.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "Your approval of a two‑day extension would mean a lot to me, helping balance my other commitments while completing the term paper.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I respectfully request a two‑day extension for the term paper; such an adjustment would accommodate my present schedule constraints.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I would deeply appreciate a two‑day extension for the term paper, as it would substantially relieve the pressure I’m currently under.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "It is essential that I receive a two‑day extension for the term paper; without it, I risk compromising the quality of my work.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I am profoundly grateful for any consideration of a two‑day extension on the term paper, which would be a critical aid to my schedule.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "I must urgently request a two‑day extension for the term paper, as meeting the current deadline is infeasible given my workload.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-004"
+  },
+  {
+    "prompt": "Send the latest Q2 market analysis report by Friday for the meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Please forward the Q2 market analysis report this Friday ahead of the meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Deliver the most recent Q2 market analysis report by Friday for our upcoming meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Provide the latest Q2 market analysis report by Friday before the scheduled meeting.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "I would appreciate it if you could send the latest Q2 market analysis report by Friday for the meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Could you kindly email the latest Q2 market analysis report by Friday so we have it for the meeting?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "It would be helpful to receive the latest Q2 market analysis report by Friday ahead of the meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Please ensure the latest Q2 market analysis report reaches me by Friday for preparation before the meeting.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "I’m grateful for your sending the latest Q2 market analysis report by Friday to support the upcoming meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Your prompt delivery of the latest Q2 market analysis report by Friday would be greatly appreciated for the meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Thank you in advance for providing the latest Q2 market analysis report by Friday for our meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "We truly value your effort to send the latest Q2 market analysis report by Friday for the upcoming meeting.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-012"
+  },
+  {
+    "prompt": "Hey, could you glance at the code patch and tell me what you think when you have a minute?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Please review the code patch and let me know if anything seems off or needs fixing as soon as possible.",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Can you take a look at the code patch and point out any issues you notice when you get a chance?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Would you mind reviewing the code patch and sharing any feedback you have at your convenience later today?",
+    "trait": "politeness",
+    "intensity": "low",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "When you have a moment, could you review the code patch and let me know if anything looks off?",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "If you could spare a few minutes, please check the code patch and tell me whether you spot any problems.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Just a quick reminder to look over the code patch when you’re free and let me know of any concerns.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "It would be helpful if you could examine the code patch and share any observations you think are relevant.",
+    "trait": "politeness",
+    "intensity": "mid",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "I’d be grateful if you could take a look at the code patch and let me know of issues you find.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Your feedback would be much appreciated; please review the code patch and inform me of any problems you notice.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "I’d really value your input—could you examine the code patch and tell me about any flaws you encounter?",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-037"
+  },
+  {
+    "prompt": "Thanks in advance! When you get a chance, please look over the code patch and point out anything that seems off.",
+    "trait": "politeness",
+    "intensity": "high",
+    "scenario_id": "politeness-request-037"
+  }
+]

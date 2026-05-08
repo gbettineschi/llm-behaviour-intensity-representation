@@ -1416,20 +1416,26 @@ class Pipeline:
         Returns (verdict, bundle_accepted, all_judged_rows, accepted_rows).
         """
         example_ids = [r["paraphrase_id"] for r in bundle[:2]] if bundle else ["x"]
+        # NOTE: schema describes types/ranges only. Do not include concrete numeric
+        # example values here — judge LLMs mode-collapse onto them and return the
+        # same score for every bundle.
         schema_hint = json.dumps(
             {
-                "accepted": True,
-                "overall_score": 0.92,
+                "accepted": "<bool>",
+                "overall_score": "<float in [0.0, 1.0]>",
                 "checks": {
-                    "content_preservation": True,
-                    "monotonic_order": True,
-                    "naturalness": True,
-                    "cue_diversity": True,
-                    "shortcut_risk": "low",
-                    "length_balance": True,
+                    "content_preservation": "<bool>",
+                    "monotonic_order": "<bool>",
+                    "naturalness": "<bool>",
+                    "cue_diversity": "<bool>",
+                    "shortcut_risk": "<one of: low | medium | high>",
+                    "length_balance": "<bool>",
                 },
-                "notes": "brief explanation",
-                "item_scores": [{"paraphrase_id": pid, "score": 0.91} for pid in example_ids],
+                "notes": "<string: cite specific evidence from the texts>",
+                "item_scores": [
+                    {"paraphrase_id": pid, "score": "<float in [0.0, 1.0]>"}
+                    for pid in example_ids
+                ],
             },
             ensure_ascii=False,
         )

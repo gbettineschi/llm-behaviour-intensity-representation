@@ -453,6 +453,78 @@ def jaccard(a: str, b: str) -> float:
     return len(sa & sb) / max(1, len(sa | sb))
 
 
+class ShortcutTracker:
+    """Streaming per-level token counter for cross-bundle shortcut detection.
+
+    Used live during paraphrase generation and judging: as each bundle is
+    processed, its texts are added to the tracker, and the next bundle is
+    given the top tokens that *currently* distinguish each level so the
+    generator can avoid them and the judge can reject paraphrases that lean
+    on them.
+    """
+
+    _STOP = frozenset(
+        "the a an and or but if of to in on at for with is are was were be "
+        "been being have has had do does did this that these those it its as "
+        "by from not no so we i you he she they them us our your his her their "
+        "my me into out over under than then there here will would can could "
+        "should may might must shall about up down".split()
+    )
+
+    def __init__(self, levels: List[str]):
+        self.levels = list(levels)
+        self.counts: Dict[str, Dict[str, int]] = {l: {} for l in self.levels}
+        self._lock = threading.Lock()
+
+    @classmethod
+    def _tokens(cls, text: str) -> List[str]:
+        return [
+            t for t in re.findall(r"[a-z']+", text.lower())
+            if len(t) > 2 and t not in cls._STOP
+        ]
+
+    def add(self, level: str, text: str) -> None:
+        toks = self._tokens(text)
+        if not toks:
+            return
+        with self._lock:
+            d = self.counts.setdefault(level, {})
+            for t in toks:
+                d[t] = d.get(t, 0) + 1
+
+    def add_rows(self, rows: Iterable[Dict[str, Any]]) -> None:
+        for r in rows:
+            lvl, txt = r.get("level"), r.get("text")
+            if lvl and txt:
+                self.add(lvl, txt)
+
+    def top_per_level(self, k: int = 10, min_count: int = 2) -> Dict[str, List[str]]:
+        """Return top-K log-odds tokens per level, only those biased toward that level."""
+        with self._lock:
+            snap = {L: dict(d) for L, d in self.counts.items()}
+        result: Dict[str, List[str]] = {}
+        for L in self.levels:
+            level_counts = snap.get(L, {})
+            others_counts: Dict[str, int] = {}
+            for OL, d in snap.items():
+                if OL == L:
+                    continue
+                for t, c in d.items():
+                    others_counts[t] = others_counts.get(t, 0) + c
+            scored = []
+            for t, c in level_counts.items():
+                if c < min_count:
+                    continue
+                o = others_counts.get(t, 0)
+                score = math.log((c + 1) / (o + 1))
+                if score <= 0:
+                    continue
+                scored.append((score, c, t))
+            scored.sort(reverse=True)
+            result[L] = [t for _, _, t in scored[:k]]
+        return result
+
+
 @dataclass
 class ModelSpec:
     model: str
@@ -1228,6 +1300,7 @@ class Pipeline:
         ladder_obj: Dict[str, Any],
         per_level: int,
         used_cue_families: set[str],
+        forbidden_tokens_by_level: Optional[Dict[str, List[str]]] = None,
     ) -> str:
         avoid = sorted(used_cue_families - {""})
         n_levels = len(ladder_obj["ladder"])
@@ -1247,6 +1320,19 @@ class Pipeline:
             prompt += (
                 f"\n\nAlready used in this dataset — vary away from these cue families: {avoid}."
             )
+        if forbidden_tokens_by_level:
+            forbidden_lines = [
+                f"  {lvl}: {forbidden_tokens_by_level[lvl]}"
+                for lvl in self.levels
+                if forbidden_tokens_by_level.get(lvl)
+            ]
+            if forbidden_lines:
+                prompt += (
+                    "\n\nForbidden tokens by level — these words have been overused at the "
+                    "listed level in earlier scenarios and now leak the level. Do NOT use "
+                    "them at that level (other levels are fine). Find different lexical "
+                    "realizations:\n" + "\n".join(forbidden_lines)
+                )
         return prompt
 
     def _repair_paraphrases_user_prompt(
@@ -1310,6 +1396,13 @@ class Pipeline:
         used_cue_families: set[str] = set()
         lock = threading.Lock()
 
+        # Streaming shortcut tracker: pre-seed with already-generated paraphrases
+        # (resume case) so the next ladder sees forbidden tokens from the start.
+        shortcut_top_k = int(self.config["pipeline"].get("shortcut_top_k", 10))
+        shortcut_min_count = int(self.config["pipeline"].get("shortcut_min_count", 2))
+        tracker = ShortcutTracker(self.levels)
+        tracker.add_rows(existing_paraphrases)
+
         def _one(ladder: Dict[str, Any]) -> List[Dict[str, Any]]:
             schema_hint = json.dumps(
                 {
@@ -1321,9 +1414,10 @@ class Pipeline:
             )
             with lock:
                 avoid = set(used_cue_families)
+            forbidden = tracker.top_per_level(k=shortcut_top_k, min_count=shortcut_min_count)
             obj = self.generator.call_json(
                 system,
-                self._paraphrase_user_prompt(ladder, per_level, avoid),
+                self._paraphrase_user_prompt(ladder, per_level, avoid, forbidden),
                 schema_hint,
             )
             scenario_id = obj["scenario_id"]
@@ -1343,6 +1437,7 @@ class Pipeline:
             with lock:
                 for r in batch:
                     used_cue_families.add(r["cue_family"])
+            tracker.add_rows(batch)
             return batch
 
         failed_paraphrases_file = self.trait_dir(trait) / "failed_paraphrases.jsonl"
@@ -1381,14 +1476,21 @@ class Pipeline:
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
-    def _judge_user_prompt(self, trait: str, scenario_id: str, bundle: List[Dict[str, Any]]) -> str:
+    def _judge_user_prompt(
+        self,
+        trait: str,
+        scenario_id: str,
+        bundle: List[Dict[str, Any]],
+        shortcut_hints: Optional[Dict[str, List[str]]] = None,
+        min_score: float = 0.75,
+    ) -> str:
         levels_order = " < ".join(self.levels)
         grouped = {
             level: [{"id": r["paraphrase_id"], "text": r["text"]}
                     for r in bundle if r["level"] == level]
             for level in self.levels
         }
-        return (
+        prompt = (
             f"Validate this bundle for trait '{trait}'.\n"
             f"Texts by level (use the exact 'id' values in your item_scores):\n"
             f"{json.dumps(grouped, ensure_ascii=False, indent=2)}\n\n"
@@ -1402,6 +1504,23 @@ class Pipeline:
             "'item_scores' must be a list where each entry has the exact 'id' string from "
             "above as 'paraphrase_id', and a 'score' in [0,1]."
         )
+        if shortcut_hints and any(shortcut_hints.values()):
+            hint_lines = [
+                f"  {lvl}: {shortcut_hints[lvl]}"
+                for lvl in self.levels
+                if shortcut_hints.get(lvl)
+            ]
+            if hint_lines:
+                prompt += (
+                    "\n\nKnown shortcut tokens by level — these tokens currently leak the "
+                    "level across earlier bundles in this run:\n" + "\n".join(hint_lines) + "\n"
+                    "RULE: if any paraphrase in this bundle relies on its level's listed "
+                    "tokens to convey the trait, set checks.shortcut_risk='high', mark the "
+                    f"bundle accepted=false, and assign that paraphrase an item_score "
+                    f"strictly below {min_score:.2f}. Do not give the bundle the benefit of "
+                    "the doubt when shortcut tokens drive the level."
+                )
+        return prompt
 
     def _judge_scenario_bundle(
         self,
@@ -1410,6 +1529,7 @@ class Pipeline:
         bundle: List[Dict[str, Any]],
         system: str,
         min_score: float,
+        shortcut_hints: Optional[Dict[str, List[str]]] = None,
     ) -> Tuple[Dict[str, Any], bool, List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Run primary + optional tie-breaker judgment for one scenario bundle.
 
@@ -1443,7 +1563,9 @@ class Pipeline:
             self.config["pipeline"].get("tie_breaker_margin", 0.15)
         )
         primary = self.judge.call_json(
-            system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
+            system,
+            self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
+            schema_hint,
         )
         bundle_accepted = (
             bool(primary.get("accepted", False))
@@ -1468,7 +1590,9 @@ class Pipeline:
                     primary["length_balance_hard_gate"] = True
         if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin):
             tie = self.tie_breaker.call_json(
-                system, self._judge_user_prompt(trait, scenario_id, bundle), schema_hint
+                system,
+                self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
+                schema_hint,
             )
             bundle_accepted = (
                 bool(tie.get("accepted", False))
@@ -1587,11 +1711,19 @@ class Pipeline:
         lock = threading.Lock()
         max_workers = int(self.config["pipeline"].get("max_workers", 1))
 
+        # Streaming shortcut tracker: pre-seed with already-judged rows so the
+        # next bundle's judge prompt includes shortcut hints from prior runs.
+        shortcut_top_k = int(self.config["pipeline"].get("shortcut_top_k", 10))
+        shortcut_min_count = int(self.config["pipeline"].get("shortcut_min_count", 2))
+        tracker = ShortcutTracker(self.levels)
+        tracker.add_rows(existing_judged)
+
         def _one(item: tuple) -> tuple:
             scenario_id, bundle = item
             ladder = ladder_map.get(scenario_id)
+            hints = tracker.top_per_level(k=shortcut_top_k, min_count=shortcut_min_count)
             verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
-                trait, scenario_id, bundle, system, min_score
+                trait, scenario_id, bundle, system, min_score, shortcut_hints=hints
             )
             for attempt in range(max_retries):
                 if accepted or ladder is None:
@@ -1602,13 +1734,15 @@ class Pipeline:
                 repaired = self._repair_bundle(trait, ladder, per_level, verdict, avoid)
                 if repaired is None:
                     break
+                hints = tracker.top_per_level(k=shortcut_top_k, min_count=shortcut_min_count)
                 verdict, accepted, judged_bundle, accepted_bundle = self._judge_scenario_bundle(
-                    trait, scenario_id, repaired, system, min_score
+                    trait, scenario_id, repaired, system, min_score, shortcut_hints=hints
                 )
             with lock:
                 for r in accepted_bundle:
                     if r.get("cue_family"):
                         used_cue_families.add(r["cue_family"])
+            tracker.add_rows(bundle)
             return judged_bundle, accepted_bundle
 
         failed_judged_file = self.trait_dir(trait) / "failed_judged.jsonl"

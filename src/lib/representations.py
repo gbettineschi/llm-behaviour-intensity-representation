@@ -141,6 +141,80 @@ def extract_activations(
     return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
 
 
+def extract_activations_last_token_chat_multilayer(
+    samples: list[Sample],
+    model,
+    tokenizer,
+    layer_indices: list[int],
+    device: str,
+    batch_size: int = 8,
+    user_instruction: str = "Rate the politeness of the following message:",
+) -> dict[tuple[str, str, str, int], torch.Tensor]:
+    """Wrap each paraphrase as the assistant turn of a chat and read the
+    last-token hidden state at each requested layer.
+
+    If the tokenizer exposes a ``chat_template``, it is used; otherwise a
+    minimal "User: ...\\nAssistant: ..." formatting is applied. The last-token
+    activation is the residual stream right after the model has integrated the
+    full assistant turn — the standard probing site in representation
+    engineering work, and typically more informative than mean-pooled content
+    tokens for trait-style probes.
+    """
+    layers = sorted(set(layer_indices))
+    has_template = bool(getattr(tokenizer, "chat_template", None))
+
+    def _render(text: str) -> str:
+        if has_template:
+            msgs = [
+                {"role": "user", "content": user_instruction},
+                {"role": "assistant", "content": text},
+            ]
+            return tokenizer.apply_chat_template(
+                msgs, tokenize=False, add_generation_prompt=False
+            )
+        return f"User: {user_instruction}\nAssistant: {text}"
+
+    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
+    for start in range(0, len(samples), batch_size):
+        batch = samples[start:start + batch_size]
+        texts = [_render(s.prompt) for s in batch]
+        enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            out = model(**enc, output_hidden_states=True)
+        hidden_states = out.hidden_states  # tuple length num_layers+1
+
+        attn = enc["attention_mask"]
+        last_idx = attn.sum(dim=1) - 1  # (B,)
+        b_idx = torch.arange(attn.size(0), device=device)
+
+        per_layer = [hidden_states[layer + 1][b_idx, last_idx, :] for layer in layers]
+        stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
+
+        for li, layer in enumerate(layers):
+            for i, sample in enumerate(batch):
+                key = (sample.trait, sample.intensity, sample.scenario_id, layer)
+                bucket.setdefault(key, []).append(stacked[li, i])
+
+    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+
+
+def extract_activations_last_token_chat(
+    samples: list[Sample],
+    model,
+    tokenizer,
+    layer_index: int,
+    device: str,
+    batch_size: int = 8,
+    user_instruction: str = "Rate the politeness of the following message:",
+) -> dict[tuple[str, str, str], torch.Tensor]:
+    """Single-layer wrapper for :func:`extract_activations_last_token_chat_multilayer`."""
+    multi = extract_activations_last_token_chat_multilayer(
+        samples, model, tokenizer, [layer_index], device,
+        batch_size=batch_size, user_instruction=user_instruction,
+    )
+    return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+
+
 def save_activations(
     activations: dict[tuple[str, str, str], torch.Tensor],
     out_dir: Path,

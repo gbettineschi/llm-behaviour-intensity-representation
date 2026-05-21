@@ -691,14 +691,28 @@ class LLMClient:
                 temperature=temperature,
                 max_tokens=self.spec.max_output_tokens,
             )
-            content = resp["choices"][0]["message"]["content"]
+            msg = resp["choices"][0]["message"]
+            content = msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", None)
+            # Reasoning models (e.g. gpt-5-nano) sometimes put the JSON in
+            # alternate fields and leave content as None. Try common fallbacks.
+            if not content:
+                for alt in ("reasoning_content", "reasoning", "text"):
+                    v = (
+                        msg.get(alt)
+                        if isinstance(msg, dict)
+                        else getattr(msg, alt, None)
+                    )
+                    if isinstance(v, str) and v.strip():
+                        content = v
+                        break
             try:
                 return self._extract_json(content)
             except json.JSONDecodeError as exc:
                 last_error = exc
                 if attempt < 2:
-                    preview = content[:200] if len(content) <= 200 else content[:197] + "..."
-                    print(f"  [retry {attempt+1}/3] JSON parse failed. Response preview: {preview}")
+                    safe = content if isinstance(content, str) else ""
+                    preview = safe[:200] if len(safe) <= 200 else safe[:197] + "..."
+                    print(f"  [retry {attempt+1}/3] JSON parse failed. Response preview: {preview!r}")
         if last_error is not None:
             raise last_error
         raise RuntimeError("call_json failed without producing an error")
@@ -885,6 +899,16 @@ class Pipeline:
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
 
+    # Names of fields that every scenario must populate regardless of trait.
+    # (Replaces a stale reference to scenario_schema["definitions"]["shared_fields"]
+    # that crashed make_scenarios on a fresh run.)
+    _SHARED_FIELDS = [
+        "scenario_id", "trait", "rubric_version", "dataset_version",
+        "speech_act", "domain", "topic_cluster", "audience_relation",
+        "register", "communicative_goal", "content_probes",
+        "forbidden_cue_tokens", "target_word_count", "length_tolerance_pct",
+    ]
+
     def _scenario_user_prompt_batched(
         self,
         trait: str,
@@ -893,7 +917,7 @@ class Pipeline:
     ) -> str:
         """Build the per-batch prompt. Each scenario's assigned speech_act is fixed up front."""
         trait_info = self._trait_info(trait)
-        shared = self.scenario_schema["definitions"]["shared_fields"]
+        shared_fields = list(self._SHARED_FIELDS)
         levels_str = ", ".join(self.levels)
         n = len(speech_act_ids)
 
@@ -928,7 +952,7 @@ class Pipeline:
             f"Trait-level generation constraints:\n"
             + "\n".join(f"  - {c}" for c in trait_info["generation_constraints"])
             + "\n\n"
-            f"Shared fields each scenario must fill: {list(shared.keys())}.\n"
+            f"Shared fields each scenario must fill: {shared_fields}.\n"
             "Hard requirements for every scenario object:\n"
             "  - scenario_id is a stable string (you may use 'auto' and the pipeline will reassign).\n"
             "  - trait must equal the trait above.\n"
@@ -1420,20 +1444,37 @@ class Pipeline:
                 self._paraphrase_user_prompt(ladder, per_level, avoid, forbidden),
                 schema_hint,
             )
-            scenario_id = obj["scenario_id"]
+            if not isinstance(obj, dict):
+                raise ValueError(f"paraphrase response is {type(obj).__name__}, expected dict")
+            scenario_id = obj.get("scenario_id") or ladder["scenario_id"]
+            items = obj.get("items")
+            if not isinstance(items, list) or not items:
+                raise ValueError(
+                    f"paraphrase response missing/empty 'items' for {ladder['scenario_id']}"
+                )
             batch: List[Dict[str, Any]] = []
-            for idx, item in enumerate(obj["items"], start=1):
+            for idx, item in enumerate(items, start=1):
+                if not isinstance(item, dict):
+                    continue
+                lvl = item.get("level")
+                txt = item.get("text")
+                if lvl not in self.levels or not isinstance(txt, str) or not txt.strip():
+                    continue
                 cue_family = item.get("cue_family", "unspecified")
                 batch.append({
                     "scenario_id": scenario_id,
                     "trait": trait,
-                    "level": item["level"],
+                    "level": lvl,
                     "cue_family": cue_family,
-                    "text": normalize_text(item["text"]),
-                    "canonical": ladder["ladder"].get(item["level"], ""),
+                    "text": normalize_text(txt),
+                    "canonical": ladder["ladder"].get(lvl, ""),
                     "invariant_content": ladder.get("invariant_content", ""),
-                    "paraphrase_id": f"{scenario_id}-{item['level']}-{idx:02d}",
+                    "paraphrase_id": f"{scenario_id}-{lvl}-{idx:02d}",
                 })
+            if not batch:
+                raise ValueError(
+                    f"paraphrase response produced no valid items for {ladder['scenario_id']}"
+                )
             with lock:
                 for r in batch:
                     used_cue_families.add(r["cue_family"])
@@ -1522,6 +1563,137 @@ class Pipeline:
                 )
         return prompt
 
+    # ── Blind intensity scorer (independent LLM, no level labels visible) ──────
+
+    def _intensity_scorer_system_prompt(self, trait: str) -> str:
+        trait_info = self._trait_info(trait)
+        return (
+            "You are a calibrated rater of linguistic trait intensity. "
+            "You will receive a list of short texts identified only by opaque codes. "
+            f"For each text, rate the intensity of the trait '{trait}' on a "
+            "continuous scale in [0.0, 1.0], where 0.0 is minimum intensity and "
+            "1.0 is maximum intensity. Use the FULL range. Do not anchor to 0.5. "
+            "You will NOT be told which texts belong together or which level they "
+            "are supposed to represent. Rate each text on its own merits.\n\n"
+            f"Trait definition: {trait_info.get('description', '')}\n\n"
+            "CRITICAL: Return ONLY valid JSON. No prose, no markdown."
+        )
+
+    def _intensity_scorer_user_prompt(
+        self,
+        trait: str,
+        anon_items: List[Tuple[str, str]],
+    ) -> str:
+        """anon_items: list of (code, text) — opaque codes, randomized order."""
+        items_json = json.dumps(
+            [{"code": c, "text": t} for c, t in anon_items],
+            ensure_ascii=False,
+            indent=2,
+        )
+        return (
+            f"Rate the intensity of trait '{trait}' for each text below.\n\n"
+            "Use the full [0.0, 1.0] range. Do NOT mode-collapse to 0.5 or to a "
+            "narrow band. Texts with markedly different intensity must receive "
+            "markedly different scores.\n\n"
+            f"Texts:\n{items_json}\n\n"
+            'Return JSON with key "scores": a list of objects '
+            '{"code": "<code>", "intensity": <float in [0,1]>}. '
+            "One entry per input code, in any order. "
+            "Do not include any other keys."
+        )
+
+    def _score_intensity_blind(
+        self,
+        trait: str,
+        bundle: List[Dict[str, Any]],
+    ) -> Dict[str, float]:
+        """Score each paraphrase blind to its assigned level.
+
+        Returns paraphrase_id → float in [0,1]. Missing rows are returned as NaN.
+        Uses the tie_breaker_judge to keep it independent from the bundle judge.
+        """
+        if not bundle:
+            return {}
+        rng = random.Random(self.random_seed + sum(ord(c) for c in trait) + len(bundle))
+        order = list(range(len(bundle)))
+        rng.shuffle(order)
+        # Opaque codes — never include level/trait/scenario in the code.
+        codes = [f"q{i:03d}" for i in range(len(bundle))]
+        code_to_pid: Dict[str, str] = {}
+        anon_items: List[Tuple[str, str]] = []
+        for code, idx in zip(codes, order):
+            row = bundle[idx]
+            code_to_pid[code] = row["paraphrase_id"]
+            anon_items.append((code, row["text"]))
+        system = self._intensity_scorer_system_prompt(trait)
+        user = self._intensity_scorer_user_prompt(trait, anon_items)
+        schema_hint = json.dumps(
+            {"scores": [{"code": "<code>", "intensity": "<float in [0,1]>"}]},
+            ensure_ascii=False,
+        )
+        try:
+            obj = self.tie_breaker.call_json(system, user, schema_hint)
+        except Exception as exc:
+            print(f"  intensity-scorer failed for {bundle[0].get('scenario_id', '?')}: {exc}")
+            return {row["paraphrase_id"]: float("nan") for row in bundle}
+        scores_raw = obj.get("scores") if isinstance(obj, dict) else None
+        if not isinstance(scores_raw, list):
+            return {row["paraphrase_id"]: float("nan") for row in bundle}
+        out: Dict[str, float] = {row["paraphrase_id"]: float("nan") for row in bundle}
+        for s in scores_raw:
+            if not isinstance(s, dict):
+                continue
+            code = s.get("code")
+            val = s.get("intensity")
+            if code in code_to_pid and isinstance(val, (int, float)):
+                v = float(val)
+                if 0.0 <= v <= 1.0:
+                    out[code_to_pid[code]] = v
+        return out
+
+    def _check_intensity_monotonicity(
+        self,
+        bundle: List[Dict[str, Any]],
+        intensity_scores: Dict[str, float],
+        min_gap: float,
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """Return (passed, diagnostic_dict).
+
+        Passes iff per-level mean of blind intensity scores is strictly monotone
+        in self.levels order and adjacent means differ by at least min_gap.
+        Coverage: requires at least one finite score per level.
+        """
+        by_level: Dict[str, List[float]] = {lvl: [] for lvl in self.levels}
+        for row in bundle:
+            s = intensity_scores.get(row["paraphrase_id"], float("nan"))
+            if isinstance(s, float) and not math.isnan(s):
+                by_level.setdefault(row["level"], []).append(s)
+        means: Dict[str, Optional[float]] = {}
+        for lvl in self.levels:
+            vals = by_level.get(lvl, [])
+            means[lvl] = (sum(vals) / len(vals)) if vals else None
+        diag = {
+            "intensity_means_by_level": {k: (round(v, 4) if v is not None else None) for k, v in means.items()},
+            "intensity_n_by_level": {k: len(by_level.get(k, [])) for k in self.levels},
+            "intensity_min_gap_required": min_gap,
+        }
+        # All levels must have at least one score.
+        if any(v is None for v in means.values()):
+            diag["intensity_monotonic"] = False
+            diag["intensity_failure_reason"] = "missing scores for at least one level"
+            return False, diag
+        ordered = [means[lvl] for lvl in self.levels]  # e.g. [low, mid, high]
+        # Strict monotonic increase with min gap.
+        for a, b in zip(ordered, ordered[1:]):
+            if b - a < min_gap:
+                diag["intensity_monotonic"] = False
+                diag["intensity_failure_reason"] = (
+                    f"adjacent gap {b - a:.3f} < required {min_gap:.3f}"
+                )
+                return False, diag
+        diag["intensity_monotonic"] = True
+        return True, diag
+
     def _judge_scenario_bundle(
         self,
         trait: str,
@@ -1567,62 +1739,124 @@ class Pipeline:
             self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
             schema_hint,
         )
+        # Defensive: judge LLM occasionally returns a JSON array (e.g. a list of
+        # item-score objects) instead of the expected verdict dict. Coerce or
+        # treat as a rejection rather than crashing the whole bundle.
+        if isinstance(primary, list):
+            primary = {"item_scores": primary, "accepted": False, "overall_score": 0.0}
+        elif not isinstance(primary, dict):
+            primary = {"accepted": False, "overall_score": 0.0, "notes": f"judge returned {type(primary).__name__}"}
         bundle_accepted = (
             bool(primary.get("accepted", False))
             and float(primary.get("overall_score", 0.0)) >= min_score
         )
-        # Hard programmatic length-balance gate. Don't trust the judge LLM alone.
-        max_ratio = float(self.config["pipeline"].get("max_length_ratio", 1.2))
+
+        # ─── Programmatic gates (not trusted to the judge LLM) ────────────────
+        gate_failures: List[str] = []
+
+        # (1) Length-balance: per-level mean word count must not span > max_ratio.
+        max_ratio = float(self.config["pipeline"].get("max_length_ratio", 1.15))
         word_counts_by_level: Dict[str, List[int]] = {}
         for r in bundle:
             word_counts_by_level.setdefault(r["level"], []).append(len(r["text"].split()))
+        mean_words_per_level: Dict[str, float] = {}
         if word_counts_by_level:
-            mean_words = [sum(v) / len(v) for v in word_counts_by_level.values() if v]
-            if len(mean_words) >= 2 and min(mean_words) > 0:
-                if max(mean_words) > min(mean_words) * max_ratio:
+            for lvl, ws in word_counts_by_level.items():
+                if ws:
+                    mean_words_per_level[lvl] = sum(ws) / len(ws)
+            mw = list(mean_words_per_level.values())
+            if len(mw) >= 2 and min(mw) > 0:
+                if max(mw) > min(mw) * max_ratio:
                     primary["length_balance_hard_gate"] = False
-                    primary.setdefault("notes", "")
-                    primary["notes"] = (primary["notes"] or "") + (
-                        f" [length-balance hard gate fired: per-level mean words {dict(zip(word_counts_by_level.keys(), [round(m, 1) for m in mean_words]))}]"
+                    primary["length_means"] = {k: round(v, 2) for k, v in mean_words_per_level.items()}
+                    gate_failures.append(
+                        f"length-balance: per-level mean words "
+                        f"{primary['length_means']} exceeds ratio {max_ratio:.2f}"
                     )
-                    bundle_accepted = False
                 else:
                     primary["length_balance_hard_gate"] = True
-        if not bundle_accepted and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin):
+                    primary["length_means"] = {k: round(v, 2) for k, v in mean_words_per_level.items()}
+
+        # (2) Blind intensity monotonicity: independent LLM rates each paraphrase
+        #     blind to its level. Per-level means must be monotone in self.levels
+        #     order, with adjacent gap ≥ intensity_min_gap.
+        enable_intensity = bool(self.config["pipeline"].get("enable_intensity_scorer", True))
+        intensity_scores: Dict[str, float] = {}
+        if enable_intensity:
+            min_gap = float(self.config["pipeline"].get("intensity_min_gap", 0.10))
+            intensity_scores = self._score_intensity_blind(trait, bundle)
+            ok_mono, mono_diag = self._check_intensity_monotonicity(
+                bundle, intensity_scores, min_gap
+            )
+            primary["intensity_gate"] = mono_diag
+            if not ok_mono:
+                gate_failures.append(
+                    f"intensity-monotonicity: {mono_diag.get('intensity_failure_reason', 'failed')}; "
+                    f"means={mono_diag.get('intensity_means_by_level')}"
+                )
+
+        if gate_failures:
+            bundle_accepted = False
+            primary.setdefault("notes", "")
+            primary["notes"] = (primary["notes"] or "") + " [gate failures: " + " | ".join(gate_failures) + "]"
+            primary["gate_failures"] = gate_failures
+
+        # Tie-breaker only fires when the judge LLM was borderline AND no
+        # programmatic gate has hard-failed. A tie-breaker cannot rescue a bundle
+        # that failed an objective check.
+        if (
+            not bundle_accepted
+            and not gate_failures
+            and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin)
+        ):
             tie = self.tie_breaker.call_json(
                 system,
                 self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
                 schema_hint,
             )
+            if not isinstance(tie, dict):
+                tie = {"accepted": False, "overall_score": 0.0, "notes": f"tie returned {type(tie).__name__}"}
             bundle_accepted = (
                 bool(tie.get("accepted", False))
                 and float(tie.get("overall_score", 0.0)) >= min_score
             )
             primary["tie_breaker"] = tie
-        item_scores = {
-            x["paraphrase_id"]: x["score"]
-            for x in primary.get("item_scores", [])
-            if "paraphrase_id" in x
-        }
-        # If the bundle is accepted overall, a missing item score means the judge
-        # didn't explicitly reject that item — give benefit of the doubt.
-        # Only items with an explicit score below min_score get filtered out.
-        default_item_score = min_score if bundle_accepted else 0.0
+
+        # ─── Per-item acceptance ───────────────────────────────────────────────
+        # Require an explicit per-item score from the judge for each paraphrase.
+        # Missing or non-numeric → 0.0 (NOT min_score). This closes the
+        # "judge says accepted=true and forgets item_scores" loophole.
+        item_scores: Dict[str, float] = {}
+        for x in primary.get("item_scores", []) or []:
+            if not isinstance(x, dict):
+                continue
+            pid = x.get("paraphrase_id")
+            sc = x.get("score")
+            if isinstance(pid, str) and isinstance(sc, (int, float)):
+                item_scores[pid] = float(sc)
         judged_rows: List[Dict[str, Any]] = []
         accepted_rows: List[Dict[str, Any]] = []
         for row in bundle:
             rec = dict(row)
             rec["judge"] = primary
-            rec["accepted"] = bundle_accepted and item_scores.get(row["paraphrase_id"], default_item_score) >= min_score
             rec["item_score"] = item_scores.get(row["paraphrase_id"])
+            rec["intensity_score_blind"] = (
+                intensity_scores.get(row["paraphrase_id"]) if enable_intensity else None
+            )
+            rec["accepted"] = (
+                bundle_accepted
+                and rec["item_score"] is not None
+                and rec["item_score"] >= min_score
+            )
             judged_rows.append(rec)
             if rec["accepted"]:
                 accepted_rows.append(rec)
         if bundle_accepted and not accepted_rows:
+            missing_pids = [r["paraphrase_id"] for r in bundle if r["paraphrase_id"] not in item_scores]
             print(
                 f"  WARNING: bundle {scenario_id} accepted overall but 0 items passed "
                 f"item-level threshold {min_score}. "
-                f"item_scores keys: {list(item_scores.keys())[:5]}"
+                f"Missing item_scores for: {missing_pids[:3]}"
             )
         return primary, bundle_accepted, judged_rows, accepted_rows
 
@@ -1651,19 +1885,30 @@ class Pipeline:
         except Exception as exc:
             print(f"  Repair generation failed for {scenario_id}: {exc}")
             return None
-        return [
-            {
+        if not isinstance(obj, dict):
+            return None
+        items = obj.get("items")
+        if not isinstance(items, list):
+            return None
+        out: List[Dict[str, Any]] = []
+        for idx, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                continue
+            lvl = item.get("level")
+            txt = item.get("text")
+            if lvl not in self.levels or not isinstance(txt, str) or not txt.strip():
+                continue
+            out.append({
                 "scenario_id": scenario_id,
                 "trait": trait,
-                "level": item["level"],
+                "level": lvl,
                 "cue_family": item.get("cue_family", "unspecified"),
-                "text": normalize_text(item["text"]),
-                "canonical": ladder["ladder"].get(item["level"], ""),
+                "text": normalize_text(txt),
+                "canonical": ladder["ladder"].get(lvl, ""),
                 "invariant_content": ladder.get("invariant_content", ""),
-                "paraphrase_id": f"{scenario_id}-{item['level']}-r{idx:02d}",
-            }
-            for idx, item in enumerate(obj.get("items", []), start=1)
-        ]
+                "paraphrase_id": f"{scenario_id}-{lvl}-r{idx:02d}",
+            })
+        return out or None
 
     def judge_bundles(self, trait: str) -> None:
         rows = jsonl_read(self.trait_dir(trait) / "paraphrases.jsonl")
@@ -1837,19 +2082,31 @@ class Pipeline:
             except Exception as exc:
                 print(f"  Shortcut repair generation failed for {sid}: {exc}")
                 continue
-            new_rows = [
-                {
+            if not isinstance(obj, dict):
+                continue
+            items = obj.get("items")
+            if not isinstance(items, list):
+                continue
+            new_rows: List[Dict[str, Any]] = []
+            for idx, item in enumerate(items, start=1):
+                if not isinstance(item, dict):
+                    continue
+                lvl = item.get("level")
+                txt = item.get("text")
+                if lvl not in self.levels or not isinstance(txt, str) or not txt.strip():
+                    continue
+                new_rows.append({
                     "scenario_id": sid,
                     "trait": trait,
-                    "level": item["level"],
+                    "level": lvl,
                     "cue_family": item.get("cue_family", "unspecified"),
-                    "text": normalize_text(item["text"]),
-                    "canonical": ladder["ladder"].get(item["level"], ""),
+                    "text": normalize_text(txt),
+                    "canonical": ladder["ladder"].get(lvl, ""),
                     "invariant_content": ladder.get("invariant_content", ""),
-                    "paraphrase_id": f"{sid}-{item['level']}-s{idx:02d}",
-                }
-                for idx, item in enumerate(obj.get("items", []), start=1)
-            ]
+                    "paraphrase_id": f"{sid}-{lvl}-s{idx:02d}",
+                })
+            if not new_rows:
+                continue
             try:
                 _, _, _, new_accepted = self._judge_scenario_bundle(
                     trait, sid, new_rows, system_judge, min_score

@@ -7,7 +7,7 @@ import random
 import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -31,11 +31,11 @@ except Exception:  # pragma: no cover
 from lib.data_typing import LEVELS, TRAITS
 
 SCENARIO_SCHEMA: Dict[str, Any] = {
-    "rubric_version": "construct_rubric.md@v2",
+    "rubric_version": "construct_rubric.md@v3",
     "dataset_version": "v3",
     "traits": {
         "politeness": {
-            "description": "Mitigation of face threat, deference, social consideration. Low = direct/blunt; high = strongly mitigated/respectful.",
+            "description": "Mitigation of face threat, deference, social consideration. Negative = impolite/rude; neutral = plain/matter-of-fact; positive = polite/mitigated.",
             "required_fields": ["speech_act_target", "imposition_level", "urgency_level", "social_distance"],
             "field_descriptions": {
                 "speech_act_target": "The exact action / refusal target / news / criticism etc. that must remain invariant across levels.",
@@ -98,18 +98,54 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                         "Do not change which party is at fault.",
                     ],
                 },
+                {
+                    "id": "complaint",
+                    "description": "Voicing a grievance about a problem or situation affecting the speaker (service issue, environmental nuisance, missed commitment, etc.). Distinct from criticism_or_feedback, which targets the listener's work.",
+                    "example_communicative_goal": "complain to a hotel manager about a noisy neighbouring room",
+                    "extra_constraints": [
+                        "The grievance (what is wrong) must remain identical across levels.",
+                        "Do not turn the complaint into pure praise or into a refusal of service.",
+                    ],
+                },
+                {
+                    "id": "reminder",
+                    "description": "Prompting the listener about an outstanding obligation, deadline, or commitment they owe.",
+                    "example_communicative_goal": "remind a colleague that an expense report is overdue",
+                    "extra_constraints": [
+                        "The reminded item (what is outstanding) must remain identical across levels.",
+                        "Do not change the reminder into a new request or an apology.",
+                    ],
+                },
+                {
+                    "id": "inquiry_sensitive",
+                    "description": "Asking a personal, awkward, or socially delicate question.",
+                    "example_communicative_goal": "ask a coworker why they missed work last week",
+                    "extra_constraints": [
+                        "The question's content must remain identical across levels.",
+                        "Do not change the topic or scope of the inquiry.",
+                    ],
+                },
+                {
+                    "id": "correction",
+                    "description": "Pointing out a factual or procedural mistake the listener made.",
+                    "example_communicative_goal": "correct a junior's misuse of a tool",
+                    "extra_constraints": [
+                        "The corrected fact or step must remain identical across levels.",
+                        "Do not change the correction into agreement or an unrelated tip.",
+                    ],
+                },
             ],
             "generation_constraints": [
                 "Speech_act_target must be fixed across levels and paraphrases.",
                 "Urgency_level and imposition scope must be constant across levels.",
-                "No insults, threats, profanity even at low politeness.",
+                "No insults, threats, or profanity even at the negative (impolite) pole.",
                 "Diversify politeness realisation across: directness, deference, gratitude framing, softeners, impersonalisation. Do not let any single token in forbidden_cue_tokens dominate one level.",
                 "All paraphrases at all levels must satisfy every content_probe with the same expected_answer.",
                 "Word count of every paraphrase must be within ±length_tolerance_pct of target_word_count.",
             ],
         },
         "hedging_confidence": {
-            "description": "Speaker commitment to a proposition. Low = tentative/hedged; high = strongly committed/direct.",
+            "description": "Speaker commitment to a proposition. Negative = tentative/hedged; neutral = balanced; positive = strongly committed/direct.",
             "required_fields": ["proposition", "evidence_state", "answer_type", "consequence_sensitivity"],
             "field_descriptions": {
                 "proposition": "The exact proposition that must stay fixed across levels.",
@@ -160,6 +196,42 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                         "Hedging modifies confidence in the estimate, not its value.",
                     ],
                 },
+                {
+                    "id": "comparison",
+                    "description": "Comparing two options, products, or approaches on a stated dimension.",
+                    "example_communicative_goal": "compare two cloud providers on reliability",
+                    "extra_constraints": [
+                        "The compared items and the dimension of comparison must remain identical across levels.",
+                        "Do not flip which option is judged better across levels.",
+                    ],
+                },
+                {
+                    "id": "diagnosis",
+                    "description": "Identifying the underlying cause of an observed problem.",
+                    "example_communicative_goal": "diagnose why the dashboard is slow",
+                    "extra_constraints": [
+                        "The diagnosed cause must remain identical across levels.",
+                        "Hedging modifies confidence in the diagnosis, not the cause itself.",
+                    ],
+                },
+                {
+                    "id": "generalization",
+                    "description": "Drawing a general claim from specific cases or evidence.",
+                    "example_communicative_goal": "generalise from recent incidents to a team-wide pattern",
+                    "extra_constraints": [
+                        "The general claim and its scope must remain identical across levels.",
+                        "Do not narrow or widen the population covered across levels.",
+                    ],
+                },
+                {
+                    "id": "evaluation",
+                    "description": "Judging the quality, suitability, or correctness of something.",
+                    "example_communicative_goal": "evaluate whether a draft proposal is ready",
+                    "extra_constraints": [
+                        "The evaluated object and the direction of judgement must remain identical across levels.",
+                        "Hedging modifies confidence in the judgement, not its direction.",
+                    ],
+                },
             ],
             "generation_constraints": [
                 "Proposition must be fixed across levels and paraphrases.",
@@ -186,10 +258,11 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
             "domain": {"type": "string", "minLength": 2},
             "topic_cluster": {"type": "string", "minLength": 2},
             "audience_relation": {"type": "string"},
-            "register": {"type": "string", "enum": ["formal", "neutral", "informal"]},
+            "register": {"type": "string", "minLength": 2},
             "communicative_goal": {"type": "string", "minLength": 5},
             "speech_act_target": {"type": "string", "minLength": 3},
             "proposition_or_request": {"type": "string"},
+            "language": {"type": "string", "enum": ["en", "it"]},
             "content_probes": {
                 "type": "array",
                 "minItems": 1,
@@ -209,19 +282,20 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
             "forbidden_lexical_shortcuts": {"type": "array", "items": {"type": "string"}},
             "target_word_count": {"type": "integer", "minimum": 4, "maximum": 60},
             "length_tolerance_pct": {"type": "integer", "minimum": 5, "maximum": 50},
-            "imposition_level": {"type": "string", "enum": ["low", "medium", "high"]},
-            "urgency_level": {"type": "string", "enum": ["low", "medium", "high"]},
-            "social_distance": {"type": "string", "enum": ["close", "moderate", "distant"]},
+            "imposition_level": {"type": "string", "minLength": 2},
+            "urgency_level": {"type": "string", "minLength": 2},
+            "social_distance": {"type": "string", "minLength": 2},
             "proposition": {"type": "string"},
             "evidence_state": {"type": "string"},
             "answer_type": {"type": "string", "enum": ["assertion", "recommendation", "explanation", "forecast", "answer", "estimate"]},
-            "consequence_sensitivity": {"type": "string", "enum": ["low", "medium", "high"]},
+            "consequence_sensitivity": {"type": "string", "minLength": 2},
             "notes": {"type": "string"},
         },
         "required": [
             "scenario_id", "trait", "speech_act", "domain", "topic_cluster",
             "audience_relation", "register", "communicative_goal",
             "content_probes", "forbidden_cue_tokens", "target_word_count",
+            "language",
         ],
         "allOf": [
             {
@@ -237,9 +311,11 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
 }
 
 CONSTRUCT_RUBRIC = """\
-# Construct Rubric (3-Level Benchmark) — v2
+# Construct Rubric (Signed 3-Point Benchmark) — v3
 
-This rubric is written for a **representation-geometry benchmark**, not a generic classification dataset. The key requirement is that all levels within a ladder preserve the same underlying content while varying only the target trait. The rubric is now multi–speech-act: each trait is realised across several speech acts, and intensity is defined consistently across all of them.
+This rubric is written for a **representation-geometry benchmark**, not a generic classification dataset. The key requirement is that all levels within a ladder preserve the same underlying content while varying only the target trait. The rubric is multi–speech-act: each trait is realised across several speech acts, and intensity is defined consistently across all of them.
+
+Each trait is realised on a **signed three-point scale**: a **negative** pole, a **neutral** centre, and a **positive** pole. The neutral point is a genuine zero — neither pole's markers are present — and the negative and positive points are departures of comparable magnitude in opposite directions.
 
 ---
 
@@ -276,38 +352,42 @@ Politeness is realised across the following speech acts (same construct, differe
 - amount of work / cost imposed
 - whether the act is optional
 - sentiment unrelated to the act
-- sentence length — high-politeness paraphrases must not be substantially longer than low-politeness ones
+- sentence length — positive paraphrases must not be substantially longer than negative ones
 
-### Three-level scale (universal across speech acts)
+### Signed three-point scale (universal across speech acts)
 
-#### Level 0 — Low politeness
-- direct, blunt realisation of the act
-- little or no mitigation
-- terse but never abusive, insulting, or profane
+#### Negative — impolite
+- the act is performed rudely: dismissive, curt, grudging, impatient, or condescending
+- it MUST read as clearly impolite to an ordinary reader — actively face-threatening, not merely plain or brief
+- a plain, inoffensive, unadorned sentence is NOT negative; that is neutral. The negative point must carry visible discourtesy
+- impoliteness is carried by tone and framing — brusqueness, irritation, dismissiveness, the absence of any acknowledgment — never by changing the underlying content
+- NEVER profane, threatening, slur-based, or abusive: rudeness comes from curt, dismissive framing, not from profanity or attacks on the person (those would be lexical confounds)
+- the same length as the neutral and positive realisations — do not make the negative point shorter
 
-#### Level 1 — Mid politeness
-- clear realisation with moderate mitigation
-- neutral-professional register
-- some softeners ("could you", "I'm afraid", "please") but not strongly deferential
+#### Neutral — neither polite nor impolite
+- plain, matter-of-fact realisation of the act
+- no courtesy markers and no rudeness markers
+- even-toned and transactional; the unmarked default
 
-#### Level 2 — High politeness
+#### Positive — polite
 - clearly respectful and mitigated
 - strong face-saving framing
 - appreciation, deference, imposition acknowledgment without changing what is being said
+- politeness is in framing, not verbosity — do not pad with extra clauses; keep it close in length to the neutral and negative realisations
 
 ### Per-speech-act guidance
 
-**request.** Low: imperative or near-imperative ("Send me the file."). Mid: modal request with light softener ("Could you send me the file when you have a moment?"). High: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance.").
+**request.** Negative: rude, impatient demand ("Just send me the file already."). Neutral: plain direct request with no softeners or brusqueness ("Can you send me the file?"). Positive: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance."). The requested action stays identical.
 
-**refusal.** Low: bare "no" plus minimal reason ("I can't make it."). Mid: softened decline with brief reason ("I won't be able to make it, sorry."). High: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
+**refusal.** Negative: abrupt, dismissive decline with no acknowledgment of the offer ("No. I'm not doing that."). Neutral: plain decline with brief reason ("I won't be able to make it."). Positive: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
 
-**disagreement.** Low: flat contradiction ("That's wrong."). Mid: hedged contradiction ("I don't think that's quite right."). High: respectful disagreement with framing ("I see your point, but I'd respectfully push back — I don't think that holds."). The disagreed-with claim stays identical.
+**disagreement.** Negative: dismissive, contemptuous contradiction ("That's flat-out wrong."). Neutral: plain contradiction ("I don't think that's right."). Positive: respectful disagreement with framing ("I see your point, but I'd respectfully push back — I don't think that holds."). The disagreed-with claim stays identical.
 
-**criticism_or_feedback.** Low: direct judgment ("This report is inadequate."). Mid: feedback with mitigation ("This report needs more work in places."). High: appreciative, face-saving feedback ("There's a lot of good material here; I think the report would benefit from some additional work in a few places."). The criticised aspect stays identical.
+**criticism_or_feedback.** Negative: harsh, belittling judgment ("This report is sloppy and nowhere near good enough."). Neutral: plain feedback ("This report needs more work."). Positive: appreciative, face-saving feedback ("There's a lot of good material here; I think the report would benefit from some additional work in a few places."). The criticised aspect stays identical.
 
-**bad_news_delivery.** Low: blunt delivery ("Your refund is denied."). Mid: softened delivery with brief reason ("Unfortunately we can't approve your refund."). High: empathetic delivery with appreciation and apology ("I'm really sorry to have to tell you this, but we won't be able to approve your refund."). The bad news stays identical.
+**bad_news_delivery.** Negative: blunt, dismissive delivery that shuts the listener down ("Your refund is denied — that's final."). Neutral: plain delivery with brief reason ("We can't approve your refund."). Positive: empathetic delivery with appreciation and apology ("I'm really sorry to have to tell you this, but we won't be able to approve your refund."). The bad news stays identical.
 
-**apology.** Low: minimal acknowledgement ("Sorry I missed the deadline."). Mid: ordinary apology with brief explanation ("I'm sorry I missed the deadline — I should have flagged it earlier."). High: full face-restoring apology with acknowledgment of impact ("I really do apologise for missing the deadline; I know it put extra pressure on the team and I should have raised it sooner."). The apologised-for action stays identical.
+**apology.** Negative: grudging, dismissive non-apology that minimises the fault ("Yeah, I missed the deadline. It happens."). Neutral: plain apology with brief explanation ("I'm sorry I missed the deadline — I should have flagged it earlier."). Positive: full face-restoring apology with acknowledgment of impact ("I really do apologise for missing the deadline; I know it put extra pressure on the team and I should have raised it sooner."). The apologised-for action stays identical.
 
 ### Cue-diversity requirement
 For a given level, do not rely on one marker repeatedly. Spread realisations across:
@@ -322,7 +402,7 @@ For a given level, do not rely on one marker repeatedly. Spread realisations acr
 ## Trait B: Hedging / Linguistic Confidence
 
 ### Core construct
-Hedging/confidence is the degree of speaker commitment to a proposition. The low end expresses uncertainty or tentativeness; the high end expresses strong commitment.
+Hedging/confidence is the degree of speaker commitment to a proposition. The negative pole expresses uncertainty or tentativeness; the positive pole expresses strong commitment.
 
 ### Scope
 Hedging is realised across the following speech acts:
@@ -350,36 +430,36 @@ Hedging is realised across the following speech acts:
 - specificity of the recommendation
 - whether numerical probabilities are introduced (forbidden unless explicitly allowed)
 
-### Three-level scale (universal across speech acts)
+### Signed three-point scale (universal across speech acts)
 
-#### Level 0 — Low confidence / strongly hedged
+#### Negative — hedged / low confidence
 - tentative stance, explicit uncertainty
 - usable but clearly cautious
 - "I think it might…", "based on what I can tell…", "it's possible that…"
 
-#### Level 1 — Mid confidence
-- balanced commitment
-- ordinary qualified claim
-- "it's likely…", "I think…", "it seems…"
+#### Neutral — balanced commitment
+- ordinary qualified claim, neither markedly hedged nor markedly assertive
+- the unmarked default
+- "it seems…", "I think…", "it looks like…"
 
-#### Level 2 — High confidence / minimally hedged
+#### Positive — confident / minimally hedged
 - strong commitment, direct statement
 - still natural, not boastful or aggressive
 - "it is…", "I'm confident that…", a bare assertion
 
 ### Per-speech-act guidance
 
-**factual_assertion.** Low: "It might be that the policy reduces costs." Mid: "It looks like the policy reduces costs." High: "The policy reduces costs." Polarity stays identical.
+**factual_assertion.** Negative: "It might be that the policy reduces costs." Neutral: "It looks like the policy reduces costs." Positive: "The policy reduces costs." Polarity stays identical.
 
-**recommendation.** Low: "You might want to consider switching vendors." Mid: "I'd suggest switching vendors." High: "You should switch vendors." The recommended action stays identical.
+**recommendation.** Negative: "You might want to consider switching vendors." Neutral: "I'd suggest switching vendors." Positive: "You should switch vendors." The recommended action stays identical.
 
-**forecast.** Low: "Churn could rise next quarter." Mid: "Churn is likely to rise next quarter." High: "Churn will rise next quarter." Direction of the prediction stays identical; do not insert numbers.
+**forecast.** Negative: "Churn could rise next quarter." Neutral: "Churn is likely to rise next quarter." Positive: "Churn will rise next quarter." Direction of the prediction stays identical; do not insert numbers.
 
-**causal_explanation.** Low: "The deployment may have failed because of the config change." Mid: "The deployment likely failed because of the config change." High: "The deployment failed because of the config change." The causal claim stays identical.
+**causal_explanation.** Negative: "The deployment may have failed because of the config change." Neutral: "The deployment likely failed because of the config change." Positive: "The deployment failed because of the config change." The causal claim stays identical.
 
-**yes_no_answer.** Low: "I think the answer is probably yes, though I'm not certain." Mid: "I'd say yes." High: "Yes." Polarity stays identical.
+**yes_no_answer.** Negative: "I think the answer is probably yes, though I'm not certain." Neutral: "I'd say yes." Positive: "Yes." Polarity stays identical.
 
-**estimation.** Low: "It might take roughly two weeks, give or take." Mid: "It'll likely take about two weeks." High: "It'll take two weeks." The central estimate stays identical; only confidence in it varies.
+**estimation.** Negative: "It might take roughly two weeks, give or take." Neutral: "It'll likely take about two weeks." Positive: "It'll take two weeks." The central estimate stays identical; only confidence in it varies.
 
 ### Cue-diversity requirement
 Diversify across:
@@ -389,7 +469,7 @@ Diversify across:
 - discourse-softening phrases
 - syntax and clause structure
 
-Avoid mapping one level to one token (e.g. "maybe" ↔ low only).
+Avoid mapping one point to one token (e.g. "maybe" ↔ negative only).
 
 ---
 
@@ -398,7 +478,7 @@ Avoid mapping one level to one token (e.g. "maybe" ↔ low only).
 Every final item must satisfy all of the following:
 
 1. **Content preservation**: same core content (target / proposition / answer / forecast / cause / estimate) across levels. Every content_probe must have the same expected_answer at every level.
-2. **Ordered intensity**: human or validated judge ordering matches low < mid < high for the target trait.
+2. **Ordered intensity**: human or validated judge ordering matches negative < neutral < positive for the target trait.
 3. **Naturalness**: each sentence is fluent and plausible in ordinary usage.
 4. **No overt artifacts**: no single cue or template uniquely identifies one level across the dataset.
 5. **Paraphrase diversity**: at least two distinct phrasings per level, not near-duplicates.
@@ -531,6 +611,7 @@ class ModelSpec:
     family: str
     temperature: float = 0.0
     max_output_tokens: int = 1200
+    litellm_kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
 class LLMClient:
@@ -690,6 +771,7 @@ class LLMClient:
                 ],
                 temperature=temperature,
                 max_tokens=self.spec.max_output_tokens,
+                **self.spec.litellm_kwargs,
             )
             msg = resp["choices"][0]["message"]
             content = msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", None)
@@ -746,7 +828,7 @@ class Pipeline:
         self.scenario_schema = SCENARIO_SCHEMA
         self._validator = Draft202012Validator(self.scenario_schema["json_schema"])
         self.dataset_version = str(self.scenario_schema.get("dataset_version", "v3"))
-        self.rubric_version = str(self.scenario_schema.get("rubric_version", "construct_rubric.md@v2"))
+        self.rubric_version = str(self.scenario_schema.get("rubric_version", "construct_rubric.md@v3"))
         self.random_seed = int(self.config["pipeline"].get("random_seed", 17))
 
     def trait_dir(self, trait: str) -> Path:
@@ -801,6 +883,20 @@ class Pipeline:
         rng.shuffle(queue)
         return queue
 
+    def _build_language_queue(self, trait: str, n: int) -> List[str]:
+        """Return a balanced, deterministic list of language ids of length n."""
+        langs = list(self.LANGUAGES)
+        per = n // len(langs)
+        rem = n - per * len(langs)
+        queue: List[str] = []
+        for lang in langs:
+            queue.extend([lang] * per)
+        for i in range(rem):
+            queue.append(langs[i % len(langs)])
+        rng = random.Random(self.random_seed + sum(ord(c) for c in trait) + 17)
+        rng.shuffle(queue)
+        return queue
+
     def _content_invariant(self, scenario: Dict[str, Any]) -> str:
         """Return the invariant content string for a scenario, regardless of trait."""
         for key in ("speech_act_target", "proposition", "proposition_or_request", "requested_action"):
@@ -841,6 +937,7 @@ class Pipeline:
                 "imposition_level": "medium",
                 "urgency_level": "low",
                 "social_distance": "moderate",
+                "language": "en",
                 "notes": "keep target action and deadline fixed across rewrites",
             }
         if trait == "hedging_confidence":
@@ -870,6 +967,7 @@ class Pipeline:
                 "evidence_state": "internal usage and renewal data trends",
                 "answer_type": "forecast",
                 "consequence_sensitivity": "medium",
+                "language": "en",
                 "notes": "vary only confidence in the forecast across levels",
             }
         return {
@@ -886,6 +984,7 @@ class Pipeline:
             "content_probes": [{"question": "placeholder?", "expected_answer": "yes"}],
             "forbidden_cue_tokens": [],
             "target_word_count": 18,
+            "language": "en",
         }
 
     # ── Scenario generation ────────────────────────────────────────────────────
@@ -907,24 +1006,33 @@ class Pipeline:
         "speech_act", "domain", "topic_cluster", "audience_relation",
         "register", "communicative_goal", "content_probes",
         "forbidden_cue_tokens", "target_word_count", "length_tolerance_pct",
+        "language",
     ]
+
+    LANGUAGES = ["en", "it"]
+    _LANGUAGE_LABELS = {"en": "English", "it": "Italian"}
 
     def _scenario_user_prompt_batched(
         self,
         trait: str,
         speech_act_ids: List[str],
         previous_scenarios: List[Dict[str, Any]],
+        language_ids: Optional[List[str]] = None,
     ) -> str:
         """Build the per-batch prompt. Each scenario's assigned speech_act is fixed up front."""
         trait_info = self._trait_info(trait)
         shared_fields = list(self._SHARED_FIELDS)
         levels_str = ", ".join(self.levels)
         n = len(speech_act_ids)
+        if language_ids is None or len(language_ids) != n:
+            # Fallback: alternate en/it deterministically.
+            language_ids = [self.LANGUAGES[i % len(self.LANGUAGES)] for i in range(n)]
 
         # Build per-scenario assignment lines and per-act guidance blocks.
         acts_by_id = {a["id"]: a for a in self._speech_acts_for(trait)}
         assignment_lines = "\n".join(
-            f"  scenario {i + 1}: speech_act = {sid}" for i, sid in enumerate(speech_act_ids)
+            f"  scenario {i + 1}: speech_act = {sid}, language = {language_ids[i]} ({self._LANGUAGE_LABELS.get(language_ids[i], language_ids[i])})"
+            for i, sid in enumerate(speech_act_ids)
         )
         unique_acts = sorted(set(speech_act_ids))
         act_blocks = []
@@ -962,6 +1070,11 @@ class Pipeline:
             "  - length_tolerance_pct is an integer (default 20).\n"
             "  - forbidden_cue_tokens is a list of surface tokens that must not dominate any single level.\n"
             "  - speech_act MUST equal the value assigned above for that scenario index.\n"
+            "  - language MUST equal the value assigned above for that scenario index. "
+            "Use 'en' or 'it' verbatim. The communicative_goal and all natural-language fields "
+            "in that scenario must be written in the assigned language. Italian scenarios must use "
+            "culturally natural Italian framing (e.g. tu/Lei distinctions, Italian workplace norms), "
+            "not transliterated English.\n"
             "  - Vary domains, topic_clusters, audience_relations, registers across the batch.\n"
         )
         if previous_scenarios:
@@ -1010,6 +1123,10 @@ class Pipeline:
         # We just take the suffix corresponding to remaining slots.
         remaining_queue = full_queue[len(cleaned):]
         all_act_ids = [a["id"] for a in self._speech_acts_for(trait)]
+
+        # Parallel queue for languages, balanced en/it across the run.
+        full_lang_queue = self._build_language_queue(trait, total_n)
+        remaining_lang_queue = full_lang_queue[len(cleaned):]
         # Safety cap to prevent runaway loops on persistent model failures or repeated dedup hits.
         max_total_batches = max(8, ((total_n + batch_size - 1) // batch_size) * 4)
         consecutive_empty_batches = 0
@@ -1049,12 +1166,22 @@ class Pipeline:
                 topup = [all_act_ids[(rng.randrange(len(all_act_ids)) + i) % len(all_act_ids)] for i in range(needed)]
                 rng.shuffle(topup)
                 remaining_queue = topup
+            if not remaining_lang_queue:
+                needed = total_n - len(cleaned)
+                remaining_lang_queue = [
+                    self.LANGUAGES[i % len(self.LANGUAGES)] for i in range(needed)
+                ]
             batch_acts = remaining_queue[:batch_size]
             remaining_queue = remaining_queue[batch_size:]
+            batch_langs = remaining_lang_queue[:batch_size]
+            remaining_lang_queue = remaining_lang_queue[batch_size:]
+            # Pad languages if shorter than acts (defensive).
+            while len(batch_langs) < len(batch_acts):
+                batch_langs.append(self.LANGUAGES[len(batch_langs) % len(self.LANGUAGES)])
             batch_n = len(batch_acts)
             attempted_batches += 1
 
-            user = self._scenario_user_prompt_batched(trait, batch_acts, cleaned)
+            user = self._scenario_user_prompt_batched(trait, batch_acts, cleaned, batch_langs)
             schema_hint = json.dumps(
                 cleaned[-2:] if cleaned else [self._seed_example(trait)],
                 ensure_ascii=False,
@@ -1127,9 +1254,11 @@ class Pipeline:
                 row.setdefault("rubric_version", self.rubric_version)
                 row.setdefault("dataset_version", self.dataset_version)
                 row.setdefault("length_tolerance_pct", 20)
-                # Assign / overwrite speech_act from the queue (defensive).
+                # Assign / overwrite speech_act and language from the queues (defensive).
                 if i < len(batch_acts):
                     row["speech_act"] = batch_acts[i]
+                if i < len(batch_langs):
+                    row["language"] = batch_langs[i]
                 # Generate scenario_id deterministically.
                 next_idx = len(cleaned) + 1
                 act_slug = slugify(str(row.get("speech_act", "act")))
@@ -1229,13 +1358,20 @@ class Pipeline:
         levels_str = ", ".join(self.levels)
         invariant = self._content_invariant(scenario)
         speech_act = scenario.get("speech_act", "")
+        language = scenario.get("language", "en")
+        language_label = self._LANGUAGE_LABELS.get(language, language)
         return (
             f"Create one {len(self.levels)}-level canonical ladder for trait '{trait}', "
             f"speech_act '{speech_act}'.\n"
             f"Scenario:\n{json.dumps(scenario, ensure_ascii=False, indent=2)}\n\n"
+            f"LANGUAGE — hard requirement: every ladder rung MUST be written in {language_label} "
+            f"(language code '{language}'). Do not mix languages. Use culturally natural phrasing "
+            "for that language; do not produce a literal translation of an English template.\n"
             f"Levels must be {levels_str}.\n"
             f"The invariant content '{invariant}' must remain identical in meaning across levels.\n"
-            "Vary only the trait intensity. Keep all paraphrases similar in length.\n"
+            f"Vary only the trait intensity. Write all {len(self.levels)} rungs at about "
+            f"{scenario.get('target_word_count', 18)} words each — equal length across "
+            "levels, so sentence length never cues the trait.\n"
             "Return JSON with keys: scenario_id, trait, invariant_content, ladder.\n"
             f"'ladder' must map each of these levels to a single sentence: {levels_str}."
         )
@@ -1314,7 +1450,7 @@ class Pipeline:
             "Do not produce near-duplicates. Use different cue families when possible. "
             "Critical: all paraphrases must be similar in length across levels. "
             "Do not use sentence length or verbosity as a cue for the trait level. "
-            "A high-intensity paraphrase must not be longer than a low-intensity one.\n\n"
+            "Paraphrases must not be systematically longer at any point on the scale than at the others.\n\n"
             "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
@@ -1325,19 +1461,34 @@ class Pipeline:
         per_level: int,
         used_cue_families: set[str],
         forbidden_tokens_by_level: Optional[Dict[str, List[str]]] = None,
+        prior_texts_by_level: Optional[Dict[str, List[str]]] = None,
     ) -> str:
         avoid = sorted(used_cue_families - {""})
         n_levels = len(ladder_obj["ladder"])
+        target_len = ladder_obj.get("scenario", {}).get("target_word_count", 18)
+        language = ladder_obj.get("scenario", {}).get("language", "en")
+        language_label = self._LANGUAGE_LABELS.get(language, language)
         prompt = (
             f"Given this canonical {n_levels}-level ladder:\n"
             f"{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
-            f"Generate {per_level} paraphrases per level.\n"
+            f"LANGUAGE — hard requirement: every paraphrase MUST be written in "
+            f"{language_label} (language code '{language}'). Do not mix languages. Use "
+            "culturally natural phrasing; do not produce a literal translation of an "
+            "English template.\n"
+            f"Generate {per_level} paraphrase(s) per level.\n"
             "For each paraphrase, provide: level, cue_family, text.\n"
-            "Cue families should differ when possible, such as lexical marker, syntactic "
-            "framing, gratitude framing, evidential framing, indirectness, modal framing.\n"
+            "DIVERSITY — hard requirement: each paraphrase must be a genuinely distinct "
+            "sentence — its own syntactic structure and its own cue family (lexical "
+            "marker, syntactic framing, gratitude framing, evidential framing, "
+            "indirectness, modal framing). Do not reuse the structure of any other "
+            "paraphrase for this scenario. The polite level especially must not collapse "
+            "onto a single 'I appreciate your X, but Y' scaffold.\n"
             "Keep the proposition or requested action unchanged.\n"
-            "Keep all paraphrases similar in length regardless of level. "
-            "Express intensity through word choice and framing, not sentence length.\n"
+            f"LENGTH — hard requirement: write every paraphrase, at every level, at about "
+            f"{target_len} words. Negative, neutral and positive paraphrases must all "
+            "average the same length; a systematic length difference across levels is a "
+            "disqualifying confound. Convey the trait through word choice and framing, "
+            "never by adding or cutting words.\n"
             "Return JSON with keys: scenario_id, trait, items."
         )
         if avoid:
@@ -1357,6 +1508,18 @@ class Pipeline:
                     "them at that level (other levels are fine). Find different lexical "
                     "realizations:\n" + "\n".join(forbidden_lines)
                 )
+        if prior_texts_by_level and any(prior_texts_by_level.values()):
+            shown = {
+                lvl: prior_texts_by_level[lvl]
+                for lvl in self.levels
+                if prior_texts_by_level.get(lvl)
+            }
+            prompt += (
+                "\n\nParaphrases ALREADY generated for this scenario are below. Yours "
+                "MUST be genuinely different sentences — a different syntactic structure "
+                "and a different cue family from every one of them. Do not re-paraphrase "
+                "them:\n" + json.dumps(shown, ensure_ascii=False, indent=2)
+            )
         return prompt
 
     def _repair_paraphrases_user_prompt(
@@ -1372,15 +1535,25 @@ class Pipeline:
         ]
         notes = judge_result.get("notes", "no notes provided")
         avoid = sorted(used_cue_families - {""})
+        target_len = ladder_obj.get("scenario", {}).get("target_word_count", 18)
+        language = ladder_obj.get("scenario", {}).get("language", "en")
+        language_label = self._LANGUAGE_LABELS.get(language, language)
         prompt = (
             f"The previous paraphrases for this ladder were rejected by the validation judge.\n"
             f"Failed checks: {failed or 'none listed'}.\n"
             f"Judge notes: {notes}\n\n"
             f"Canonical ladder:\n"
             f"{json.dumps(ladder_obj['ladder'], ensure_ascii=False, indent=2)}\n\n"
+            f"LANGUAGE — hard requirement: every corrected paraphrase MUST be written in "
+            f"{language_label} (language code '{language}'). Do not mix languages.\n"
             f"Generate {per_level} corrected paraphrases per level, addressing the issues above.\n"
             "For each paraphrase, provide: level, cue_family, text.\n"
             "Keep the proposition or requested action unchanged.\n"
+            f"DIVERSITY — hard requirement: the {per_level} paraphrases within each level "
+            "must each use a distinct syntactic structure and cue family; no template "
+            "clones or synonym swaps, especially at the polite level.\n"
+            f"LENGTH — hard requirement: every paraphrase at every level must be about "
+            f"{target_len} words; equal length across levels, length must not cue the trait.\n"
             "Return JSON with keys: scenario_id, trait, items."
         )
         if avoid:
@@ -1428,57 +1601,73 @@ class Pipeline:
         tracker.add_rows(existing_paraphrases)
 
         def _one(ladder: Dict[str, Any]) -> List[Dict[str, Any]]:
+            scenario_id = ladder["scenario_id"]
+            scenario_language = ladder.get("scenario", {}).get("language", "en")
             schema_hint = json.dumps(
                 {
-                    "scenario_id": ladder["scenario_id"],
+                    "scenario_id": scenario_id,
                     "trait": trait,
-                    "items": [{"level": "low", "cue_family": "syntactic indirectness", "text": "..."}],
+                    "items": [{"level": "negative", "cue_family": "syntactic indirectness", "text": "..."}],
                 },
                 ensure_ascii=False,
             )
             with lock:
                 avoid = set(used_cue_families)
-            forbidden = tracker.top_per_level(k=shortcut_top_k, min_count=shortcut_min_count)
-            obj = self.generator.call_json(
-                system,
-                self._paraphrase_user_prompt(ladder, per_level, avoid, forbidden),
-                schema_hint,
-            )
-            if not isinstance(obj, dict):
-                raise ValueError(f"paraphrase response is {type(obj).__name__}, expected dict")
-            scenario_id = obj.get("scenario_id") or ladder["scenario_id"]
-            items = obj.get("items")
-            if not isinstance(items, list) or not items:
-                raise ValueError(
-                    f"paraphrase response missing/empty 'items' for {ladder['scenario_id']}"
-                )
+            # Generate one paraphrase per level per pass, each pass seeing the
+            # paraphrases already produced for this scenario, so the model cannot
+            # template-clone a level's set within a single response.
+            prior_by_level: Dict[str, List[str]] = {lvl: [] for lvl in self.levels}
+            counters: Dict[str, int] = {lvl: 0 for lvl in self.levels}
             batch: List[Dict[str, Any]] = []
-            for idx, item in enumerate(items, start=1):
-                if not isinstance(item, dict):
+            for _pass in range(per_level):
+                forbidden = tracker.top_per_level(k=shortcut_top_k, min_count=shortcut_min_count)
+                try:
+                    obj = self.generator.call_json(
+                        system,
+                        self._paraphrase_user_prompt(ladder, 1, avoid, forbidden, prior_by_level),
+                        schema_hint,
+                    )
+                except Exception as exc:
+                    print(f"  ! paraphrase pass failed for {scenario_id}: {type(exc).__name__}: {str(exc)[:100]}")
                     continue
-                lvl = item.get("level")
-                txt = item.get("text")
-                if lvl not in self.levels or not isinstance(txt, str) or not txt.strip():
+                items = obj.get("items") if isinstance(obj, dict) else None
+                if not isinstance(items, list):
                     continue
-                cue_family = item.get("cue_family", "unspecified")
-                batch.append({
-                    "scenario_id": scenario_id,
-                    "trait": trait,
-                    "level": lvl,
-                    "cue_family": cue_family,
-                    "text": normalize_text(txt),
-                    "canonical": ladder["ladder"].get(lvl, ""),
-                    "invariant_content": ladder.get("invariant_content", ""),
-                    "paraphrase_id": f"{scenario_id}-{lvl}-{idx:02d}",
-                })
+                pass_rows: List[Dict[str, Any]] = []
+                seen: set[str] = set()
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    lvl = item.get("level")
+                    txt = item.get("text")
+                    if lvl not in self.levels or lvl in seen:
+                        continue
+                    if not isinstance(txt, str) or not txt.strip():
+                        continue
+                    seen.add(lvl)
+                    txt = normalize_text(txt)
+                    counters[lvl] += 1
+                    pass_rows.append({
+                        "scenario_id": scenario_id,
+                        "trait": trait,
+                        "level": lvl,
+                        "language": scenario_language,
+                        "cue_family": item.get("cue_family", "unspecified"),
+                        "text": txt,
+                        "canonical": ladder["ladder"].get(lvl, ""),
+                        "invariant_content": ladder.get("invariant_content", ""),
+                        "paraphrase_id": f"{scenario_id}-{lvl}-{counters[lvl]:02d}",
+                    })
+                    prior_by_level[lvl].append(txt)
+                batch.extend(pass_rows)
+                tracker.add_rows(pass_rows)
             if not batch:
                 raise ValueError(
-                    f"paraphrase response produced no valid items for {ladder['scenario_id']}"
+                    f"paraphrase generation produced no valid items for {scenario_id}"
                 )
             with lock:
                 for r in batch:
                     used_cue_families.add(r["cue_family"])
-            tracker.add_rows(batch)
             return batch
 
         failed_paraphrases_file = self.trait_dir(trait) / "failed_paraphrases.jsonl"
@@ -1511,7 +1700,10 @@ class Pipeline:
         return (
             "You are an independent validation judge for a benchmark. "
             "Your job is to reject content drift, wrong ordering, poor fluency, "
-            "weak cue diversity, and shortcut-heavy bundles.\n\n"
+            "weak cue diversity, and shortcut-heavy bundles.\n"
+            "You score paraphrase QUALITY — how faithfully each text realises its "
+            "ASSIGNED level while preserving content and reading naturally — never the "
+            "magnitude of the trait itself.\n\n"
             f"Rubric:\n{rubric}\n\n"
             "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
@@ -1531,19 +1723,34 @@ class Pipeline:
                     for r in bundle if r["level"] == level]
             for level in self.levels
         }
+        bundle_language = next((r.get("language") for r in bundle if r.get("language")), "en")
+        language_label = self._LANGUAGE_LABELS.get(bundle_language, bundle_language)
         prompt = (
             f"Validate this bundle for trait '{trait}'.\n"
+            f"LANGUAGE: all texts in this bundle are written in {language_label} "
+            f"(code '{bundle_language}'). Apply the rubric and your fluency judgement in that "
+            "language. Do not penalise correct non-English phrasing as 'unnatural'.\n"
             f"Texts by level (use the exact 'id' values in your item_scores):\n"
             f"{json.dumps(grouped, ensure_ascii=False, indent=2)}\n\n"
             f"Check: proposition/request preservation, correct {levels_order} ordering, "
             "naturalness, paraphrase diversity, obvious lexical shortcut risk, and "
             "length_balance (flag if one level's texts are substantially longer/shorter "
-            "than the others — length must not be a trait cue).\n"
+            "than the others — length must not be a trait cue).\n\n"
+            "SCORING — read carefully. 'overall_score' and every 'item_score' rate "
+            "PARAPHRASE QUALITY, not how much of the trait the text expresses. A "
+            "paraphrase is high quality when it correctly and naturally realises its "
+            "ASSIGNED level, preserves the shared content, and is a fluent, non-duplicate "
+            f"sentence. The levels '{levels_order}' are target labels, NOT a 0-to-1 "
+            "scale: a text assigned the lowest level (the negative pole) that is a clear, "
+            "well-written realisation of that level deserves a HIGH score — just as much "
+            "as a well-written highest-level text. Do NOT give a text a low score merely "
+            "for sitting at a low level. Score a paraphrase low ONLY when it is a bad "
+            "paraphrase: wrong level, content drift, unnatural, or a near-duplicate.\n"
             "Return JSON with keys: accepted, overall_score, checks, notes, item_scores.\n"
             "'checks' must include content_preservation, monotonic_order, naturalness, "
             "cue_diversity, shortcut_risk, length_balance.\n"
             "'item_scores' must be a list where each entry has the exact 'id' string from "
-            "above as 'paraphrase_id', and a 'score' in [0,1]."
+            "above as 'paraphrase_id', and a quality 'score' in [0,1] as defined above."
         )
         if shortcut_hints and any(shortcut_hints.values()):
             hint_lines = [
@@ -1553,13 +1760,14 @@ class Pipeline:
             ]
             if hint_lines:
                 prompt += (
-                    "\n\nKnown shortcut tokens by level — these tokens currently leak the "
-                    "level across earlier bundles in this run:\n" + "\n".join(hint_lines) + "\n"
-                    "RULE: if any paraphrase in this bundle relies on its level's listed "
-                    "tokens to convey the trait, set checks.shortcut_risk='high', mark the "
-                    f"bundle accepted=false, and assign that paraphrase an item_score "
-                    f"strictly below {min_score:.2f}. Do not give the bundle the benefit of "
-                    "the doubt when shortcut tokens drive the level."
+                    "\n\nFrequently-used tokens by level (for awareness — these recur at "
+                    "the listed level across earlier bundles):\n" + "\n".join(hint_lines) + "\n"
+                    "Note: this trait is partly lexical — ordinary trait vocabulary (such "
+                    "as courtesy markers) is expected and is NOT itself a shortcut. Set "
+                    "checks.shortcut_risk='high' and score items low ONLY when the "
+                    "paraphrases at a level lack genuine variety — i.e. they are near-"
+                    "duplicates of one another or all hinge on the same single token or "
+                    "template. Diverse sentences that share common trait vocabulary are fine."
                 )
         return prompt
 
@@ -1602,6 +1810,10 @@ class Pipeline:
             "Do not include any other keys."
         )
 
+    def _intensity_scorer_language_hint(self, bundle: List[Dict[str, Any]]) -> str:
+        lang = next((r.get("language") for r in bundle if r.get("language")), "en")
+        return self._LANGUAGE_LABELS.get(lang, lang)
+
     def _score_intensity_blind(
         self,
         trait: str,
@@ -1627,6 +1839,8 @@ class Pipeline:
             anon_items.append((code, row["text"]))
         system = self._intensity_scorer_system_prompt(trait)
         user = self._intensity_scorer_user_prompt(trait, anon_items)
+        lang_label = self._intensity_scorer_language_hint(bundle)
+        user = f"All texts below are written in {lang_label}. Rate them in that language.\n\n" + user
         schema_hint = json.dumps(
             {"scores": [{"code": "<code>", "intensity": "<float in [0,1]>"}]},
             ensure_ascii=False,
@@ -1682,7 +1896,7 @@ class Pipeline:
             diag["intensity_monotonic"] = False
             diag["intensity_failure_reason"] = "missing scores for at least one level"
             return False, diag
-        ordered = [means[lvl] for lvl in self.levels]  # e.g. [low, mid, high]
+        ordered = [means[lvl] for lvl in self.levels]  # e.g. [negative, neutral, positive]
         # Strict monotonic increase with min gap.
         for a, b in zip(ordered, ordered[1:]):
             if b - a < min_gap:
@@ -1731,9 +1945,6 @@ class Pipeline:
             },
             ensure_ascii=False,
         )
-        tie_breaker_margin = float(
-            self.config["pipeline"].get("tie_breaker_margin", 0.15)
-        )
         primary = self.judge.call_json(
             system,
             self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
@@ -1746,9 +1957,17 @@ class Pipeline:
             primary = {"item_scores": primary, "accepted": False, "overall_score": 0.0}
         elif not isinstance(primary, dict):
             primary = {"accepted": False, "overall_score": 0.0, "notes": f"judge returned {type(primary).__name__}"}
+        # Bundle acceptance is decoupled from the judge's scalar overall_score,
+        # which mode-collapses to a narrow band and is not a reliable signal.
+        # Accept on the judge's core correctness checks; the programmatic gates
+        # below can still veto, and per-item scores filter individual rows.
+        _checks = primary.get("checks")
+        if not isinstance(_checks, dict):
+            _checks = {}
         bundle_accepted = (
-            bool(primary.get("accepted", False))
-            and float(primary.get("overall_score", 0.0)) >= min_score
+            _checks.get("content_preservation") is True
+            and _checks.get("monotonic_order") is True
+            and _checks.get("naturalness") is True
         )
 
         # ─── Programmatic gates (not trusted to the judge LLM) ────────────────
@@ -1800,27 +2019,6 @@ class Pipeline:
             primary.setdefault("notes", "")
             primary["notes"] = (primary["notes"] or "") + " [gate failures: " + " | ".join(gate_failures) + "]"
             primary["gate_failures"] = gate_failures
-
-        # Tie-breaker only fires when the judge LLM was borderline AND no
-        # programmatic gate has hard-failed. A tie-breaker cannot rescue a bundle
-        # that failed an objective check.
-        if (
-            not bundle_accepted
-            and not gate_failures
-            and float(primary.get("overall_score", 0.0)) >= max(0.0, min_score - tie_breaker_margin)
-        ):
-            tie = self.tie_breaker.call_json(
-                system,
-                self._judge_user_prompt(trait, scenario_id, bundle, shortcut_hints, min_score),
-                schema_hint,
-            )
-            if not isinstance(tie, dict):
-                tie = {"accepted": False, "overall_score": 0.0, "notes": f"tie returned {type(tie).__name__}"}
-            bundle_accepted = (
-                bool(tie.get("accepted", False))
-                and float(tie.get("overall_score", 0.0)) >= min_score
-            )
-            primary["tie_breaker"] = tie
 
         # ─── Per-item acceptance ───────────────────────────────────────────────
         # Require an explicit per-item score from the judge for each paraphrase.
@@ -1876,7 +2074,7 @@ class Pipeline:
             {
                 "scenario_id": scenario_id,
                 "trait": trait,
-                "items": [{"level": "low", "cue_family": "...", "text": "..."}],
+                "items": [{"level": "negative", "cue_family": "...", "text": "..."}],
             },
             ensure_ascii=False,
         )
@@ -1902,6 +2100,7 @@ class Pipeline:
                 "scenario_id": scenario_id,
                 "trait": trait,
                 "level": lvl,
+                "language": ladder.get("scenario", {}).get("language", "en"),
                 "cue_family": item.get("cue_family", "unspecified"),
                 "text": normalize_text(txt),
                 "canonical": ladder["ladder"].get(lvl, ""),
@@ -2073,7 +2272,7 @@ class Pipeline:
                 {
                     "scenario_id": sid,
                     "trait": trait,
-                    "items": [{"level": "low", "cue_family": "...", "text": "..."}],
+                    "items": [{"level": "negative", "cue_family": "...", "text": "..."}],
                 },
                 ensure_ascii=False,
             )
@@ -2125,7 +2324,6 @@ class Pipeline:
             raise FileNotFoundError("Run judge first.")
         max_dup = float(self.config["pipeline"]["max_duplicate_jaccard"])
         warning_acc = float(self.config["pipeline"]["lexical_baseline_warning_accuracy"])
-        max_rounds = int(self.config["pipeline"].get("max_shortcut_repair_rounds", 2))
 
         duplicates: List[Dict[str, Any]] = []
         for a, b in itertools.combinations(rows, 2):
@@ -2138,49 +2336,71 @@ class Pipeline:
                 })
 
         df = pd.DataFrame(rows)
-        lexical_accuracy = None
-        top_ngrams: List[Dict[str, Any]] = []
-        shortcut_ngrams: List[str] = []
+        # Ensure language column exists so older rows (pre-language pipeline) still group.
+        if "language" not in df.columns:
+            df["language"] = "en"
+        else:
+            df["language"] = df["language"].fillna("en")
 
-        if len(df) >= 12 and df["level"].nunique() >= 2:
-            vectorizer = CountVectorizer(ngram_range=(1, 2), min_df=1)
-            X = vectorizer.fit_transform(df["text"])
-            y = df["level"]
+        def _fit_lexical_baseline(sub_df: "pd.DataFrame") -> Tuple[Optional[float], List[Dict[str, Any]], List[str]]:
+            """Run the per-subset lexical-baseline classifier and return
+            (accuracy, top_ngrams_by_level, shortcut_ngrams)."""
+            if len(sub_df) < 12 or sub_df["level"].nunique() < 2:
+                return None, [], []
+            vectorizer = CountVectorizer(ngram_range=(1, 2), min_df=2)
+            X = vectorizer.fit_transform(sub_df["text"])
+            y = sub_df["level"]
             n_splits = min(5, y.value_counts().min())
-            if n_splits >= 2:
-                clf = LogisticRegression(max_iter=2000)
-                cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=7)
-                preds = cross_val_predict(clf, X, y, cv=cv)
-                lexical_accuracy = float(accuracy_score(y, preds))
-                clf.fit(X, y)
-                vocab = vectorizer.get_feature_names_out()
-                for idx, label in enumerate(clf.classes_):
-                    top_ids = clf.coef_[idx].argsort()[-10:][::-1]
-                    level_top = [vocab[i] for i in top_ids]
-                    top_ngrams.append({"level": label, "top_positive_ngrams": level_top})
-                    shortcut_ngrams.extend(level_top[:5])
+            if n_splits < 2:
+                return None, [], []
+            clf = LogisticRegression(max_iter=2000)
+            cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=7)
+            preds = cross_val_predict(clf, X, y, cv=cv)
+            acc = float(accuracy_score(y, preds))
+            clf.fit(X, y)
+            vocab = vectorizer.get_feature_names_out()
+            coef_rows = list(clf.coef_)
+            if len(coef_rows) == 1 and len(clf.classes_) == 2:
+                coef_rows = [-coef_rows[0], coef_rows[0]]
+            tops: List[Dict[str, Any]] = []
+            shortcuts: List[str] = []
+            for idx, label in enumerate(clf.classes_):
+                top_ids = coef_rows[idx].argsort()[-10:][::-1]
+                level_top = [vocab[i] for i in top_ids]
+                tops.append({"level": label, "top_positive_ngrams": level_top})
+                shortcuts.extend(level_top[:5])
+            return acc, tops, shortcuts
 
-        used_cue_families: set[str] = {
-            r["cue_family"] for r in rows if r.get("cue_family")
-        }
+        # Per-language baselines — mixed-language pooling would trivially separate
+        # on vocabulary, so each language gets its own classifier.
+        per_language_baseline: Dict[str, Dict[str, Any]] = {}
+        for lang_code, lang_df in df.groupby("language"):
+            acc, tops, shortcuts = _fit_lexical_baseline(lang_df)
+            per_language_baseline[str(lang_code)] = {
+                "num_rows": int(len(lang_df)),
+                "lexical_baseline_accuracy": acc,
+                "top_ngrams_by_level": tops,
+                "shortcut_ngrams": shortcuts,
+            }
 
-        # Hard gate: if lexical accuracy is too high, trigger targeted regeneration
-        if (
-            lexical_accuracy is not None
-            and lexical_accuracy >= warning_acc
-            and _repair_round < max_rounds
-            and shortcut_ngrams
-        ):
-            flagged = self._find_shortcut_scenarios(rows, shortcut_ngrams)
-            if flagged:
-                print(
-                    f"Shortcut gate (round {_repair_round + 1}/{max_rounds}): "
-                    f"regenerating {len(flagged)} scenarios"
-                )
-                self._regenerate_shortcut_scenarios(trait, flagged, shortcut_ngrams, used_cue_families)
-                self.audit(trait, _repair_round=_repair_round + 1)
-                return
+        # Headline accuracy for the report: max across languages (most concerning value).
+        # The warning gate uses this same headline.
+        accs = [v["lexical_baseline_accuracy"] for v in per_language_baseline.values()
+                if v["lexical_baseline_accuracy"] is not None]
+        lexical_accuracy = max(accs) if accs else None
+        top_ngrams = [
+            {"language": lang, **entry}
+            for lang, info in per_language_baseline.items()
+            for entry in info["top_ngrams_by_level"]
+        ]
+        shortcut_ngrams = [
+            s for info in per_language_baseline.values() for s in info["shortcut_ngrams"]
+        ]
 
+        # The lexical-baseline accuracy is reported (below), not gated on:
+        # politeness is intrinsically lexical, so a bag-of-words classifier
+        # beating chance is expected. Cue diversity is enforced upstream
+        # (generation + judge), not by destructive post-hoc regeneration.
         scenario_balance = (
             df.groupby(["scenario_id", "level"])
             .size()
@@ -2218,6 +2438,13 @@ class Pipeline:
             "num_duplicate_pairs": len(duplicates),
             "lexical_baseline_accuracy": lexical_accuracy,
             "lexical_baseline_warning": lexical_accuracy is not None and lexical_accuracy >= warning_acc,
+            "lexical_baseline_by_language": {
+                lang: {
+                    "num_rows": info["num_rows"],
+                    "lexical_baseline_accuracy": info["lexical_baseline_accuracy"],
+                }
+                for lang, info in per_language_baseline.items()
+            },
             "top_ngrams_by_level": top_ngrams,
             "scenario_level_balance": scenario_balance,
             "mean_char_length_by_level": {k: round(v, 1) for k, v in char_len_by_level.items()},

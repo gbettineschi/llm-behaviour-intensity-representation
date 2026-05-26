@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 TRAITS = ["politeness", "hedging_confidence"]
-LEVELS = ["low", "mid", "high"]
+LEVELS = ["negative", "neutral", "positive"]
 
 
 class Sample(NamedTuple):

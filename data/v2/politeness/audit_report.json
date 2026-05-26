@@ -1,0 +1,3631 @@
+{
+  "trait": "politeness",
+  "num_rows": 2090,
+  "shortcut_repair_rounds": 0,
+  "duplicate_pairs_over_threshold": [],
+  "num_duplicate_pairs": 0,
+  "lexical_baseline_accuracy": 0.839458413926499,
+  "lexical_baseline_warning": true,
+  "lexical_baseline_by_language": {
+    "en": {
+      "num_rows": 1056,
+      "lexical_baseline_accuracy": 0.8276515151515151
+    },
+    "it": {
+      "num_rows": 1034,
+      "lexical_baseline_accuracy": 0.839458413926499
+    }
+  },
+  "top_ngrams_by_level": [
+    {
+      "language": "en",
+      "level": "negative",
+      "top_positive_ngrams": [
+        "no",
+        "what",
+        "now",
+        "it",
+        "wrong",
+        "period",
+        "need",
+        "get",
+        "want",
+        "me"
+      ]
+    },
+    {
+      "language": "en",
+      "level": "neutral",
+      "top_positive_ngrams": [
+        "can you",
+        "some",
+        "was",
+        "requires",
+        "lately",
+        "current",
+        "submission",
+        "as",
+        "please",
+        "purchased"
+      ]
+    },
+    {
+      "language": "en",
+      "level": "positive",
+      "top_positive_ngrams": [
+        "but",
+        "would",
+        "might",
+        "if",
+        "perhaps",
+        "could",
+        "sorry",
+        "hoping",
+        "good",
+        "thanks"
+      ]
+    },
+    {
+      "language": "it",
+      "level": "negative",
+      "top_positive_ngrams": [
+        "subito",
+        "immediatamente",
+        "non",
+        "fare",
+        "inaccettabile",
+        "senza",
+        "inammissibile",
+        "perché",
+        "assolutamente",
+        "voglio"
+      ]
+    },
+    {
+      "language": "it",
+      "level": "neutral",
+      "top_positive_ngrams": [
+        "stata",
+        "puoi",
+        "si",
+        "del",
+        "già",
+        "causa",
+        "presente",
+        "che il",
+        "comunico che",
+        "comunico"
+      ]
+    },
+    {
+      "language": "it",
+      "level": "positive",
+      "top_positive_ngrams": [
+        "se",
+        "ma",
+        "molto",
+        "saresti",
+        "potrebbe",
+        "tuttavia",
+        "forse",
+        "qualche",
+        "spero",
+        "sarebbe"
+      ]
+    }
+  ],
+  "scenario_level_balance": [
+    {
+      "scenario_id": "politeness-apology-001",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-001",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-001",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-004",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-004",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-004",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-013",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-013",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-013",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-038",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-038",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-038",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-057",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-057",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-057",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-078",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-078",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-078",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-094",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-094",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-094",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-104",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-104",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-104",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-144",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-144",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-144",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-145",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-145",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-145",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-146",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-146",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-146",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-152",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-152",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-152",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-168",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-168",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-168",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-198",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-198",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-198",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-202",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-202",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-202",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-218",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-218",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-218",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-221",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-221",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-221",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-227",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-227",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-227",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-237",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-237",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-237",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-244",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-244",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-244",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-245",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-245",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-245",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-248",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-248",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-248",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-283",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-283",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-apology-283",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-009",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-009",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-009",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-011",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-011",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-011",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-016",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-016",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-016",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-036",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-036",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-036",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-053",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-053",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-053",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-056",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-056",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-056",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-088",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-088",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-088",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-093",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-093",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-093",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-095",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-095",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-095",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-099",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-099",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-099",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-107",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-107",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-107",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-113",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-113",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-113",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-136",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-136",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-136",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-141",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-141",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-141",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-173",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-173",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-173",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-183",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-183",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-183",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-187",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-187",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-187",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-196",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-196",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-196",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-242",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-242",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-242",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-273",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-273",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-273",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-296",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-296",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-bad-news-delivery-296",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-017",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-017",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-017",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-066",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-066",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-066",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-091",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-091",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-091",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-098",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-098",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-098",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-108",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-108",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-108",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-110",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-110",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-110",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-128",
+      "level": "negative",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-complaint-128",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-128",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-139",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-139",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-139",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-151",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-151",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-151",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-158",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-158",
+      "level": "neutral",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-complaint-158",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-163",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-163",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-163",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-167",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-167",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-167",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-169",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-169",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-169",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-174",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-174",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-174",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-215",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-215",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-215",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-216",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-216",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-216",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-217",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-217",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-217",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-229",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-229",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-229",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-241",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-241",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-241",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-264",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-264",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-264",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-271",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-271",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-271",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-281",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-281",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-281",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-294",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-294",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-complaint-294",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-002",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-002",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-002",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-008",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-008",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-008",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-019",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-019",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-019",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-024",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-024",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-024",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-030",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-030",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-030",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-033",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-033",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-033",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-090",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-090",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-090",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-115",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-115",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-115",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-129",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-129",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-129",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-133",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-133",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-133",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-135",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-135",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-135",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-137",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-137",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-137",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-143",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-143",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-143",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-181",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-181",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-181",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-184",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-184",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-184",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-197",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-197",
+      "level": "neutral",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-correction-197",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-235",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-235",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-235",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-243",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-243",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-243",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-250",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-250",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-250",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-259",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-259",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-259",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-268",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-268",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-268",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-287",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-287",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-287",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-289",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-289",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-289",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-292",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-292",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-292",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-293",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-293",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-299",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-299",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-correction-299",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-015",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-015",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-015",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-018",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-018",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-018",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-022",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-022",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-022",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-026",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-026",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-026",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-027",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-027",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-027",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-029",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-029",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-029",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-037",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-037",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-037",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-046",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-046",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-046",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-052",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-052",
+      "level": "neutral",
+      "count": 1
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-052",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-068",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-068",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-068",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-071",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-071",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-071",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-073",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-073",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-073",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-084",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-084",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-084",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-085",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-085",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-101",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-101",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-101",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-105",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-105",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-105",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-125",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-125",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-125",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-131",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-131",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-131",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-132",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-132",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-132",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-156",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-156",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-156",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-201",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-201",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-228",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-228",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-228",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-230",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-230",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-230",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-231",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-231",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-231",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-246",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-246",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-246",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-257",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-257",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-257",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-274",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-274",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-274",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-285",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-285",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-criticism-or-feedback-285",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-032",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-032",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-032",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-072",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-072",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-072",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-087",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-087",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-087",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-089",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-089",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-089",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-097",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-097",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-097",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-114",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-114",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-114",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-117",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-117",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-117",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-123",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-123",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-123",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-126",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-126",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-126",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-147",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-147",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-147",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-160",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-160",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-160",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-175",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-175",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-175",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-182",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-182",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-182",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-191",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-191",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-191",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-193",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-193",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-193",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-212",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-212",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-212",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-220",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-220",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-220",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-224",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-224",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-224",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-225",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-225",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-225",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-234",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-234",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-234",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-251",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-251",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-251",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-256",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-256",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-256",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-267",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-267",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-267",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-282",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-282",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-282",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-291",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-291",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-disagreement-291",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-003",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-003",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-003",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-048",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-048",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-048",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-059",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-059",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-059",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-061",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-061",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-062",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-062",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-062",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-112",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-112",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-112",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-121",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-121",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-121",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-134",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-134",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-134",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-138",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-138",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-138",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-154",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-154",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-154",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-162",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-162",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-162",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-170",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-170",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-206",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-206",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-206",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-232",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-232",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-232",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-236",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-236",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-236",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-262",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-262",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-262",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-266",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-266",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-266",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-279",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-279",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-inquiry-sensitive-279",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-014",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-014",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-014",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-039",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-039",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-039",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-042",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-042",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-042",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-043",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-043",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-043",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-049",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-049",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-049",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-051",
+      "level": "negative",
+      "count": 1
+    },
+    {
+      "scenario_id": "politeness-refusal-051",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-051",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-054",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-054",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-054",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-058",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-058",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-058",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-079",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-079",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-079",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-080",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-080",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-080",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-086",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-086",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-086",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-103",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-103",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-103",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-109",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-109",
+      "level": "neutral",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-refusal-109",
+      "level": "positive",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-refusal-157",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-157",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-157",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-161",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-161",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-161",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-165",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-165",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-165",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-176",
+      "level": "negative",
+      "count": 2
+    },
+    {
+      "scenario_id": "politeness-refusal-176",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-176",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-179",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-179",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-179",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-192",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-192",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-192",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-207",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-207",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-207",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-210",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-210",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-210",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-233",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-233",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-238",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-238",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-238",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-240",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-240",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-240",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-276",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-276",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-276",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-278",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-278",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-278",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-280",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-280",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-280",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-297",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-297",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-297",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-006",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-006",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-006",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-025",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-025",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-025",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-031",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-031",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-031",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-040",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-040",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-040",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-055",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-055",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-055",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-064",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-064",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-064",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-100",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-100",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-100",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-111",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-111",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-111",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-116",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-116",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-116",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-118",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-118",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-118",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-122",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-122",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-122",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-164",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-164",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-164",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-177",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-177",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-177",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-213",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-213",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-213",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-214",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-214",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-214",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-226",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-226",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-226",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-255",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-255",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-255",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-263",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-263",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-263",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-265",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-265",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-265",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-275",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-275",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-275",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-298",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-298",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-reminder-298",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-005",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-005",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-012",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-012",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-012",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-028",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-028",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-028",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-045",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-045",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-045",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-063",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-063",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-063",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-069",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-069",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-070",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-070",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-070",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-081",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-081",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-081",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-082",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-082",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-083",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-083",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-083",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-106",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-106",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-106",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-124",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-124",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-124",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-127",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-127",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-127",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-130",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-130",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-130",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-149",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-149",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-172",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-172",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-172",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-185",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-185",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-195",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-195",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-203",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-203",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-203",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-223",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-223",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-223",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-252",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-252",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-252",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-253",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-253",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-253",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-260",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-260",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-272",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-272",
+      "level": "neutral",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-272",
+      "level": "positive",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-290",
+      "level": "negative",
+      "count": 3
+    },
+    {
+      "scenario_id": "politeness-request-290",
+      "level": "positive",
+      "count": 3
+    }
+  ],
+  "mean_char_length_by_level": {
+    "negative": 90.7,
+    "neutral": 97.2,
+    "positive": 97.0
+  },
+  "mean_word_count_by_level": {
+    "negative": 14.77,
+    "neutral": 15.15,
+    "positive": 15.46
+  },
+  "length_ratio_threshold": 1.15,
+  "length_imbalance_warning": false
+}

@@ -1,0 +1,2 @@
+{"scenario_id": "politeness-reminder-209", "error_type": "Timeout", "error_message": "litellm.Timeout: Timeout Error: OpenrouterException - litellm.Timeout: Connection timed out after 600.0 seconds."}
+{"scenario_id": "politeness-reminder-171", "error_type": "Timeout", "error_message": "litellm.Timeout: Timeout Error: OpenrouterException - litellm.Timeout: Connection timed out after 600.0 seconds."}

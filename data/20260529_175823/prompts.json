@@ -1,0 +1,110 @@
+[
+  {
+    "prompt": "I'm not coming to your party. My schedule is packed with more important things; attending is simply out of the question.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "Regrettably, attendance is impossible. Prior commitments prevent me from joining the party; I will be unavailable that evening.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "How kind of you to invite me! I wish I could be there, but a prior engagement prevents me from attending.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "Forget about me showing up. I have zero interest in your party, so I'm definitely not going to be there.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "Unfortunately, I won't be able to make it. It turns out I have a prior obligation, so I won't be at the party.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "I truly appreciate the invitation to your party! Sadly, something unexpected came up, so I won't be able to attend.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "I'm not going. I have much better ways to spend my time than being at your boring party; count me out.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "It appears I'm unable to attend. My calendar shows a pre-existing obligation, and therefore I won't be at the party.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "I'm so grateful for the invitation to your party! I wish I could come, but I have a previous commitment already scheduled.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-refusal-001"
+  },
+  {
+    "prompt": "You should give me an extension on the assignment; my other priorities took precedence, and you're here to help the students out.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I'm writing to request an extension for the assignment. Some problems have come up that have made it hard for me to finish on time.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I was wondering about the possibility of an extension for the assignment. I've had a few unexpected difficulties, and any extra time would help.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I require you to extend the deadline for the assignment; I've had more pressing matters, and you're supposed to be assisting students like me.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I am submitting a request for an extension on the assignment. Evidence suggests some recent issues have complicated my ability to complete it by the due date.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I would be grateful if you could consider extending the deadline for the assignment. Some unforeseen circumstances have arisen, and I'd appreciate the flexibility.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I'm telling you now that I expect an extension on this assignment; I had more important things to do, so your role is to help students.",
+    "trait": "politeness",
+    "intensity": "negative",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I am formally asking for an extension on the assignment. I've been managing some difficulties that have made it harder to complete the work.",
+    "trait": "politeness",
+    "intensity": "neutral",
+    "scenario_id": "politeness-request-002"
+  },
+  {
+    "prompt": "I'd be so grateful if an extension on the assignment were possible. I've been navigating some challenges, and any extra time would really help.",
+    "trait": "politeness",
+    "intensity": "positive",
+    "scenario_id": "politeness-request-002"
+  }
+]

@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from lib.data_typing import Sample
+from lib.prompts import Sample
 
 
 def load_model(model_name: str, device: str, quantization: str | None = None):
@@ -80,7 +80,8 @@ def extract_activations_multilayer(
     """
     layers = sorted(set(layer_indices))
     special_ids = {
-        tid for tid in (
+        tid
+        for tid in (
             tokenizer.bos_token_id,
             tokenizer.eos_token_id,
             tokenizer.pad_token_id,
@@ -91,7 +92,7 @@ def extract_activations_multilayer(
     bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
 
     for start in range(0, len(samples), batch_size):
-        batch = samples[start:start + batch_size]
+        batch = samples[start : start + batch_size]
         texts = [s.prompt for s in batch]
         enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
         with torch.no_grad():
@@ -112,8 +113,7 @@ def extract_activations_multilayer(
 
         # Pool every requested layer on-device, stack, then a single cross-device copy.
         per_layer = [
-            (hidden_states[layer + 1] * weights).sum(dim=1) / counts
-            for layer in layers
+            (hidden_states[layer + 1] * weights).sum(dim=1) / counts for layer in layers
         ]
         stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
         # stacked: (num_layers, B, D)
@@ -195,7 +195,7 @@ def extract_activations_last_token_chat_multilayer(
 
     bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
     for start in range(0, len(samples), batch_size):
-        batch = samples[start:start + batch_size]
+        batch = samples[start : start + batch_size]
         texts = [_render(s.prompt) for s in batch]
         enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
         with torch.no_grad():
@@ -240,8 +240,13 @@ def extract_activations_last_token_chat(
     If *out_dir* is given, tensors are saved to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``.
     """
     multi = extract_activations_last_token_chat_multilayer(
-        samples, model, tokenizer, [layer_index], device,
-        batch_size=batch_size, user_instruction=user_instruction,
+        samples,
+        model,
+        tokenizer,
+        [layer_index],
+        device,
+        batch_size=batch_size,
+        user_instruction=user_instruction,
     )
     result = {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
 

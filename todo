@@ -1,1 +1,6 @@
-add support for apple metal
+- analysis.py should be better
+- a single reproducing script should be available
+- readme should be good
+- code should be readable and documented
+- representations should be on git via lfs if necessary
+- representations should be saved for the tokens we are interested into

@@ -1,11 +1,11 @@
 """Blind triplet-ranking web app (library).
 
 `human_eval(data_root)` serves a local web app and blocks until the annotator finishes:
-they first pick one of the available prompt datasets (a `data/<timestamp>/` folder with a
-`filtered.jsonl`), then order each scenario's three paraphrases — shown unlabeled, in random
-order — from least to most of the trait. The true order is revealed after each answer. On
+they first pick one of the available datasets (a `data/<timestamp>/sentences/` folder with a
+`sentences_filtered.jsonl`), then order each scenario's three paraphrases — shown unlabeled, in
+random order — from least to most of the trait. The true order is revealed after each answer. On
 finish the server stops and the collected results are RETURNED to the caller, which decides
-where to save them (see run_human_eval.py). Stdlib only — no extra dependencies.
+where to save them (see evaluate_prompts.py). Stdlib only — no extra dependencies.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def build_triplets(run_dir: Path) -> list[dict]:
     Display order is shuffled (seeded per scenario, stable across reloads); the true level of
     each card is kept server-side for scoring.
     """
-    path = run_dir / "filtered.jsonl"
+    path = run_dir / "sentences_filtered.jsonl"
     if not path.exists():
         return []
     by_scenario: dict[str, dict[str, list[dict]]] = defaultdict(
@@ -73,32 +73,34 @@ def build_triplets(run_dir: Path) -> list[dict]:
 # --- scoring
 
 
-def score_order(human_order: list[str], gold_order: list[str]) -> tuple[bool, int]:
+def score_order(human_order: list[str], assumed_order: list[str]) -> tuple[bool, int]:
     """Return (exact-match, #correctly-ordered-pairs) for one triplet."""
     rank = {lvl: i for i, lvl in enumerate(human_order)}
-    gold = {lvl: i for i, lvl in enumerate(gold_order)}
+    assumed = {lvl: i for i, lvl in enumerate(assumed_order)}
     pairs = sum(
         1
-        for a, b in combinations(gold_order, 2)
-        if (rank[a] < rank[b]) == (gold[a] < gold[b])
+        for a, b in combinations(assumed_order, 2)
+        if (rank[a] < rank[b]) == (assumed[a] < assumed[b])
     )
-    return human_order == gold_order, pairs
+    return human_order == assumed_order, pairs
 
 
 def agreement(records: list[dict]) -> dict:
-    """Aggregate agreement of the annotator's orderings against the dataset labels."""
+    """Aggregate agreement of the annotator's orderings against the dataset labels.
+
+    For 3 levels Kendall tau is just 2*pairwise_accuracy - 1, so only the two independent
+    numbers are reported: exact-order and pairwise accuracy.
+    """
     n = len(records)
     if n == 0:
         return {"n": 0}
     n_pairs = len(LEVELS) * (len(LEVELS) - 1) // 2
     exact = sum(r["exact"] for r in records)
     pairs = sum(r["pairwise_correct"] for r in records)
-    taus = [(2 * r["pairwise_correct"] - n_pairs) / n_pairs for r in records]
     return {
         "n": n,
         "exact_order_accuracy": round(exact / n, 4),
         "pairwise_accuracy": round(pairs / (n * n_pairs), 4),
-        "mean_kendall_tau": round(sum(taus) / n, 4),
     }
 
 
@@ -184,7 +186,7 @@ async function initPick() {
   const res = await api("/api/datasets");
   const box = $("datasets");
   const list = res.datasets || [];
-  if (list.length === 0) { $("pickErr").textContent = "No datasets found under data/ (run generate_prompts.py first)."; return; }
+  if (list.length === 0) { $("pickErr").textContent = "No datasets found under data/ (run generate_sentences.py first)."; return; }
   box.innerHTML = "";
   list.forEach((d, i) => {
     const row = document.createElement("label");
@@ -251,10 +253,10 @@ $("submitBtn").onclick = async () => {
   revealed = true;
   $("submitBtn").classList.add("hidden");
   $("resetBtn").classList.add("hidden");
-  const goldPos = {}; res.gold_order.forEach((lvl, i) => { goldPos[lvl] = i; });
+  const assumedPos = {}; res.assumed_order.forEach((lvl, i) => { assumedPos[lvl] = i; });
   for (const el of document.querySelectorAll(".card")) {
     const level = res.levels[el.dataset.cid];
-    el.classList.add(ranking.indexOf(el.dataset.cid) === goldPos[level] ? "good" : "bad");
+    el.classList.add(ranking.indexOf(el.dataset.cid) === assumedPos[level] ? "good" : "bad");
     el.querySelector(".tag").textContent = "true level: " + level.toUpperCase();
   }
   const v = $("verdict"); v.classList.remove("hidden");
@@ -275,9 +277,9 @@ async function showDone() {
     box.innerHTML =
       '<p class="big">' + pct(a.exact_order_accuracy) + '</p>' +
       '<p class="sub">exact-order agreement over ' + a.n + ' triplets</p>' +
-      '<table><tr><th>n</th><th>exact order</th><th>pairwise</th><th>Kendall &tau;</th></tr>' +
+      '<table><tr><th>n</th><th>exact order</th><th>pairwise</th></tr>' +
       '<tr><td>' + a.n + '</td><td>' + pct(a.exact_order_accuracy) + '</td><td>' +
-      pct(a.pairwise_accuracy) + '</td><td>' + a.mean_kendall_tau.toFixed(3) + '</td></tr></table>' +
+      pct(a.pairwise_accuracy) + '</td></tr></table>' +
       '<p class="sub" style="margin-top:14px">Results returned to the launcher — you can close this tab.</p>';
   }
   $("done").classList.remove("hidden");
@@ -288,7 +290,7 @@ initPick();
 
 
 def _make_handler(data_root: Path, state: dict, results: dict, done: threading.Event):
-    gold_order = LEVELS
+    assumed_order = LEVELS
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):  # quiet
@@ -320,17 +322,17 @@ def _make_handler(data_root: Path, state: dict, results: dict, done: threading.E
                 self.wfile.write(body)
             elif parsed.path == "/api/datasets":
                 datasets = []
-                for p in sorted(data_root.glob("*/filtered.jsonl")):
+                for p in sorted(data_root.glob("*/sentences/sentences_filtered.jsonl")):
                     datasets.append(
                         {
-                            "name": p.parent.name,
+                            "name": p.parent.parent.name,
                             "n_triplets": len(build_triplets(p.parent)),
                         }
                     )
                 self._json({"datasets": datasets})
             elif parsed.path == "/api/tasks":
                 name = parse_qs(parsed.query).get("dataset", [""])[0]
-                triplets = build_triplets(data_root / name)
+                triplets = build_triplets(data_root / name / "sentences")
                 state.update(
                     dataset=name,
                     triplets=triplets,
@@ -369,13 +371,12 @@ def _make_handler(data_root: Path, state: dict, results: dict, done: threading.E
                 self._json({"error": "invalid answer"}, 400)
                 return
             human_order = [cid_to_level[cid] for cid in ranking]
-            exact, pairs = score_order(human_order, gold_order)
+            exact, pairs = score_order(human_order, assumed_order)
             state["answers"].append(
                 {
                     "scenario_id": triplet["task_id"],
                     "trait": triplet["trait"],
                     "human_order": human_order,
-                    "gold_order": gold_order,
                     "exact": exact,
                     "pairwise_correct": pairs,
                 }
@@ -383,7 +384,7 @@ def _make_handler(data_root: Path, state: dict, results: dict, done: threading.E
             self._json(
                 {
                     "levels": cid_to_level,
-                    "gold_order": gold_order,
+                    "assumed_order": assumed_order,
                     "exact": exact,
                     "pairwise_correct": pairs,
                 }
@@ -392,6 +393,7 @@ def _make_handler(data_root: Path, state: dict, results: dict, done: threading.E
         def _finish(self) -> None:
             results.update(
                 dataset=state["dataset"],
+                assumed_order=list(LEVELS),
                 answers=state["answers"],
                 agreement=agreement(state["answers"]),
             )

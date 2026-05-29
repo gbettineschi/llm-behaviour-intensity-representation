@@ -1,7 +1,7 @@
-"""Politeness prompt-dataset generation (English-only).
+"""Politeness sentence-dataset generation (English-only).
 
-One module: shared types/IO (Sample, load_accepted, …), rubric, scenario schema, LLM client,
-and the Pipeline. `generate_prompts(out_dir, ...)` runs the stages and writes into out_dir;
+One module: shared types/IO (Sample, load_accepted, …), politeness guide, scenario schema, LLM client,
+and the Pipeline. `generate_sentences(out_dir, ...)` runs the stages and writes into out_dir;
 the caller owns where that is. Stages run in order:
 
     scenarios -> base_sentences -> paraphrases -> judge_and_filter -> export
@@ -35,7 +35,7 @@ from json_repair import repair_json
 
 from jsonschema import Draft202012Validator
 
-# --- shared types & IO helpers (this module is `lib.prompts`)
+# --- shared types & IO helpers (this module is `lib.sentences`)
 
 TRAITS = ["politeness"]
 LEVELS = ["negative", "neutral", "positive"]
@@ -49,7 +49,7 @@ class Sample(NamedTuple):
 
 
 def load_accepted(path: str | Path) -> list[Sample]:
-    """Load samples from a filtered.jsonl dataset (text/trait/level/scenario_id)."""
+    """Load samples from a sentences_filtered.jsonl dataset (text/trait/level/scenario_id)."""
     samples = []
     with open(path) as f:
         for line in f:
@@ -96,9 +96,9 @@ def jaccard(a: str, b: str) -> float:
     return len(sa & sb) / max(1, len(sa | sb))
 
 
-# --- construct rubric
+# --- politeness guide
 
-CONSTRUCT_RUBRIC = """\
+POLITENESS_GUIDE = """\
 # Politeness rubric (signed 3-point scale)
 
 Rewrite one fixed message at three politeness levels — negative (impolite), neutral
@@ -107,7 +107,7 @@ true zero: neither courtesy nor rudeness markers. Negative and positive are equa
 departures from it.
 
 ## Keep constant across the three levels
-- the speech-act target (what is requested / refused / criticised / etc.)
+- the intent target (what is requested / refused / criticised / etc.)
 - named entities, dates, deadlines, and the core intent
 - the polarity of the act (a refusal stays a refusal; an apology stays an apology)
 - urgency, scope, and the amount imposed
@@ -124,7 +124,7 @@ person (those would be lexical giveaways).
 **Positive — polite.** Respectful and mitigated: appreciation, deference, acknowledging the
 imposition. Politeness is in the framing, not extra words — keep it the same length.
 
-## Per-speech-act examples
+## Per-intent examples
 **request.** Negative: rude, impatient demand ("Just send me the file already."). Neutral: plain direct request with no softeners or brusqueness ("Can you send me the file?"). Positive: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance."). The requested action stays identical.
 
 **refusal.** Negative: abrupt, dismissive decline with no acknowledgment of the offer ("No. I'm not doing that."). Neutral: plain decline with brief reason ("I won't be able to make it."). Positive: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
@@ -155,7 +155,7 @@ indirectness, gratitude framing, imposition acknowledgment, and softened or impe
 
 # The trait-specific field every politeness scenario must carry: the fixed thing the act is
 # about. Named once so the trait catalogue and the json_schema `required` list stay in sync.
-POLITENESS_REQUIRED = ["speech_act_target"]
+POLITENESS_REQUIRED = ["intent_target"]
 
 SCENARIO_SCHEMA: Dict[str, Any] = {
     "rubric_version": "v3",
@@ -165,11 +165,11 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
         "politeness": {
             "description": "Mitigation of face threat, deference, social consideration. Negative = impolite/rude; neutral = plain/matter-of-fact; positive = polite/mitigated.",
             "required_fields": POLITENESS_REQUIRED,
-            "speech_acts": [
+            "intents": [
                 {
                     "id": "request",
                     "description": "Asking the listener to do or provide something.",
-                    "example_communicative_goal": "ask a colleague to send a file",
+                    "example_goal": "ask a colleague to send a file",
                     "extra_constraints": [
                         "Keep the requested action fixed across levels.",
                         "Do not change urgency or scope across levels.",
@@ -178,7 +178,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "refusal",
                     "description": "Declining a request, invitation, proposal, or offer made by the listener.",
-                    "example_communicative_goal": "turn down a meeting invitation",
+                    "example_goal": "turn down a meeting invitation",
                     "extra_constraints": [
                         "The refusal target (what is being declined) must remain identical across levels.",
                         "Do not change the refusal into a partial acceptance or a counter-offer.",
@@ -187,7 +187,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "disagreement",
                     "description": "Expressing a contrary opinion, correction, or pushback on a claim.",
-                    "example_communicative_goal": "push back on a colleague's analysis",
+                    "example_goal": "push back on a colleague's analysis",
                     "extra_constraints": [
                         "The point of disagreement must remain identical across levels.",
                         "Do not soften disagreement into agreement at any level.",
@@ -196,7 +196,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "criticism_or_feedback",
                     "description": "Pointing out a problem with the listener's work, output, or behaviour.",
-                    "example_communicative_goal": "tell a junior their report needs rework",
+                    "example_goal": "tell a junior their report needs rework",
                     "extra_constraints": [
                         "The criticised aspect must remain identical across levels.",
                         "Do not turn criticism into pure praise.",
@@ -205,7 +205,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "bad_news_delivery",
                     "description": "Telling the listener something they will not want to hear (denial, rejection, negative outcome).",
-                    "example_communicative_goal": "inform a customer their refund is denied",
+                    "example_goal": "inform a customer their refund is denied",
                     "extra_constraints": [
                         "The bad news content must remain identical across levels.",
                         "Do not change a denial into an approval or a hedged maybe.",
@@ -214,7 +214,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "apology",
                     "description": "Acknowledging fault or expressing regret for a specific wrongdoing.",
-                    "example_communicative_goal": "apologise for missing a deadline",
+                    "example_goal": "apologise for missing a deadline",
                     "extra_constraints": [
                         "The thing being apologised for must remain identical across levels.",
                         "Do not change which party is at fault.",
@@ -223,7 +223,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "complaint",
                     "description": "Voicing a grievance about a problem or situation affecting the speaker (service issue, environmental nuisance, missed commitment, etc.). Distinct from criticism_or_feedback, which targets the listener's work.",
-                    "example_communicative_goal": "complain to a hotel manager about a noisy neighbouring room",
+                    "example_goal": "complain to a hotel manager about a noisy neighbouring room",
                     "extra_constraints": [
                         "The grievance (what is wrong) must remain identical across levels.",
                         "Do not turn the complaint into pure praise or into a refusal of service.",
@@ -232,7 +232,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "reminder",
                     "description": "Prompting the listener about an outstanding obligation, deadline, or commitment they owe.",
-                    "example_communicative_goal": "remind a colleague that an expense report is overdue",
+                    "example_goal": "remind a colleague that an expense report is overdue",
                     "extra_constraints": [
                         "The reminded item (what is outstanding) must remain identical across levels.",
                         "Do not change the reminder into a new request or an apology.",
@@ -241,7 +241,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "inquiry_sensitive",
                     "description": "Asking a personal, awkward, or socially delicate question.",
-                    "example_communicative_goal": "ask a coworker why they missed work last week",
+                    "example_goal": "ask a coworker why they missed work last week",
                     "extra_constraints": [
                         "The question's content must remain identical across levels.",
                         "Do not change the topic or scope of the inquiry.",
@@ -250,7 +250,7 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 {
                     "id": "correction",
                     "description": "Pointing out a factual or procedural mistake the listener made.",
-                    "example_communicative_goal": "correct a junior's misuse of a tool",
+                    "example_goal": "correct a junior's misuse of a tool",
                     "extra_constraints": [
                         "The corrected fact or step must remain identical across levels.",
                         "Do not change the correction into agreement or an unrelated tip.",
@@ -258,11 +258,10 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
                 },
             ],
             "generation_constraints": [
-                "Speech_act_target must be fixed across levels and paraphrases.",
+                "Intent_target must be fixed across levels and paraphrases.",
                 "Urgency and imposition must stay constant across levels.",
                 "No insults, threats, or profanity even at the negative (impolite) pole.",
-                "Diversify politeness across directness, deference, gratitude, softeners, and impersonal phrasing. Do not let any single forbidden_cue_token dominate one level.",
-                "Every paraphrase, at every level, must satisfy every content_probe with the same expected_answer.",
+                "Diversify politeness across directness, deference, gratitude, softeners, and impersonal phrasing.",
                 "Keep every paraphrase, at every level, close to target_word_count.",
             ],
         },
@@ -276,36 +275,20 @@ SCENARIO_SCHEMA: Dict[str, Any] = {
             "trait": {"const": "politeness"},
             "rubric_version": {"type": "string"},
             "dataset_version": {"type": "string"},
-            "speech_act": {"type": "string", "minLength": 2},
+            "intent": {"type": "string", "minLength": 2},
             "domain": {"type": "string", "minLength": 2},
             "audience_relation": {"type": "string"},
             "communicative_goal": {"type": "string", "minLength": 5},
-            "speech_act_target": {"type": "string", "minLength": 3},
-            "content_probes": {
-                "type": "array",
-                "minItems": 1,
-                "maxItems": 3,
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "question": {"type": "string", "minLength": 5},
-                        "expected_answer": {"type": "string", "enum": ["yes", "no"]},
-                    },
-                    "required": ["question", "expected_answer"],
-                },
-            },
-            "forbidden_cue_tokens": {"type": "array", "items": {"type": "string"}},
+            "intent_target": {"type": "string", "minLength": 3},
             "target_word_count": {"type": "integer", "minimum": 4, "maximum": 60},
         },
         "required": [
             "scenario_id",
             "trait",
-            "speech_act",
+            "intent",
             "domain",
             "audience_relation",
             "communicative_goal",
-            "content_probes",
-            "forbidden_cue_tokens",
             "target_word_count",
         ]
         + POLITENESS_REQUIRED,
@@ -383,7 +366,7 @@ class LLMClient:
 # --- pipeline
 
 _RANDOM_SEED = (
-    17  # fixed so shuffles (speech-act queue, blind scoring) are reproducible
+    17  # fixed so shuffles (intent queue, blind scoring) are reproducible
 )
 
 
@@ -438,7 +421,7 @@ class Pipeline:
 
     def _run_items(self, items, work):
         # Run work(item) over items in a thread pool; a failing item comes back as None
-        # (callers filter those out). Errors are printed; counts go into run.json.
+        # (callers filter those out). Errors are printed; counts go into metadata.json.
         def _safe(item):
             try:
                 return work(item)
@@ -457,29 +440,29 @@ class Pipeline:
                 f"Trait '{trait}' is not defined in the scenario schema."
             ) from e
 
-    def _speech_acts_for(self, trait: str) -> List[Dict[str, Any]]:
-        acts = self._trait_info(trait).get("speech_acts", [])
+    def _intents_for(self, trait: str) -> List[Dict[str, Any]]:
+        acts = self._trait_info(trait).get("intents", [])
         if not acts:
-            raise ValueError(f"No speech_acts configured for trait '{trait}'")
+            raise ValueError(f"No intents configured for trait '{trait}'")
         return acts
 
-    def _build_speech_act_queue(self, trait: str, n: int) -> List[str]:
-        # Speech_act ids split as evenly as possible across n scenarios, then shuffled
+    def _build_intent_queue(self, trait: str, n: int) -> List[str]:
+        # Intent ids split as evenly as possible across n scenarios, then shuffled
         # with a fixed seed so a given trait always yields the same order.
-        acts = [a["id"] for a in self._speech_acts_for(trait)]
-        per = n // len(acts)
-        rem = n - per * len(acts)
+        ids = [a["id"] for a in self._intents_for(trait)]
+        per = n // len(ids)
+        rem = n - per * len(ids)
         queue: List[str] = []
-        for a in acts:
+        for a in ids:
             queue.extend([a] * per)
         for i in range(rem):
-            queue.append(acts[i % len(acts)])
+            queue.append(ids[i % len(ids)])
         rng = random.Random(self.random_seed + sum(ord(c) for c in trait))
         rng.shuffle(queue)
         return queue
 
     def _content_invariant(self, scenario: Dict[str, Any]) -> str:
-        v = scenario.get("speech_act_target")
+        v = scenario.get("intent_target")
         return v.strip() if isinstance(v, str) else ""
 
     def _validate_scenario(self, scenario: Dict[str, Any]) -> Tuple[bool, List[str]]:
@@ -493,22 +476,11 @@ class Pipeline:
             "trait": trait,
             "rubric_version": self.rubric_version,
             "dataset_version": self.dataset_version,
-            "speech_act": "request",
+            "intent": "request",
             "domain": "workplace",
             "audience_relation": "peer",
             "communicative_goal": "ask a teammate to share the latest budget spreadsheet",
-            "speech_act_target": "send the latest budget spreadsheet by end of day",
-            "content_probes": [
-                {
-                    "question": "Is the speaker asking for the budget spreadsheet?",
-                    "expected_answer": "yes",
-                },
-                {
-                    "question": "Is the speaker offering to do something for the listener?",
-                    "expected_answer": "no",
-                },
-            ],
-            "forbidden_cue_tokens": ["please", "kindly"],
+            "intent_target": "send the latest budget spreadsheet by end of day",
             "target_word_count": 18,
         }
 
@@ -528,55 +500,53 @@ class Pipeline:
         "trait",
         "rubric_version",
         "dataset_version",
-        "speech_act",
+        "intent",
         "domain",
         "audience_relation",
         "communicative_goal",
-        "content_probes",
-        "forbidden_cue_tokens",
         "target_word_count",
     ]
 
     def _scenario_user_prompt_batched(
         self,
         trait: str,
-        speech_act_ids: List[str],
+        intent_ids: List[str],
         previous_scenarios: List[Dict[str, Any]],
     ) -> str:
-        # Each scenario's speech_act is assigned up front so the batch stays balanced.
+        # Each scenario's intent is assigned up front so the batch stays balanced.
         trait_info = self._trait_info(trait)
         shared_fields = list(self._SHARED_FIELDS)
         levels_str = ", ".join(self.levels)
-        n = len(speech_act_ids)
+        n = len(intent_ids)
 
-        acts_by_id = {a["id"]: a for a in self._speech_acts_for(trait)}
+        intents_by_id = {a["id"]: a for a in self._intents_for(trait)}
         assignment_lines = "\n".join(
-            f"  scenario {i + 1}: speech_act = {sid}"
-            for i, sid in enumerate(speech_act_ids)
+            f"  scenario {i + 1}: intent = {sid}"
+            for i, sid in enumerate(intent_ids)
         )
-        unique_acts = sorted(set(speech_act_ids))
-        act_blocks = []
-        for sid in unique_acts:
-            a = acts_by_id[sid]
+        unique_intents = sorted(set(intent_ids))
+        intent_blocks = []
+        for sid in unique_intents:
+            a = intents_by_id[sid]
             block = f"- {sid}: {a.get('description', '')}"
-            example_goal = a.get("example_communicative_goal")
+            example_goal = a.get("example_goal")
             if example_goal:
-                block += f"\n  example communicative_goal: {example_goal}"
+                block += f"\n  example goal: {example_goal}"
             extra = a.get("extra_constraints") or []
             if extra:
-                block += "\n  per-act constraints:\n" + "\n".join(
+                block += "\n  per-intent constraints:\n" + "\n".join(
                     f"    - {c}" for c in extra
                 )
-            act_blocks.append(block)
+            intent_blocks.append(block)
 
         prompt = (
             f"Generate exactly {n} base scenarios for the trait '{trait}'.\n"
             f"Trait description: {trait_info.get('description', '')}\n"
             f"Future ordinal rewriting will use levels: {levels_str}.\n\n"
-            f"Each scenario MUST use the speech_act assigned to it below. Do not reassign or merge speech acts:\n"
+            f"Each scenario MUST use the intent assigned to it below. Do not reassign or merge intents:\n"
             f"{assignment_lines}\n\n"
-            f"Speech-act guide (only the acts you need this batch):\n"
-            + "\n".join(act_blocks)
+            f"Intent guide (only the intents you need this batch):\n"
+            + "\n".join(intent_blocks)
             + "\n\n"
             f"Required trait-specific fields: {trait_info['required_fields']}.\n"
             f"Trait-level generation constraints:\n"
@@ -587,10 +557,8 @@ class Pipeline:
             "  - scenario_id is a stable string (you may use 'auto' and the pipeline will reassign).\n"
             "  - trait must equal the trait above.\n"
             f"  - rubric_version = '{self.rubric_version}', dataset_version = '{self.dataset_version}'.\n"
-            "  - content_probes is a list of 1-3 yes/no questions, each with expected_answer in [yes, no].\n"
             "  - target_word_count is an integer between 8 and 40.\n"
-            "  - forbidden_cue_tokens is a list of surface tokens that must not dominate any single level.\n"
-            "  - speech_act MUST equal the value assigned above for that scenario index.\n"
+            "  - intent MUST equal the value assigned above for that scenario index.\n"
             "  - All natural-language fields must be written in English.\n"
             "  - Vary domains and audience_relations across the batch.\n"
         )
@@ -598,7 +566,7 @@ class Pipeline:
             slim = [
                 {
                     "scenario_id": s.get("scenario_id"),
-                    "speech_act": s.get("speech_act"),
+                    "intent": s.get("intent"),
                     "domain": s.get("domain"),
                     "communicative_goal": s.get("communicative_goal"),
                 }
@@ -621,7 +589,7 @@ class Pipeline:
         system = self._scenario_system_prompt(trait)
 
         cleaned: List[Dict[str, Any]] = []
-        remaining_queue = self._build_speech_act_queue(trait, total_n)
+        remaining_queue = self._build_intent_queue(trait, total_n)
         invariant_strings: set[str] = set()
 
         # Stop on: target reached, an absolute batch cap, a fatal API error, or too many
@@ -652,15 +620,15 @@ class Pipeline:
             if (
                 not remaining_queue
             ):  # ran dry because dedup/validation dropped some scenarios
-                remaining_queue = self._build_speech_act_queue(
+                remaining_queue = self._build_intent_queue(
                     trait, total_n - len(cleaned)
                 )
-            batch_acts = remaining_queue[:batch_size]
+            batch_intents = remaining_queue[:batch_size]
             remaining_queue = remaining_queue[batch_size:]
-            batch_n = len(batch_acts)
+            batch_n = len(batch_intents)
             attempted_batches += 1
 
-            user = self._scenario_user_prompt_batched(trait, batch_acts, cleaned)
+            user = self._scenario_user_prompt_batched(trait, batch_intents, cleaned)
             schema_hint = json.dumps(
                 cleaned[-2:] if cleaned else [self._seed_example(trait)],
                 ensure_ascii=False,
@@ -682,7 +650,7 @@ class Pipeline:
             if scenarios_raw is None:
                 err_msg = str(last_err) if last_err else ""
                 print(
-                    f"  ! batch {batch_index} ({batch_acts}) skipped after {max_batch_retries} retries."
+                    f"  ! batch {batch_index} ({batch_intents}) skipped after {max_batch_retries} retries."
                 )
                 unproductive_streak += 1
                 if any(p in err_msg.lower() for p in FATAL_ERRORS):
@@ -711,15 +679,11 @@ class Pipeline:
                 row["trait"] = trait
                 row.setdefault("rubric_version", self.rubric_version)
                 row.setdefault("dataset_version", self.dataset_version)
-                if i < len(batch_acts):
-                    row["speech_act"] = batch_acts[i]
+                if i < len(batch_intents):
+                    row["intent"] = batch_intents[i]
                 next_idx = len(cleaned) + 1
-                act_slug = slugify(str(row.get("speech_act", "act")))
-                row["scenario_id"] = f"{trait}-{act_slug}-{next_idx:03d}"
-                cp = row.get("content_probes")
-                if isinstance(cp, dict):
-                    row["content_probes"] = [cp]
-                row.setdefault("forbidden_cue_tokens", [])
+                intent_slug = slugify(str(row.get("intent", "intent")))
+                row["scenario_id"] = f"{trait}-{intent_slug}-{next_idx:03d}"
 
                 ok, _ = self._validate_scenario(row)
                 if not ok:
@@ -753,7 +717,7 @@ class Pipeline:
         return (
             "You create controlled ordinal ladders for NLP research. "
             "Keep content fixed and vary only trait intensity.\n\n"
-            f"Rubric:\n{CONSTRUCT_RUBRIC}\n\n"
+            f"Politeness guide:\n{POLITENESS_GUIDE}\n\n"
             "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
@@ -761,10 +725,10 @@ class Pipeline:
     def _base_sentences_user_prompt(self, trait: str, scenario: Dict[str, Any]) -> str:
         levels_str = ", ".join(self.levels)
         invariant = self._content_invariant(scenario)
-        speech_act = scenario.get("speech_act", "")
+        intent = scenario.get("intent", "")
         return (
             f"Create one {len(self.levels)}-level set of base sentences for trait '{trait}', "
-            f"speech_act '{speech_act}'.\n"
+            f"intent '{intent}'.\n"
             f"Scenario:\n{json.dumps(scenario, ensure_ascii=False, indent=2)}\n\n"
             "Write every sentence in English; use natural, idiomatic phrasing.\n"
             f"Levels must be {levels_str}.\n"
@@ -836,7 +800,6 @@ class Pipeline:
         self,
         base_obj: Dict[str, Any],
         used_cue_families: set[str],
-        forbidden_cue_tokens: Optional[List[str]] = None,
         prior_texts_by_level: Optional[Dict[str, List[str]]] = None,
     ) -> str:
         avoid = sorted(used_cue_families - {""})
@@ -865,11 +828,6 @@ class Pipeline:
         )
         if avoid:
             prompt += f"\n\nAlready used in this dataset — vary away from these cue families: {avoid}."
-        if forbidden_cue_tokens:
-            prompt += (
-                "\n\nDo not lean on these tokens to mark politeness (they are scenario-specific "
-                f"shortcuts to avoid as level cues): {sorted(set(forbidden_cue_tokens))}."
-            )
         if prior_texts_by_level and any(prior_texts_by_level.values()):
             shown = {
                 lvl: prior_texts_by_level[lvl]
@@ -896,7 +854,6 @@ class Pipeline:
 
         def _one(base_obj: Dict[str, Any]) -> List[Dict[str, Any]]:
             scenario_id = base_obj["scenario_id"]
-            forbidden = base_obj.get("scenario", {}).get("forbidden_cue_tokens") or []
             schema_hint = json.dumps(
                 {
                     "scenario_id": scenario_id,
@@ -923,7 +880,7 @@ class Pipeline:
                     obj = self.generator.call_json(
                         system,
                         self._paraphrase_user_prompt(
-                            base_obj, avoid, forbidden, prior_by_level
+                            base_obj, avoid, prior_by_level
                         ),
                         schema_hint,
                     )
@@ -995,12 +952,8 @@ class Pipeline:
     def _context_user_prompt(
         self,
         invariant: str,
-        content_probes: List[Dict[str, Any]],
         items: List[Tuple[str, str]],
     ) -> str:
-        probes_str = (
-            json.dumps(content_probes, ensure_ascii=False) if content_probes else "[]"
-        )
         items_json = json.dumps(
             [{"paraphrase_id": pid, "text": t} for pid, t in items],
             ensure_ascii=False,
@@ -1008,7 +961,6 @@ class Pipeline:
         )
         return (
             f"Invariant content every text must preserve:\n{invariant}\n\n"
-            f"Content probes — every text must satisfy each with the stated expected_answer:\n{probes_str}\n\n"
             f"Texts:\n{items_json}\n\n"
             'Return JSON with key "scores": a list of {"paraphrase_id": "<id>", "score": <float 0..1>}, '
             "one entry per input id. No other keys."
@@ -1018,7 +970,6 @@ class Pipeline:
         self,
         trait: str,
         bundle: List[Dict[str, Any]],
-        content_probes: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, float]:
         # paraphrase_id -> faithfulness score in [0,1]; 0.0 if the judge omits an id.
         if not bundle:
@@ -1026,7 +977,7 @@ class Pipeline:
         invariant = bundle[0].get("invariant_content", "")
         items = [(r["paraphrase_id"], r["text"]) for r in bundle]
         system = self._context_system_prompt(trait)
-        user = self._context_user_prompt(invariant, content_probes or [], items)
+        user = self._context_user_prompt(invariant, items)
         schema_hint = json.dumps(
             {"scores": [{"paraphrase_id": "<id>", "score": "<float 0..1>"}]},
             ensure_ascii=False,
@@ -1195,18 +1146,16 @@ class Pipeline:
         self,
         trait: str,
         bundle: List[Dict[str, Any]],
-        scenario: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         # Tag every paraphrase with its scores, `passed`, and the `failed_check` that dropped it.
         min_score = self.min_acceptance_score
         min_gap = self.intensity_min_gap
         max_ratio = self.max_length_ratio
-        content_probes = (scenario or {}).get("content_probes", [])
 
         failed_check: Dict[str, str] = {}
 
         # criterion 1: context (per-sentence faithfulness)
-        ctx_scores = self._context_scores(trait, bundle, content_probes)
+        ctx_scores = self._context_scores(trait, bundle)
         for r in bundle:
             if ctx_scores.get(r["paraphrase_id"], 0.0) < min_score:
                 failed_check[r["paraphrase_id"]] = "context"
@@ -1251,7 +1200,6 @@ class Pipeline:
         self,
         trait: str,
         paraphrases: List[Dict[str, Any]],
-        scenarios_by_id: Dict[str, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
         # Judge each scenario's paraphrases and tag every row with `passed` + `failed_check`.
         # Returns all rows (the unfiltered set); the caller keeps the passing ones.
@@ -1262,9 +1210,7 @@ class Pipeline:
 
         def _one(item: Tuple[str, List[Dict[str, Any]]]):
             sid, bundle = item
-            return self._judge_and_filter_bundle(
-                trait, bundle, scenarios_by_id.get(sid)
-            )
+            return self._judge_and_filter_bundle(trait, bundle)
 
         results = [r for r in self._run_items(bundles, _one) if r is not None]
         judged = [row for bundle_rows in results for row in bundle_rows]
@@ -1304,7 +1250,7 @@ DEFAULT_MODELS = {
 }
 
 
-# Rows kept in filtered.jsonl (the dataset); diagnostics (scores, passed, failed_check) stay in unfiltered.
+# Rows kept in sentences_filtered.jsonl (the dataset); diagnostics (scores, passed, failed_check) stay in sentences_unfiltered.
 _DATASET_FIELDS = (
     "scenario_id",
     "trait",
@@ -1317,7 +1263,7 @@ _DATASET_FIELDS = (
 )
 
 
-def generate_prompts(
+def generate_sentences(
     out_dir,
     *,
     n_scenarios: int = 300,
@@ -1330,9 +1276,9 @@ def generate_prompts(
 ) -> Path:
     """Generate the dataset into out_dir (created if needed) and return it.
 
-    Writes scenarios.jsonl, unfiltered.jsonl, filtered.jsonl, run.json into out_dir. The caller
-    chooses the directory (e.g. data/<timestamp>). Needs OPENROUTER_API_KEY (a repo-root .env is
-    loaded automatically).
+    Writes scenarios.jsonl, sentences_unfiltered.jsonl, sentences_filtered.jsonl, metadata.json into out_dir. The caller
+    chooses the directory (e.g. data/<timestamp>/prompts). Needs OPENROUTER_API_KEY (a repo-root .env
+    is loaded automatically).
     """
     models = models or DEFAULT_MODELS
     out = Path(out_dir)
@@ -1353,14 +1299,12 @@ def generate_prompts(
     scenarios = pipe.make_scenarios(trait)
     base = pipe.make_base_sentences(trait, scenarios)
     paraphrases = pipe.make_paraphrases(trait, base)
-    judged = pipe.judge_and_filter(
-        trait, paraphrases, {s["scenario_id"]: s for s in scenarios}
-    )
+    judged = pipe.judge_and_filter(trait, paraphrases)
     passed = [r for r in judged if r["passed"]]
 
-    jsonl_write(out / "unfiltered.jsonl", judged)
+    jsonl_write(out / "sentences_unfiltered.jsonl", judged)
     jsonl_write(
-        out / "filtered.jsonl",
+        out / "sentences_filtered.jsonl",
         [{k: r[k] for k in _DATASET_FIELDS if k in r} for r in passed],
     )
 
@@ -1368,11 +1312,11 @@ def generate_prompts(
     for r in judged:
         if r["failed_check"]:
             by_failed[r["failed_check"]] = by_failed.get(r["failed_check"], 0) + 1
-    by_act: Dict[str, int] = {}
+    by_intent: Dict[str, int] = {}
     for s in scenarios:
-        by_act[s.get("speech_act", "?")] = by_act.get(s.get("speech_act", "?"), 0) + 1
+        by_intent[s.get("intent", "?")] = by_intent.get(s.get("intent", "?"), 0) + 1
     manifest = {
-        "timestamp": out.name,
+        "timestamp": out.parent.name,
         "trait": trait,
         "params": {
             "n_scenarios": n_scenarios,
@@ -1391,10 +1335,10 @@ def generate_prompts(
             "passed": len(passed),
             "failed": len(judged) - len(passed),
             "by_failed_check": by_failed,
-            "by_speech_act": by_act,
+            "by_intent": by_intent,
         },
     }
-    with (out / "run.json").open("w", encoding="utf-8") as f:
+    with (out / "metadata.json").open("w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     print(f"Done. {len(passed)} accepted paraphrases → {out}")
     return out

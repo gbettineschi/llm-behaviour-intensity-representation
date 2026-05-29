@@ -1,0 +1,26 @@
+{
+  "timestamp": "20260529_212332",
+  "trait": "politeness",
+  "params": {
+    "n_scenarios": 2,
+    "paraphrases_per_level": 3,
+    "min_acceptance_score": 0.7,
+    "intensity_min_gap": 0.1,
+    "max_length_ratio": 1.15
+  },
+  "models": {
+    "generator": "openrouter/google/gemini-2.0-flash-001",
+    "judge": "openrouter/deepseek/deepseek-v4-flash"
+  },
+  "counts": {
+    "scenarios": 2,
+    "paraphrases": 18,
+    "passed": 18,
+    "failed": 0,
+    "by_failed_check": {},
+    "by_speech_act": {
+      "refusal": 1,
+      "request": 1
+    }
+  }
+}

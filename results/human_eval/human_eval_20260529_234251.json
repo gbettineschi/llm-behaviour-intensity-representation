@@ -1,0 +1,44 @@
+{
+  "result_timestamp": "20260529_234251",
+  "dataset": "20260529_212332",
+  "answers": [
+    {
+      "scenario_id": "politeness-request-002",
+      "trait": "politeness",
+      "human_order": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "gold_order": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "exact": true,
+      "pairwise_correct": 3
+    },
+    {
+      "scenario_id": "politeness-refusal-001",
+      "trait": "politeness",
+      "human_order": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "gold_order": [
+        "negative",
+        "neutral",
+        "positive"
+      ],
+      "exact": true,
+      "pairwise_correct": 3
+    }
+  ],
+  "agreement": {
+    "n": 2,
+    "exact_order_accuracy": 1.0,
+    "pairwise_accuracy": 1.0,
+    "mean_kendall_tau": 1.0
+  }
+}

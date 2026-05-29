@@ -1,41 +1,58 @@
+"""Difference-vector geometry analysis on a pre-extracted representations/ directory.
+
+Run from the repo root:  uv run python src/run.py [data/<timestamp>/representations]
+Defaults to the latest one. Run extract_representations.py first.
+"""
 import sys
-import yaml
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))  # adds src/ so `lib.*` imports resolve
+from lib.analysis import (
+    compute_difference_vectors,
+    plot_similarity_matrix,
+    similarity_matrix,
+)
+from lib.sentences import LEVELS
+from lib.representations import load_representations
 
-import torch
-from lib.data_typing import load_prompts
-from lib.representations import load_model, extract_activations
-from lib.analysis import compute_difference_vectors, similarity_matrix, plot_similarity_matrix
-
-CONFIG = Path(__file__).parent / "config.yaml"
-DATA   = Path("data/v1/prompts.json")
+LAYER = 13
+TRAIT = "politeness"
 
 
-def main():
-    with open(CONFIG) as f:
-        cfg = yaml.safe_load(f)
+def latest_representations() -> Path:
+    runs = sorted(Path("data").glob("*/representations"))
+    if not runs:
+        raise SystemExit(
+            "No data/<timestamp>/representations found — run extract_representations.py first."
+        )
+    return runs[-1]
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    results_dir = Path(cfg["results_dir"])
-    act_dir = results_dir / "activations"
-    plot_dir = results_dir / "plots"
 
-    samples = load_prompts(DATA)
+def main(
+    rep_dir: str | Path | None = None, *, results_dir: str | Path = "results/analysis"
+) -> None:
+    rep_dir = Path(rep_dir) if rep_dir else latest_representations()
+    results_dir = Path(results_dir)
 
-    model, tokenizer = load_model(cfg["model"], device)
-    activations = extract_activations(samples, model, tokenizer, cfg["layer"], device, out_dir=act_dir)
+    activations = load_representations(rep_dir, layer=LAYER)
+    levels = [lvl for lvl in LEVELS if any(i == lvl for (_, i, _) in activations)]
+    traits_cfg = [{"name": TRAIT, "intensities": levels}]
+    print(f"{len(activations)} vectors (layer {LAYER}) from {rep_dir}")
 
-    diffs = compute_difference_vectors(activations, cfg["traits"])
+    diffs = compute_difference_vectors(activations, traits_cfg)
     labels, matrix = similarity_matrix(diffs)
-    plot_similarity_matrix(labels, matrix, plot_dir / "cosine_similarity.png")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    plot_similarity_matrix(labels, matrix, results_dir / "cosine_similarity.png")
 
-    print("Cosine similarity matrix:")
+    print("difference-vector cosine matrix:")
     for i, row_label in enumerate(labels):
-        for j, col_label in enumerate(labels):
-            print(f"  {row_label} × {col_label}: {matrix[i, j]:.4f}")
+        print(
+            "  "
+            + row_label
+            + "  "
+            + "  ".join(f"{matrix[i, j]:.3f}" for j in range(len(labels)))
+        )
+    print(f"Saved plot under {results_dir}")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else None)

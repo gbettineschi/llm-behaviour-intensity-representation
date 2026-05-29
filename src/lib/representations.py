@@ -1,29 +1,14 @@
+import json
+from datetime import datetime
 from pathlib import Path
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from lib.prompts import Sample
+from lib.sentences import Sample, load_accepted
 
 
 def load_model(model_name: str, device: str, quantization: str | None = None):
-    """Load a causal LM and its tokenizer onto *device*.
-
-    Parameters
-    ----------
-    model_name : str
-        HuggingFace model identifier (e.g. ``"google/gemma-2-2b"``).
-    device : str
-        Target device string (``"cpu"``, ``"cuda"``, etc.).
-    quantization : str | None
-        ``"4bit"``, ``"8bit"``, or ``None`` (default bfloat16).
-        4/8-bit require ``bitsandbytes``.
-
-    Returns
-    -------
-    model : AutoModelForCausalLM
-    tokenizer : AutoTokenizer
-    """
     from transformers import BitsAndBytesConfig
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -44,258 +29,163 @@ def load_model(model_name: str, device: str, quantization: str | None = None):
     return model, tokenizer
 
 
-def extract_activations_multilayer(
-    samples: list[Sample],
-    model,
-    tokenizer,
-    layer_indices: list[int],
-    device: str,
-    batch_size: int = 8,
-    out_dir: Path | None = None,
-) -> dict[tuple[str, str, str, int], torch.Tensor]:
-    """Extract mean content-token activations at multiple transformer layers in one pass.
+TOKEN_MODES = ("mean", "last", "first")
 
-    Runs prompts through *model* in batches with ``output_hidden_states=True`` so
-    every requested layer is captured per forward pass. For each ``(trait,
-    intensity, layer)`` group, mean-pools over content tokens (excluding BOS,
-    EOS, and pad tokens) and averages across prompts in the group.
 
-    Parameters
-    ----------
-    samples : list[Sample]
-    model : AutoModelForCausalLM
-    tokenizer : AutoTokenizer
-    layer_indices : list[int]
-        Indices into ``model.model.layers``.
-    device : str
-    batch_size : int
-    out_dir : Path | None
-        If given, tensors are saved to ``out_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt``.
-
-    Returns
-    -------
-    dict[tuple[str, str, str, int], torch.Tensor]
-        Maps ``(trait, intensity, scenario_id, layer)`` to a mean activation vector
-        ``(hidden_dim,)``. Samples sharing the same scenario_id+intensity are averaged.
-    """
-    layers = sorted(set(layer_indices))
-    special_ids = {
-        tid
-        for tid in (
-            tokenizer.bos_token_id,
-            tokenizer.eos_token_id,
-            tokenizer.pad_token_id,
-        )
-        if tid is not None
+def _reduce_all(hidden: torch.Tensor, valid: torch.Tensor) -> dict[str, torch.Tensor]:
+    # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns each mode as (B, D).
+    w = valid.unsqueeze(-1).to(hidden.dtype)
+    rows = torch.arange(hidden.size(0), device=hidden.device)
+    first_idx = valid.int().argmax(1)
+    last_idx = valid.size(1) - 1 - valid.flip(1).int().argmax(1)
+    return {
+        "mean": (hidden * w).sum(1) / w.sum(1).clamp(min=1),
+        "first": hidden[rows, first_idx, :],
+        "last": hidden[rows, last_idx, :],
     }
-
-    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
-
-    for start in range(0, len(samples), batch_size):
-        batch = samples[start : start + batch_size]
-        texts = [s.prompt for s in batch]
-        enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
-        with torch.no_grad():
-            out = model(**enc, output_hidden_states=True)
-        hidden_states = out.hidden_states  # tuple length num_layers+1
-
-        token_ids = enc["input_ids"]
-        attention_mask = enc["attention_mask"].bool()
-        valid = attention_mask.clone()
-        for sid in special_ids:
-            valid &= token_ids != sid
-        empty_rows = valid.sum(dim=1) == 0
-        if empty_rows.any():
-            valid[empty_rows] = attention_mask[empty_rows]
-
-        weights = valid.to(hidden_states[0].dtype).unsqueeze(-1)  # (B, L, 1)
-        counts = weights.sum(dim=1).clamp(min=1)  # (B, 1)
-
-        # Pool every requested layer on-device, stack, then a single cross-device copy.
-        per_layer = [
-            (hidden_states[layer + 1] * weights).sum(dim=1) / counts for layer in layers
-        ]
-        stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
-        # stacked: (num_layers, B, D)
-
-        for li, layer in enumerate(layers):
-            for i, sample in enumerate(batch):
-                key = (sample.trait, sample.intensity, sample.scenario_id, layer)
-                bucket.setdefault(key, []).append(stacked[li, i])
-
-    result = {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
-
-    if out_dir is not None:
-        for (trait, intensity, scenario_id, layer), tensor in result.items():
-            layer_dir = out_dir / f"layer_{layer}"
-            layer_dir.mkdir(parents=True, exist_ok=True)
-            torch.save(tensor, layer_dir / f"{trait}__{intensity}__{scenario_id}.pt")
-
-    return result
 
 
 def extract_activations(
     samples: list[Sample],
     model,
     tokenizer,
-    layer_index: int,
+    layers: list[int],
     device: str,
-    out_dir: Path | None = None,
-) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Mean content-token activations at a single layer.
-
-    Thin wrapper over :func:`extract_activations_multilayer` for one layer.
-    Returns a dict keyed by ``(trait, intensity, scenario_id)`` (no layer index).
-    If *out_dir* is given, tensors are saved to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``.
-    """
-    multi = extract_activations_multilayer(samples, model, tokenizer, [layer_index], device)
-    result = {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
-
-    if out_dir is not None:
-        save_activations(result, out_dir)
-
-    return result
-
-
-def extract_activations_last_token_chat_multilayer(
-    samples: list[Sample],
-    model,
-    tokenizer,
-    layer_indices: list[int],
-    device: str,
+    *,
     batch_size: int = 8,
-    user_instruction: str = "Rate the politeness of the following message:",
-    out_dir: Path | None = None,
-) -> dict[tuple[str, str, str, int], torch.Tensor]:
-    """Wrap each paraphrase as the assistant turn of a chat and read the
-    last-token hidden state at each requested layer.
+) -> dict[tuple[str, str, str, int], dict[str, torch.Tensor]]:
+    """Activations at each requested layer, keyed by (trait, intensity, scenario_id, layer).
 
-    If the tokenizer exposes a ``chat_template``, it is used; otherwise a
-    minimal "User: ...\\nAssistant: ..." formatting is applied. The last-token
-    activation is the residual stream right after the model has integrated the
-    full assistant turn — the standard probing site in representation
-    engineering work, and typically more informative than mean-pooled content
-    tokens for trait-style probes.
-
-    If *out_dir* is given, tensors are saved to ``out_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt``.
+    Each value is the bundle of per-prompt reductions {"mean", "last", "first"}: "mean" pools
+    content tokens (excluding BOS/EOS/pad), "last"/"first" take a single content token. Samples
+    sharing a key are averaged per reduction. The analysis side picks which reduction to use.
     """
-    layers = sorted(set(layer_indices))
-    has_template = bool(getattr(tokenizer, "chat_template", None))
+    layers = sorted(set(layers))
+    special = {
+        t
+        for t in (tokenizer.bos_token_id, tokenizer.eos_token_id, tokenizer.pad_token_id)
+        if t is not None
+    }
 
-    def _render(text: str) -> str:
-        if has_template:
-            msgs = [
-                {"role": "user", "content": user_instruction},
-                {"role": "assistant", "content": text},
-            ]
-            return tokenizer.apply_chat_template(
-                msgs, tokenize=False, add_generation_prompt=False
-            )
-        return f"User: {user_instruction}\nAssistant: {text}"
-
-    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
+    bucket: dict[tuple[str, str, str, int], dict[str, list[torch.Tensor]]] = {}
     for start in range(0, len(samples), batch_size):
         batch = samples[start : start + batch_size]
-        texts = [_render(s.prompt) for s in batch]
-        enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
+        enc = tokenizer([s.prompt for s in batch], return_tensors="pt", padding=True).to(device)
         with torch.no_grad():
-            out = model(**enc, output_hidden_states=True)
-        hidden_states = out.hidden_states  # tuple length num_layers+1
+            hidden = model(**enc, output_hidden_states=True).hidden_states
 
-        attn = enc["attention_mask"]
-        last_idx = attn.sum(dim=1) - 1  # (B,)
-        b_idx = torch.arange(attn.size(0), device=device)
+        mask = enc["attention_mask"].bool()
+        valid = mask.clone()
+        for sid in special:
+            valid &= enc["input_ids"] != sid
+        empty = valid.sum(1) == 0
+        valid[empty] = mask[empty]
 
-        per_layer = [hidden_states[layer + 1][b_idx, last_idx, :] for layer in layers]
-        stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
+        for layer in layers:
+            red = _reduce_all(hidden[layer + 1], valid)
+            red = {m: red[m].detach().to("cpu", dtype=torch.float32) for m in TOKEN_MODES}
+            for i, s in enumerate(batch):
+                key = (s.trait, s.intensity, s.scenario_id, layer)
+                d = bucket.setdefault(key, {m: [] for m in TOKEN_MODES})
+                for m in TOKEN_MODES:
+                    d[m].append(red[m][i])
 
-        for li, layer in enumerate(layers):
-            for i, sample in enumerate(batch):
-                key = (sample.trait, sample.intensity, sample.scenario_id, layer)
-                bucket.setdefault(key, []).append(stacked[li, i])
-
-    result = {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
-
-    if out_dir is not None:
-        for (trait, intensity, scenario_id, layer), tensor in result.items():
-            layer_dir = out_dir / f"layer_{layer}"
-            layer_dir.mkdir(parents=True, exist_ok=True)
-            torch.save(tensor, layer_dir / f"{trait}__{intensity}__{scenario_id}.pt")
-
-    return result
+    return {
+        key: {m: torch.stack(vecs[m]).mean(0) for m in TOKEN_MODES}
+        for key, vecs in bucket.items()
+    }
 
 
-def extract_activations_last_token_chat(
-    samples: list[Sample],
-    model,
-    tokenizer,
-    layer_index: int,
-    device: str,
-    batch_size: int = 8,
-    user_instruction: str = "Rate the politeness of the following message:",
-    out_dir: Path | None = None,
-) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Single-layer wrapper for :func:`extract_activations_last_token_chat_multilayer`.
-
-    If *out_dir* is given, tensors are saved to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``.
-    """
-    multi = extract_activations_last_token_chat_multilayer(
-        samples,
-        model,
-        tokenizer,
-        [layer_index],
-        device,
-        batch_size=batch_size,
-        user_instruction=user_instruction,
-    )
-    result = {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
-
-    if out_dir is not None:
-        save_activations(result, out_dir)
-
-    return result
-
-
-def save_activations(
-    activations: dict[tuple[str, str, str], torch.Tensor],
-    out_dir: Path,
+def save_representations(
+    activations: dict[tuple[str, str, str, int], dict[str, torch.Tensor]],
+    out_dir: str | Path,
+    *,
+    meta: dict,
 ) -> None:
-    """Save each activation tensor to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``."""
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    for (trait, intensity, scenario_id), tensor in activations.items():
-        torch.save(tensor, out_dir / f"{trait}__{intensity}__{scenario_id}.pt")
+    by_layer: dict[int, dict[tuple[str, str, str], dict[str, torch.Tensor]]] = {}
+    for (trait, intensity, scenario_id, layer), bundle in activations.items():
+        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id)] = bundle
+    for layer, bundles in by_layer.items():
+        torch.save(bundles, out_dir / f"layer_{layer}.pt")
+    (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2))
 
 
-def load_activations_multilayer(act_dir: Path) -> dict[tuple[str, str, str, int], torch.Tensor]:
-    """Load multilayer activations saved by :func:`extract_activations_multilayer`.
+def load_representations(rep_dir: str | Path, *, layer: int | None = None, token: str = "mean"):
+    """One vector per key, selecting `token` ("mean"/"last"/"first") from each saved bundle.
 
-    Expects ``act_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt`` files.
-    Returns a dict keyed by ``(trait, intensity, scenario_id, layer)``.
+    layer given → {(trait, intensity, scenario_id): vec}; layer None → adds the layer to the key.
     """
-    result = {}
-    for layer_dir in sorted(act_dir.glob("layer_*"), key=lambda p: int(p.name.split("_")[1])):
-        layer = int(layer_dir.name.split("_")[1])
-        for path in sorted(layer_dir.glob("*.pt")):
-            trait, intensity, scenario_id = path.stem.split("__")
-            result[(trait, intensity, scenario_id, layer)] = torch.load(path, weights_only=True)
-    return result
+    rep_dir = Path(rep_dir)
+    if layer is not None:
+        bundles = torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
+        return {key: bundle[token] for key, bundle in bundles.items()}
+    out: dict[tuple[str, str, str, int], torch.Tensor] = {}
+    for path in sorted(rep_dir.glob("layer_*.pt")):
+        n = int(path.stem.split("_")[1])
+        for key, bundle in torch.load(path, weights_only=False).items():
+            out[(*key, n)] = bundle[token]
+    return out
 
 
-def load_activations(act_dir: Path) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Load activation tensors saved by :func:`save_activations`.
+def unembedding_covariance(model, chunk: int = 16384) -> torch.Tensor:
+    U = model.get_output_embeddings().weight.detach()  # (V, D)
+    V, D = U.shape[0], U.shape[1]
+    gram = torch.zeros(D, D, dtype=torch.float64)
+    col_sum = torch.zeros(D, dtype=torch.float64)
+    for s in range(0, V, chunk):
+        blk = U[s : s + chunk].to("cpu", torch.float32)
+        gram += (blk.T @ blk).double()
+        col_sum += blk.sum(0).double()
+    mean = col_sum / V
+    return gram / V - torch.outer(mean, mean)
 
-    Parameters
-    ----------
-    act_dir : Path
-        Directory containing ``<trait>__<intensity>__<scenario_id>.pt`` files.
 
-    Returns
-    -------
-    dict[tuple[str, str, str], torch.Tensor]
-        Maps ``(trait, intensity, scenario_id)`` to its activation vector.
+def extract_representations(
+    dataset: str | Path,
+    out_dir: str | Path,
+    *,
+    model_name: str = "google/gemma-2-2b",
+    layers: list[int] | None = None,
+    batch_size: int = 8,
+) -> Path:
+    """Extract activations for a sentences_filtered.jsonl dataset and save them into out_dir.
+
+    Loads the model, extracts at every requested layer (each saved as the {mean, last, first}
+    bundle), and writes the layer_<N>.pt bundles, a metadata.json manifest, and unembed_cov.pt.
+    The caller chooses out_dir (e.g. data/<timestamp>/representations).
     """
-    result = {}
-    for path in sorted(act_dir.glob("*.pt")):
-        trait, intensity, scenario_id = path.stem.split("__")
-        result[(trait, intensity, scenario_id)] = torch.load(path, weights_only=True)
-    return result
+    dataset, out_dir = Path(dataset), Path(out_dir)
+    layers = layers or list(range(1, 23))
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+
+    samples = load_accepted(dataset)
+    print(f"{len(samples)} samples from {dataset}  |  device={device}")
+
+    model, tokenizer = load_model(model_name, device)
+    activations = extract_activations(
+        samples, model, tokenizer, layers, device, batch_size=batch_size
+    )
+
+    meta = {
+        "generated_at": datetime.now().strftime("%Y%m%d_%H%M%S"),
+        "source_dataset": str(dataset),
+        "model": model_name,
+        "device": device,
+        "layers": layers,
+        "tokens": list(TOKEN_MODES),
+        "n_samples": len(samples),
+        "vectors_per_layer": len(activations) // len(layers),
+        "hidden_dim": next(iter(activations.values()))["mean"].shape[0],
+    }
+    save_representations(activations, out_dir, meta=meta)
+    torch.save(unembedding_covariance(model), out_dir / "unembed_cov.pt")
+    print(f"Saved {len(layers)} layers + unembed_cov.pt under {out_dir}")
+    return out_dir

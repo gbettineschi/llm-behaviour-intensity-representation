@@ -14,7 +14,7 @@ from lib.sentences import generate_sentences
 if __name__ == "__main__":
     out = generate_sentences(
         Path("data") / datetime.now().strftime("%Y%m%d_%H%M%S") / "sentences",
-        n_scenarios=300,
+        n_scenarios=100,
         paraphrases_per_level=3,
         min_acceptance_score=0.70,
     )

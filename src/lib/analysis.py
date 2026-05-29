@@ -124,12 +124,14 @@ def plot_similarity_matrix(
 #   * ``ordinal_linearity_metrics`` — the NAIVE pooled estimator. Centroids and
 #     the probe pool every sample by intensity level only, mixing language,
 #     topic and scenario. Kept as an explicit baseline for before/after
-#     comparison; not the estimator to trust (see ``blocked_linearity_metrics``).
-#   * ``blocked_linearity_metrics`` — the BLOCK-AWARE estimator. Treats
-#     ``scenario_id`` as a block (it fixes language, topic and invariant
-#     content), applies the within-scenario (fixed-effects) transform, uses
-#     GroupKFold so a scenario's levels never split across train/test, estimates
-#     the projection axis out-of-fold, and reports per-scenario distributions.
+#     comparison; not the estimator to trust (see
+#     ``within_scenario_linearity_metrics``).
+#   * ``within_scenario_linearity_metrics`` — the WITHIN-SCENARIO estimator.
+#     Each ``scenario_id`` fixes language, topic and invariant content, so it
+#     applies the within-scenario (fixed-effects) transform — subtracting each
+#     scenario's across-level mean — before any projection, uses GroupKFold so a
+#     scenario's levels never split across train/test, estimates the projection
+#     axis out-of-fold, and reports per-scenario distributions.
 # ---------------------------------------------------------------------------
 
 
@@ -157,7 +159,7 @@ def ordinal_linearity_metrics(acts_by_level, levels_ordered, cv=5, ridge_alpha=1
 
     Spearman/Kendall use an in-sample projection axis; the ridge probe uses a
     shuffled KFold that leaks scenario identity across folds. Retained only for
-    explicit comparison against :func:`blocked_linearity_metrics`.
+    explicit comparison against :func:`within_scenario_linearity_metrics`.
     """
     X, y, centroids = _per_level_arrays(acts_by_level, levels_ordered)
 
@@ -274,7 +276,7 @@ def per_scenario_step_cosines(
     return np.array(out)
 
 
-def blocked_linearity_metrics(
+def within_scenario_linearity_metrics(
     activations: dict[tuple[str, str, str], torch.Tensor],
     levels_ordered: list[str],
     trait: str | None = None,
@@ -282,7 +284,7 @@ def blocked_linearity_metrics(
     ridge_alpha: float = 1.0,
     seed: int = 0,
 ) -> dict:
-    """Block-aware ordinal linearity metrics (scenario = block).
+    """Within-scenario ordinal linearity metrics (each scenario is its own control).
 
     Corrects the confounds of :func:`ordinal_linearity_metrics`:
       * within-scenario (fixed-effects) transform removes the additive

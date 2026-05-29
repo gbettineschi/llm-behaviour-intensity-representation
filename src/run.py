@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent))  # adds src/ so `lib.*` imports r
 
 import torch
 from lib.data_typing import load_prompts
-from lib.representations import load_model, extract_activations, save_activations
+from lib.representations import load_model, extract_activations
 from lib.analysis import compute_difference_vectors, similarity_matrix, plot_similarity_matrix
 
 CONFIG = Path(__file__).parent / "config.yaml"
@@ -25,8 +25,7 @@ def main():
     samples = load_prompts(DATA)
 
     model, tokenizer = load_model(cfg["model"], device)
-    activations = extract_activations(samples, model, tokenizer, cfg["layer"], device)
-    save_activations(activations, act_dir)
+    activations = extract_activations(samples, model, tokenizer, cfg["layer"], device, out_dir=act_dir)
 
     diffs = compute_difference_vectors(activations, cfg["traits"])
     labels, matrix = similarity_matrix(diffs)

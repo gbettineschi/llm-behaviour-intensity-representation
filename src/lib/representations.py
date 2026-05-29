@@ -51,7 +51,8 @@ def extract_activations_multilayer(
     layer_indices: list[int],
     device: str,
     batch_size: int = 8,
-) -> dict[tuple[str, str, int], torch.Tensor]:
+    out_dir: Path | None = None,
+) -> dict[tuple[str, str, str, int], torch.Tensor]:
     """Extract mean content-token activations at multiple transformer layers in one pass.
 
     Runs prompts through *model* in batches with ``output_hidden_states=True`` so
@@ -68,6 +69,8 @@ def extract_activations_multilayer(
         Indices into ``model.model.layers``.
     device : str
     batch_size : int
+    out_dir : Path | None
+        If given, tensors are saved to ``out_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt``.
 
     Returns
     -------
@@ -120,7 +123,15 @@ def extract_activations_multilayer(
                 key = (sample.trait, sample.intensity, sample.scenario_id, layer)
                 bucket.setdefault(key, []).append(stacked[li, i])
 
-    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+    result = {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+
+    if out_dir is not None:
+        for (trait, intensity, scenario_id, layer), tensor in result.items():
+            layer_dir = out_dir / f"layer_{layer}"
+            layer_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(tensor, layer_dir / f"{trait}__{intensity}__{scenario_id}.pt")
+
+    return result
 
 
 def extract_activations(
@@ -129,16 +140,21 @@ def extract_activations(
     tokenizer,
     layer_index: int,
     device: str,
-) -> dict[tuple[str, str], torch.Tensor]:
+    out_dir: Path | None = None,
+) -> dict[tuple[str, str, str], torch.Tensor]:
     """Mean content-token activations at a single layer.
 
     Thin wrapper over :func:`extract_activations_multilayer` for one layer.
-    Returns a dict keyed by ``(trait, intensity)`` (no layer index).
+    Returns a dict keyed by ``(trait, intensity, scenario_id)`` (no layer index).
+    If *out_dir* is given, tensors are saved to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``.
     """
-    multi = extract_activations_multilayer(
-        samples, model, tokenizer, [layer_index], device
-    )
-    return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+    multi = extract_activations_multilayer(samples, model, tokenizer, [layer_index], device)
+    result = {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+
+    if out_dir is not None:
+        save_activations(result, out_dir)
+
+    return result
 
 
 def extract_activations_last_token_chat_multilayer(
@@ -149,6 +165,7 @@ def extract_activations_last_token_chat_multilayer(
     device: str,
     batch_size: int = 8,
     user_instruction: str = "Rate the politeness of the following message:",
+    out_dir: Path | None = None,
 ) -> dict[tuple[str, str, str, int], torch.Tensor]:
     """Wrap each paraphrase as the assistant turn of a chat and read the
     last-token hidden state at each requested layer.
@@ -159,6 +176,8 @@ def extract_activations_last_token_chat_multilayer(
     full assistant turn — the standard probing site in representation
     engineering work, and typically more informative than mean-pooled content
     tokens for trait-style probes.
+
+    If *out_dir* is given, tensors are saved to ``out_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt``.
     """
     layers = sorted(set(layer_indices))
     has_template = bool(getattr(tokenizer, "chat_template", None))
@@ -195,7 +214,15 @@ def extract_activations_last_token_chat_multilayer(
                 key = (sample.trait, sample.intensity, sample.scenario_id, layer)
                 bucket.setdefault(key, []).append(stacked[li, i])
 
-    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+    result = {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+
+    if out_dir is not None:
+        for (trait, intensity, scenario_id, layer), tensor in result.items():
+            layer_dir = out_dir / f"layer_{layer}"
+            layer_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(tensor, layer_dir / f"{trait}__{intensity}__{scenario_id}.pt")
+
+    return result
 
 
 def extract_activations_last_token_chat(
@@ -206,13 +233,22 @@ def extract_activations_last_token_chat(
     device: str,
     batch_size: int = 8,
     user_instruction: str = "Rate the politeness of the following message:",
+    out_dir: Path | None = None,
 ) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Single-layer wrapper for :func:`extract_activations_last_token_chat_multilayer`."""
+    """Single-layer wrapper for :func:`extract_activations_last_token_chat_multilayer`.
+
+    If *out_dir* is given, tensors are saved to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``.
+    """
     multi = extract_activations_last_token_chat_multilayer(
         samples, model, tokenizer, [layer_index], device,
         batch_size=batch_size, user_instruction=user_instruction,
     )
-    return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+    result = {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+
+    if out_dir is not None:
+        save_activations(result, out_dir)
+
+    return result
 
 
 def save_activations(
@@ -223,6 +259,21 @@ def save_activations(
     out_dir.mkdir(parents=True, exist_ok=True)
     for (trait, intensity, scenario_id), tensor in activations.items():
         torch.save(tensor, out_dir / f"{trait}__{intensity}__{scenario_id}.pt")
+
+
+def load_activations_multilayer(act_dir: Path) -> dict[tuple[str, str, str, int], torch.Tensor]:
+    """Load multilayer activations saved by :func:`extract_activations_multilayer`.
+
+    Expects ``act_dir/layer_<N>/<trait>__<intensity>__<scenario_id>.pt`` files.
+    Returns a dict keyed by ``(trait, intensity, scenario_id, layer)``.
+    """
+    result = {}
+    for layer_dir in sorted(act_dir.glob("layer_*"), key=lambda p: int(p.name.split("_")[1])):
+        layer = int(layer_dir.name.split("_")[1])
+        for path in sorted(layer_dir.glob("*.pt")):
+            trait, intensity, scenario_id = path.stem.split("__")
+            result[(trait, intensity, scenario_id, layer)] = torch.load(path, weights_only=True)
+    return result
 
 
 def load_activations(act_dir: Path) -> dict[tuple[str, str, str], torch.Tensor]:

@@ -1,0 +1,14 @@
+{
+  "trait": "politeness",
+  "total_scenarios": 2,
+  "by_speech_act": {
+    "refusal": 1,
+    "request": 1
+  },
+  "by_domain": {
+    "social": 1,
+    "academic": 1
+  },
+  "attempted_batches": 1,
+  "succeeded_batches": 1
+}

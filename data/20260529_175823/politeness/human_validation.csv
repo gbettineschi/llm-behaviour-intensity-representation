@@ -1,0 +1,10 @@
+scenario_id,paraphrase_id,trait,level,text,check_order_within_bundle,check_content_preserved,check_natural,comments
+politeness-refusal-001,politeness-refusal-001-negative-01,politeness,negative,I'm not coming to your party. My schedule is packed with more important things; attending is simply out of the question.,,,,
+politeness-refusal-001,politeness-refusal-001-neutral-01,politeness,neutral,"Regrettably, attendance is impossible. Prior commitments prevent me from joining the party; I will be unavailable that evening.",,,,
+politeness-refusal-001,politeness-refusal-001-positive-01,politeness,positive,"How kind of you to invite me! I wish I could be there, but a prior engagement prevents me from attending.",,,,
+politeness-refusal-001,politeness-refusal-001-negative-02,politeness,negative,"Forget about me showing up. I have zero interest in your party, so I'm definitely not going to be there.",,,,
+politeness-refusal-001,politeness-refusal-001-neutral-02,politeness,neutral,"Unfortunately, I won't be able to make it. It turns out I have a prior obligation, so I won't be at the party.",,,,
+politeness-refusal-001,politeness-refusal-001-positive-02,politeness,positive,"I truly appreciate the invitation to your party! Sadly, something unexpected came up, so I won't be able to attend.",,,,
+politeness-refusal-001,politeness-refusal-001-negative-03,politeness,negative,I'm not going. I have much better ways to spend my time than being at your boring party; count me out.,,,,
+politeness-refusal-001,politeness-refusal-001-neutral-03,politeness,neutral,"It appears I'm unable to attend. My calendar shows a pre-existing obligation, and therefore I won't be at the party.",,,,
+politeness-refusal-001,politeness-refusal-001-positive-03,politeness,positive,"I'm so grateful for the invitation to your party! I wish I could come, but I have a previous commitment already scheduled.",,,,

@@ -51,8 +51,12 @@ def compute_difference_vectors(
         for step in range(1, len(intensities)):
             for j in range(len(intensities) - 1, step - 1, -1):
                 lo, hi = intensities[j - step], intensities[j]
-                lo_scenarios = {s for (t, lv, s) in activations if t == name and lv == lo}
-                hi_scenarios = {s for (t, lv, s) in activations if t == name and lv == hi}
+                lo_scenarios = {
+                    s for (t, lv, s) in activations if t == name and lv == lo
+                }
+                hi_scenarios = {
+                    s for (t, lv, s) in activations if t == name and lv == hi
+                }
                 shared = sorted(lo_scenarios & hi_scenarios)
                 if not shared:
                     continue
@@ -107,11 +111,21 @@ def plot_similarity_matrix(
     ax.set_yticklabels(labels, fontsize=11)
     for i, j in itertools.product(range(n), range(n)):
         color = "white" if abs(matrix[i, j]) > 0.65 else "black"
-        ax.text(j, i, f"{matrix[i, j]:.2f}", ha="center", va="center",
-                fontsize=13, fontweight="bold", color=color)
+        ax.text(
+            j,
+            i,
+            f"{matrix[i, j]:.2f}",
+            ha="center",
+            va="center",
+            fontsize=13,
+            fontweight="bold",
+            color=color,
+        )
     cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label("cosine similarity", fontsize=10)
-    ax.set_title("Cosine similarity of activation difference vectors", fontsize=13, pad=14)
+    ax.set_title(
+        "Cosine similarity of activation difference vectors", fontsize=13, pad=14
+    )
     plt.tight_layout()
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close()

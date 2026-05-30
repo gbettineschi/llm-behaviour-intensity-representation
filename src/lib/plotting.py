@@ -146,7 +146,7 @@ def plot_projection_pair(panels, titles, *, neg_label, pos_label,
     return fig, axes
 
 
-def plot_layer_sweep(layers, accuracy, agreement, *, focal_layer, figsize=(5.4, 2.8)):
+def plot_layer_sweep(layers, accuracy, agreement, *, focal_layer, figsize=(8, 5)):
     """Direction-quality summary (accuracy + cross-method cosine) across layers."""
     fig, ax = plt.subplots(figsize=figsize)
     ax.plot(layers, accuracy, "o-", color=C_POS, label="MeanDiff CV balanced acc.")

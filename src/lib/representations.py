@@ -53,11 +53,11 @@ def extract_activations(
     *,
     pool: str = "mean",
     batch_size: int = 8,
-) -> dict[tuple[str, str, str, int], torch.Tensor]:
-    """Activations at each requested layer, keyed by (trait, intensity, scenario_id, layer).
+) -> dict[tuple[str, str, str, str, int], torch.Tensor]:
+    """Activations at each requested layer, keyed by (trait, intensity, scenario_id, paraphrase_id, layer).
 
     ``pool='mean'`` pools content tokens (excluding BOS/EOS/pad); ``pool='last'`` takes the
-    final content token. Samples sharing a key are averaged.
+    final content token. One vector per paraphrase; nothing is averaged here.
     """
     if pool not in TOKEN_POOLS:
         raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
@@ -68,7 +68,7 @@ def extract_activations(
         if t is not None
     }
 
-    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
+    out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}
     for start in range(0, len(samples), batch_size):
         batch = samples[start : start + batch_size]
         enc = tokenizer([s.prompt for s in batch], return_tensors="pt", padding=True).to(device)
@@ -85,42 +85,60 @@ def extract_activations(
         for layer in layers:
             red = _reduce(hidden[layer + 1], valid, pool).detach().to("cpu", dtype=torch.float32)
             for i, s in enumerate(batch):
-                key = (s.trait, s.intensity, s.scenario_id, layer)
-                bucket.setdefault(key, []).append(red[i])
+                key = (s.trait, s.intensity, s.scenario_id, s.paraphrase_id, layer)
+                if key in out:
+                    raise ValueError(f"duplicate paraphrase_id encountered: {key}")
+                out[key] = red[i]
 
-    return {key: torch.stack(vecs).mean(0) for key, vecs in bucket.items()}
+    return out
 
 
 def save_representations(
-    activations: dict[tuple[str, str, str, int], torch.Tensor],
+    activations: dict[tuple[str, str, str, str, int], torch.Tensor],
     out_dir: str | Path,
     *,
     meta: dict,
 ) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    by_layer: dict[int, dict[tuple[str, str, str], torch.Tensor]] = {}
-    for (trait, intensity, scenario_id, layer), vec in activations.items():
-        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id)] = vec
+    by_layer: dict[int, dict[tuple[str, str, str, str], torch.Tensor]] = {}
+    for (trait, intensity, scenario_id, paraphrase_id, layer), vec in activations.items():
+        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id, paraphrase_id)] = vec
     for layer, vecs in by_layer.items():
         torch.save(vecs, out_dir / f"layer_{layer}.pt")
     (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2))
 
 
 def load_representations(rep_dir: str | Path, *, layer: int | None = None):
-    """One vector per key.
+    """One vector per paraphrase.
 
-    layer given → {(trait, intensity, scenario_id): vec}; layer None → adds the layer to the key.
+    ``layer`` given → ``{(trait, intensity, scenario_id, paraphrase_id): vec}``;
+    ``layer`` None → adds the layer to the key.
     """
     rep_dir = Path(rep_dir)
     if layer is not None:
         return torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
-    out: dict[tuple[str, str, str, int], torch.Tensor] = {}
+    out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}
     for path in sorted(rep_dir.glob("layer_*.pt")):
         n = int(path.stem.split("_")[1])
         for key, vec in torch.load(path, weights_only=False).items():
             out[(*key, n)] = vec
     return out
+
+
+def pool_by_scenario_level(
+    activations: dict[tuple[str, str, str, str], torch.Tensor],
+) -> dict[tuple[str, str, str], torch.Tensor]:
+    """Mean paraphrase vectors per ``(trait, intensity, scenario_id)``.
+
+    Recovers the scenario-centroid view from the paraphrase-level store; the
+    analysis helpers in :mod:`lib.analysis` (e.g. ``within_center``) expect this
+    3-tuple key shape.
+    """
+    bucket: dict[tuple[str, str, str], list[torch.Tensor]] = {}
+    for (trait, intensity, scenario_id, _paraphrase_id), vec in activations.items():
+        bucket.setdefault((trait, intensity, scenario_id), []).append(vec)
+    return {k: torch.stack(vs).mean(0) for k, vs in bucket.items()}
 
 
 def unembedding_covariance(model, chunk: int = 16384) -> torch.Tensor:

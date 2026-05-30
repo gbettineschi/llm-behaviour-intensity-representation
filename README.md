@@ -9,6 +9,14 @@ _[placeholder]_
 
 ## Setup and development
 **Setup**
+0. Before cloning the repo, make sure you have git lfs installed.
+   ```
+   git lfs install
+   ```
+If you have already cloned the repo before doing this, you can fix by installing git lfs (command above) and then running:
+   ```
+   git lfs pull
+   ```
 1. Install dependencies with uv.
    ```
    uv sync

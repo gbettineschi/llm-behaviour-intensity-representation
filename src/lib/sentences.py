@@ -1225,33 +1225,6 @@ class Pipeline:
 
 # --- entry point
 
-DEFAULT_MODELS = {
-    # Generator: creative, follows complex JSON schemas. Routed through google-vertex.
-    "generator": {
-        "model": "openrouter/google/gemini-2.0-flash-001",
-        "family": "google",
-        "temperature": 0.5,
-        "max_output_tokens": 2048,
-        "litellm_kwargs": {
-            "extra_body": {
-                "provider": {"order": ["google-vertex"], "allow_fallbacks": True}
-            }
-        },
-    },
-    # Judge: a different family from the generator to limit leakage. Does both the label-aware
-    # content check and the label-blind intensity rating.
-    "judge": {
-        "model": "openrouter/deepseek/deepseek-v4-flash",
-        "family": "deepseek",
-        "temperature": 0.0,
-        "max_output_tokens": 8192,
-        "litellm_kwargs": {
-            "extra_body": {"provider": {"order": ["alibaba"], "allow_fallbacks": True}}
-        },
-    },
-}
-
-
 # Rows kept in sentences_filtered.jsonl (the dataset); diagnostics (scores, passed, failed_check) stay in sentences_unfiltered.
 _DATASET_FIELDS = (
     "scenario_id",
@@ -1274,15 +1247,19 @@ def generate_sentences(
     intensity_min_gap: float = 0.10,
     max_length_ratio: float = 1.15,
     max_workers: int = 3,
-    models: Optional[Dict[str, Any]] = None,
+    models: Dict[str, Any],
 ) -> Path:
     """Generate the dataset into out_dir (created if needed) and return it.
+
+    ``models`` must be a dict with ``"generator"`` and ``"judge"`` entries, each a
+    kwargs dict for ``ModelSpec`` (model id, family, temperature, ...). The caller
+    (the entry script) owns the concrete model ids so this library stays
+    model-agnostic.
 
     Writes scenarios.jsonl, sentences_unfiltered.jsonl, sentences_filtered.jsonl, metadata.json into out_dir. The caller
     chooses the directory (e.g. data/<timestamp>/prompts). Needs OPENROUTER_API_KEY (a repo-root .env
     is loaded automatically).
     """
-    models = models or DEFAULT_MODELS
     out = Path(out_dir)
     pipe = Pipeline(
         out,

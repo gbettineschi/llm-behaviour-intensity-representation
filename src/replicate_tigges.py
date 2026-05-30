@@ -32,7 +32,7 @@ from lib.directions import (
     level_table,
     projection_stats,
 )
-from lib.plotting import (
+from lib.figures import (
     apply_style,
     plot_agreement,
     plot_agreement_pair,
@@ -47,9 +47,9 @@ from lib.representations import load_representations
 
 LAYER = 13
 TRAIT = "politeness"
-POOL = "last"
+TOKEN_POOLING = "last"
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
-REP_DIR = DATASET.parent.parent / "representations" / POOL
+REP_DIR = DATASET.parent.parent / "representations" / f"{TOKEN_POOLING}_token"
 RESULTS_ROOT = Path("results/replication_tigges")
 
 NEG, NEU, POS = "negative", "neutral", "positive"
@@ -171,7 +171,7 @@ def main() -> Path:
     print(f"Saving figures under {out_dir}\n")
 
     activations = load_representations(REP_DIR, layer=LAYER)
-    print(f"Loaded {len(activations)} paraphrase vectors at layer {LAYER} (pool={POOL!r})\n")
+    print(f"Loaded {len(activations)} paraphrase vectors at layer {LAYER} (token_pooling={TOKEN_POOLING!r})\n")
 
     r1_direction_agreement(activations, out_dir)
     print()

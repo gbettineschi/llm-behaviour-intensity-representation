@@ -21,4 +21,11 @@ dependencies = [
     "litellm>=1.60.0",
     "jsonschema>=4.20.0",
     "python-dotenv>=1.0.0",
+    "sae-lens>=6.43.0",
+    "json-repair>=0.59.10",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.15",
 ]

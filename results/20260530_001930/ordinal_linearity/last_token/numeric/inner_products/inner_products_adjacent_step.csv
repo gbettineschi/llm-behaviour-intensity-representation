@@ -1,0 +1,6 @@
+space_slug,space,adjacent_raw,adjacent_dis,R_full_positive_neutral,R_full_neutral_negative,R_full_positive_negative
+euclidean_raw,Euclidean (raw),-0.2286176685,-0.2528461699,0.8664909755,0.943501902,0.9378805834
+anisotropy_corrected,Anisotropy-corrected,-0.2028624169,-0.2286026327,0.8483841386,0.9282141725,0.925233133
+park_causal,Park causal,-0.2078679738,-0.230670113,0.8634421472,0.9405010065,0.936492079
+mahalanobis_lda,Mahalanobis / LDA,-0.1350633399,-0.1380340745,0.970256413,0.9867697619,0.9893966073
+within_subjects_noise,Within-subjects noise,-0.08816290754,-0.08909397811,0.9852298738,0.9938882016,0.9952638955

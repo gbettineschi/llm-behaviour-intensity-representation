@@ -1,29 +1,14 @@
+import json
+from datetime import datetime
 from pathlib import Path
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from lib.data_typing import Sample
+from lib.sentences import Sample, load_accepted
 
 
 def load_model(model_name: str, device: str, quantization: str | None = None):
-    """Load a causal LM and its tokenizer onto *device*.
-
-    Parameters
-    ----------
-    model_name : str
-        HuggingFace model identifier (e.g. ``"google/gemma-2-2b"``).
-    device : str
-        Target device string (``"cpu"``, ``"cuda"``, etc.).
-    quantization : str | None
-        ``"4bit"``, ``"8bit"``, or ``None`` (default bfloat16).
-        4/8-bit require ``bitsandbytes``.
-
-    Returns
-    -------
-    model : AutoModelForCausalLM
-    tokenizer : AutoTokenizer
-    """
     from transformers import BitsAndBytesConfig
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -44,128 +29,186 @@ def load_model(model_name: str, device: str, quantization: str | None = None):
     return model, tokenizer
 
 
-def extract_activations_multilayer(
-    samples: list[Sample],
-    model,
-    tokenizer,
-    layer_indices: list[int],
-    device: str,
-    batch_size: int = 8,
-) -> dict[tuple[str, str, int], torch.Tensor]:
-    """Extract mean content-token activations at multiple transformer layers in one pass.
+TOKEN_POOLS = ("avg", "last")
 
-    Runs prompts through *model* in batches with ``output_hidden_states=True`` so
-    every requested layer is captured per forward pass. For each ``(trait,
-    intensity, layer)`` group, mean-pools over content tokens (excluding BOS,
-    EOS, and pad tokens) and averages across prompts in the group.
 
-    Parameters
-    ----------
-    samples : list[Sample]
-    model : AutoModelForCausalLM
-    tokenizer : AutoTokenizer
-    layer_indices : list[int]
-        Indices into ``model.model.layers``.
-    device : str
-    batch_size : int
-
-    Returns
-    -------
-    dict[tuple[str, str, str, int], torch.Tensor]
-        Maps ``(trait, intensity, scenario_id, layer)`` to a mean activation vector
-        ``(hidden_dim,)``. Samples sharing the same scenario_id+intensity are averaged.
-    """
-    layers = sorted(set(layer_indices))
-    special_ids = {
-        tid for tid in (
-            tokenizer.bos_token_id,
-            tokenizer.eos_token_id,
-            tokenizer.pad_token_id,
-        )
-        if tid is not None
-    }
-
-    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
-
-    for start in range(0, len(samples), batch_size):
-        batch = samples[start:start + batch_size]
-        texts = [s.prompt for s in batch]
-        enc = tokenizer(texts, return_tensors="pt", padding=True).to(device)
-        with torch.no_grad():
-            out = model(**enc, output_hidden_states=True)
-        hidden_states = out.hidden_states  # tuple length num_layers+1
-
-        token_ids = enc["input_ids"]
-        attention_mask = enc["attention_mask"].bool()
-        valid = attention_mask.clone()
-        for sid in special_ids:
-            valid &= token_ids != sid
-        empty_rows = valid.sum(dim=1) == 0
-        if empty_rows.any():
-            valid[empty_rows] = attention_mask[empty_rows]
-
-        weights = valid.to(hidden_states[0].dtype).unsqueeze(-1)  # (B, L, 1)
-        counts = weights.sum(dim=1).clamp(min=1)  # (B, 1)
-
-        # Pool every requested layer on-device, stack, then a single cross-device copy.
-        per_layer = [
-            (hidden_states[layer + 1] * weights).sum(dim=1) / counts
-            for layer in layers
-        ]
-        stacked = torch.stack(per_layer, dim=0).detach().to("cpu", dtype=torch.float32)
-        # stacked: (num_layers, B, D)
-
-        for li, layer in enumerate(layers):
-            for i, sample in enumerate(batch):
-                key = (sample.trait, sample.intensity, sample.scenario_id, layer)
-                bucket.setdefault(key, []).append(stacked[li, i])
-
-    return {k: torch.stack(v).mean(dim=0) for k, v in bucket.items()}
+def _reduce(hidden: torch.Tensor, valid: torch.Tensor, token_pooling: str) -> torch.Tensor:
+    # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns (B, D).
+    if token_pooling == "avg":
+        w = valid.unsqueeze(-1).to(hidden.dtype)
+        return (hidden * w).sum(1) / w.sum(1).clamp(min=1)
+    if token_pooling == "last":
+        rows = torch.arange(hidden.size(0), device=hidden.device)
+        last_idx = valid.size(1) - 1 - valid.flip(1).int().argmax(1)
+        return hidden[rows, last_idx, :]
+    raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
 
 
 def extract_activations(
     samples: list[Sample],
     model,
     tokenizer,
-    layer_index: int,
+    layers: list[int],
     device: str,
-) -> dict[tuple[str, str], torch.Tensor]:
-    """Mean content-token activations at a single layer.
+    *,
+    token_pooling: str = "avg",
+    batch_size: int = 8,
+) -> dict[tuple[str, str, str, str, int], torch.Tensor]:
+    """Activations at each requested layer, keyed by (trait, intensity, scenario_id, paraphrase_id, layer).
 
-    Thin wrapper over :func:`extract_activations_multilayer` for one layer.
-    Returns a dict keyed by ``(trait, intensity)`` (no layer index).
+    Activations come from a single forward pass over the prompt — the **prefill phase
+    only**; no tokens are generated. ``token_pooling`` therefore reduces over the prompt's
+    tokens: ``'avg'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
+    the prompt's final content token. One vector per paraphrase; nothing is averaged here.
     """
-    multi = extract_activations_multilayer(
-        samples, model, tokenizer, [layer_index], device
-    )
-    return {(t, i, s): vec for (t, i, s, _), vec in multi.items()}
+    if token_pooling not in TOKEN_POOLS:
+        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
+    layers = sorted(set(layers))
+    special = {
+        t
+        for t in (tokenizer.bos_token_id, tokenizer.eos_token_id, tokenizer.pad_token_id)
+        if t is not None
+    }
+
+    out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}
+    for start in range(0, len(samples), batch_size):
+        batch = samples[start : start + batch_size]
+        enc = tokenizer([s.prompt for s in batch], return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            hidden = model(**enc, output_hidden_states=True).hidden_states
+
+        mask = enc["attention_mask"].bool()
+        valid = mask.clone()
+        for sid in special:
+            valid &= enc["input_ids"] != sid
+        empty = valid.sum(1) == 0
+        valid[empty] = mask[empty]
+
+        for layer in layers:
+            red = _reduce(hidden[layer + 1], valid, token_pooling).detach().to("cpu", dtype=torch.float32)
+            for i, s in enumerate(batch):
+                key = (s.trait, s.intensity, s.scenario_id, s.paraphrase_id, layer)
+                if key in out:
+                    raise ValueError(f"duplicate paraphrase_id encountered: {key}")
+                out[key] = red[i]
+
+    return out
 
 
-def save_activations(
-    activations: dict[tuple[str, str, str], torch.Tensor],
-    out_dir: Path,
+def save_representations(
+    activations: dict[tuple[str, str, str, str, int], torch.Tensor],
+    out_dir: str | Path,
+    *,
+    meta: dict,
 ) -> None:
-    """Save each activation tensor to ``out_dir/<trait>__<intensity>__<scenario_id>.pt``."""
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    for (trait, intensity, scenario_id), tensor in activations.items():
-        torch.save(tensor, out_dir / f"{trait}__{intensity}__{scenario_id}.pt")
+    by_layer: dict[int, dict[tuple[str, str, str, str], torch.Tensor]] = {}
+    for (trait, intensity, scenario_id, paraphrase_id, layer), vec in activations.items():
+        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id, paraphrase_id)] = vec
+    for layer, vecs in by_layer.items():
+        torch.save(vecs, out_dir / f"layer_{layer}.pt")
+    (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2))
 
 
-def load_activations(act_dir: Path) -> dict[tuple[str, str, str], torch.Tensor]:
-    """Load activation tensors saved by :func:`save_activations`.
+def load_representations(rep_dir: str | Path, *, layer: int | None = None):
+    """One vector per paraphrase.
 
-    Parameters
-    ----------
-    act_dir : Path
-        Directory containing ``<trait>__<intensity>__<scenario_id>.pt`` files.
-
-    Returns
-    -------
-    dict[tuple[str, str, str], torch.Tensor]
-        Maps ``(trait, intensity, scenario_id)`` to its activation vector.
+    ``layer`` given → ``{(trait, intensity, scenario_id, paraphrase_id): vec}``;
+    ``layer`` None → adds the layer to the key.
     """
-    result = {}
-    for path in sorted(act_dir.glob("*.pt")):
-        trait, intensity, scenario_id = path.stem.split("__")
-        result[(trait, intensity, scenario_id)] = torch.load(path, weights_only=True)
-    return result
+    rep_dir = Path(rep_dir)
+    if layer is not None:
+        return torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
+    out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}
+    for path in sorted(rep_dir.glob("layer_*.pt")):
+        n = int(path.stem.split("_")[1])
+        for key, vec in torch.load(path, weights_only=False).items():
+            out[(*key, n)] = vec
+    return out
+
+
+def pool_by_scenario_level(
+    activations: dict[tuple[str, str, str, str], torch.Tensor],
+) -> dict[tuple[str, str, str], torch.Tensor]:
+    """Mean paraphrase vectors per ``(trait, intensity, scenario_id)``.
+
+    Recovers the scenario-centroid view from the paraphrase-level store; the
+    analysis helpers in :mod:`lib.analysis` (e.g. ``within_center``) expect this
+    3-tuple key shape.
+    """
+    bucket: dict[tuple[str, str, str], list[torch.Tensor]] = {}
+    for (trait, intensity, scenario_id, _paraphrase_id), vec in activations.items():
+        bucket.setdefault((trait, intensity, scenario_id), []).append(vec)
+    return {k: torch.stack(vs).mean(0) for k, vs in bucket.items()}
+
+
+def unembedding_covariance(model, chunk: int = 16384) -> torch.Tensor:
+    U = model.get_output_embeddings().weight.detach()  # (V, D)
+    V, D = U.shape[0], U.shape[1]
+    gram = torch.zeros(D, D, dtype=torch.float64)
+    col_sum = torch.zeros(D, dtype=torch.float64)
+    for s in range(0, V, chunk):
+        blk = U[s : s + chunk].to("cpu", torch.float32)
+        gram += (blk.T @ blk).double()
+        col_sum += blk.sum(0).double()
+    mean = col_sum / V
+    return gram / V - torch.outer(mean, mean)
+
+
+def extract_representations(
+    dataset: str | Path,
+    out_dir: str | Path,
+    *,
+    model_name: str,
+    layers: list[int] | None = None,
+    token_pooling: str = "avg",
+    batch_size: int = 8,
+) -> Path:
+    """Extract activations for a sentences_filtered.jsonl dataset and save them.
+
+    Activations are taken from the prompt's **prefill phase only** (no generation), so
+    ``token_pooling`` reduces over the prompt tokens: ``'avg'`` averages content tokens,
+    ``'last'`` takes the prompt's final content token. Per-layer activations are written
+    under ``out_dir/<token_pooling>_token/`` so both poolings can coexist; the pooling-invariant
+    ``unembeddings_covariance.pt`` is written once at ``out_dir/``.
+    """
+    if token_pooling not in TOKEN_POOLS:
+        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
+    dataset, out_dir = Path(dataset), Path(out_dir)
+    pool_dir = out_dir / f"{token_pooling}_token"
+    layers = layers or list(range(1, 23))
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+
+    samples = load_accepted(dataset)
+    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  token_pooling={token_pooling}")
+
+    model, tokenizer = load_model(model_name, device)
+    activations = extract_activations(
+        samples, model, tokenizer, layers, device, token_pooling=token_pooling, batch_size=batch_size
+    )
+
+    meta = {
+        "generated_at": datetime.now().strftime("%Y%m%d_%H%M%S"),
+        "source_dataset": str(dataset),
+        "model": model_name,
+        "device": device,
+        "layers": layers,
+        "token_pooling": token_pooling,
+        "n_samples": len(samples),
+        "vectors_per_layer": len(activations) // len(layers),
+        "hidden_dim": next(iter(activations.values())).shape[0],
+    }
+    save_representations(activations, pool_dir, meta=meta)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cov_path = out_dir / "unembeddings_covariance.pt"
+    if not cov_path.exists():
+        torch.save(unembedding_covariance(model), cov_path)
+    print(f"Saved {len(layers)} layers under {pool_dir} (+ unembeddings_covariance.pt at {out_dir})")
+    return pool_dir

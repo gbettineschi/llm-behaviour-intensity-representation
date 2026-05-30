@@ -7,7 +7,7 @@ layer-sweep line plot).
 
 Typical usage:
 
-    from lib.plotting import (
+    from lib.figures import (
         apply_style, C_POS, C_NEG, C_NEUT, C_REF, C_NULL,
         plot_agreement, plot_agreement_pair,
         plot_projection, plot_projection_pair,
@@ -146,7 +146,7 @@ def plot_projection_pair(panels, titles, *, neg_label, pos_label,
     return fig, axes
 
 
-def plot_layer_sweep(layers, accuracy, agreement, *, focal_layer, figsize=(8, 5)):
+def plot_layer_sweep(layers, accuracy, agreement, *, focal_layer, figsize=(5.4, 2.8)):
     """Direction-quality summary (accuracy + cross-method cosine) across layers."""
     fig, ax = plt.subplots(figsize=figsize)
     ax.plot(layers, accuracy, "o-", color=C_POS, label="MeanDiff CV balanced acc.")

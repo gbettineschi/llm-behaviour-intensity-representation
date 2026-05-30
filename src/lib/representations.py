@@ -153,7 +153,7 @@ def extract_representations(
     ``token_pooling`` reduces over the prompt tokens: ``'avg'`` averages content tokens,
     ``'last'`` takes the prompt's final content token. Per-layer activations are written
     under ``out_dir/<token_pooling>_token/`` so both poolings can coexist; the pooling-invariant
-    ``unembed_cov.pt`` is written once at ``out_dir/``.
+    ``unembeddings_covariance.pt`` is written once at ``out_dir/``.
     """
     if token_pooling not in TOKEN_POOLS:
         raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
@@ -189,8 +189,8 @@ def extract_representations(
     }
     save_representations(activations, pool_dir, meta=meta)
     out_dir.mkdir(parents=True, exist_ok=True)
-    cov_path = out_dir / "unembed_cov.pt"
+    cov_path = out_dir / "unembeddings_covariance.pt"
     if not cov_path.exists():
         torch.save(unembedding_covariance(model), cov_path)
-    print(f"Saved {len(layers)} layers under {pool_dir} (+ unembed_cov.pt at {out_dir})")
+    print(f"Saved {len(layers)} layers under {pool_dir} (+ unembeddings_covariance.pt at {out_dir})")
     return pool_dir

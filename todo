@@ -1,6 +1,4 @@
 - analysis.py should be better
 - a single reproducing script should be available
-- readme should be good
-- code should be readable and documented
-- representations should be on git via lfs if necessary
-- representations should be saved for the tokens we are interested into
+- readme should be more complete
+- code should be readable and documented, strip all comments to begin with, then iterate

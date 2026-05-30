@@ -32,16 +32,16 @@ def load_model(model_name: str, device: str, quantization: str | None = None):
 TOKEN_POOLS = ("mean", "last")
 
 
-def _reduce(hidden: torch.Tensor, valid: torch.Tensor, pool: str) -> torch.Tensor:
+def _reduce(hidden: torch.Tensor, valid: torch.Tensor, token_pooling: str) -> torch.Tensor:
     # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns (B, D).
-    if pool == "mean":
+    if token_pooling == "mean":
         w = valid.unsqueeze(-1).to(hidden.dtype)
         return (hidden * w).sum(1) / w.sum(1).clamp(min=1)
-    if pool == "last":
+    if token_pooling == "last":
         rows = torch.arange(hidden.size(0), device=hidden.device)
         last_idx = valid.size(1) - 1 - valid.flip(1).int().argmax(1)
         return hidden[rows, last_idx, :]
-    raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
+    raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
 
 
 def extract_activations(
@@ -51,16 +51,18 @@ def extract_activations(
     layers: list[int],
     device: str,
     *,
-    pool: str = "mean",
+    token_pooling: str = "mean",
     batch_size: int = 8,
 ) -> dict[tuple[str, str, str, int], torch.Tensor]:
     """Activations at each requested layer, keyed by (trait, intensity, scenario_id, layer).
 
-    ``pool='mean'`` pools content tokens (excluding BOS/EOS/pad); ``pool='last'`` takes the
-    final content token. Samples sharing a key are averaged.
+    Activations come from a single forward pass over the prompt — the **prefill phase
+    only**; no tokens are generated. ``token_pooling`` therefore reduces over the prompt's
+    tokens: ``'mean'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
+    the prompt's final content token. Samples sharing a key are averaged.
     """
-    if pool not in TOKEN_POOLS:
-        raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
+    if token_pooling not in TOKEN_POOLS:
+        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
     layers = sorted(set(layers))
     special = {
         t
@@ -83,7 +85,7 @@ def extract_activations(
         valid[empty] = mask[empty]
 
         for layer in layers:
-            red = _reduce(hidden[layer + 1], valid, pool).detach().to("cpu", dtype=torch.float32)
+            red = _reduce(hidden[layer + 1], valid, token_pooling).detach().to("cpu", dtype=torch.float32)
             for i, s in enumerate(batch):
                 key = (s.trait, s.intensity, s.scenario_id, layer)
                 bucket.setdefault(key, []).append(red[i])
@@ -140,21 +142,23 @@ def extract_representations(
     dataset: str | Path,
     out_dir: str | Path,
     *,
-    model_name: str = "google/gemma-2-2b",
+    model_name: str,
     layers: list[int] | None = None,
-    pool: str = "mean",
+    token_pooling: str = "mean",
     batch_size: int = 8,
 ) -> Path:
     """Extract activations for a sentences_filtered.jsonl dataset and save them.
 
-    ``pool='mean'`` pools content tokens; ``pool='last'`` takes the final content token.
-    Per-layer activations are written under ``out_dir/<pool>/`` so both pools can coexist;
-    the pool-invariant ``unembed_cov.pt`` is written once at ``out_dir/``.
+    Activations are taken from the prompt's **prefill phase only** (no generation), so
+    ``token_pooling`` reduces over the prompt tokens: ``'mean'`` averages content tokens,
+    ``'last'`` takes the prompt's final content token. Per-layer activations are written
+    under ``out_dir/<token_pooling>/`` so both poolings can coexist; the pooling-invariant
+    ``unembed_cov.pt`` is written once at ``out_dir/``.
     """
-    if pool not in TOKEN_POOLS:
-        raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
+    if token_pooling not in TOKEN_POOLS:
+        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
     dataset, out_dir = Path(dataset), Path(out_dir)
-    pool_dir = out_dir / pool
+    pool_dir = out_dir / token_pooling
     layers = layers or list(range(1, 23))
     device = (
         "cuda"
@@ -165,11 +169,11 @@ def extract_representations(
     )
 
     samples = load_accepted(dataset)
-    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  pool={pool}")
+    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  token_pooling={token_pooling}")
 
     model, tokenizer = load_model(model_name, device)
     activations = extract_activations(
-        samples, model, tokenizer, layers, device, pool=pool, batch_size=batch_size
+        samples, model, tokenizer, layers, device, token_pooling=token_pooling, batch_size=batch_size
     )
 
     meta = {
@@ -178,7 +182,7 @@ def extract_representations(
         "model": model_name,
         "device": device,
         "layers": layers,
-        "pool": pool,
+        "token_pooling": token_pooling,
         "n_samples": len(samples),
         "vectors_per_layer": len(activations) // len(layers),
         "hidden_dim": next(iter(activations.values())).shape[0],

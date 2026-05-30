@@ -1,5 +1,5 @@
 {
-  "generated_at": "20260530_124257",
+  "generated_at": "20260530_124506",
   "source_dataset": "data/20260530_001930/sentences/sentences_filtered.jsonl",
   "model": "google/gemma-2-2b",
   "device": "mps",
@@ -27,7 +27,7 @@
     21,
     22
   ],
-  "token_pooling": "last",
+  "token_pooling": "avg",
   "n_samples": 633,
   "vectors_per_layer": 633,
   "hidden_dim": 2304

@@ -46,10 +46,11 @@ class Sample(NamedTuple):
     trait: str
     intensity: str
     scenario_id: str = ""
+    paraphrase_id: str = ""
 
 
 def load_accepted(path: str | Path) -> list[Sample]:
-    """Load samples from a sentences_filtered.jsonl dataset (text/trait/level/scenario_id)."""
+    """Load samples from a sentences_filtered.jsonl dataset (text/trait/level/scenario_id/paraphrase_id)."""
     samples = []
     with open(path) as f:
         for line in f:
@@ -62,6 +63,7 @@ def load_accepted(path: str | Path) -> list[Sample]:
                         trait=r["trait"],
                         intensity=r["level"],
                         scenario_id=r["scenario_id"],
+                        paraphrase_id=r["paraphrase_id"],
                     )
                 )
     return samples

@@ -265,6 +265,40 @@ def within_center(
     return out
 
 
+def within_center_paraphrase(
+    activations: dict[tuple[str, str, str, str], torch.Tensor],
+    levels_ordered: list[str],
+    trait: str | None = None,
+) -> dict[tuple[str, str, str, str], np.ndarray]:
+    """Paraphrase-level within-scenario (fixed-effects) transform.
+
+    Sibling of :func:`within_center` for paraphrase-keyed activations
+    ``(trait, level, scenario_id, paraphrase_id)``. For each scenario carrying
+    at least one paraphrase at every level in ``levels_ordered``, subtracts the
+    mean of all of that scenario's paraphrase vectors (across the requested
+    levels) from each. Removes the additive per-scenario offset while keeping
+    paraphrase-level granularity. Scenarios missing a level are dropped.
+    """
+    trait = _infer_trait(activations, trait)
+    by_scen: dict[str, dict[str, list[tuple[tuple, np.ndarray]]]] = {}
+    for key, vec in activations.items():
+        t, lvl, sid, _pid = key
+        if t != trait or lvl not in levels_ordered:
+            continue
+        by_scen.setdefault(sid, {}).setdefault(lvl, []).append((key, _to_np(vec)))
+
+    out: dict[tuple[str, str, str, str], np.ndarray] = {}
+    for by_level in by_scen.values():
+        if not all(lvl in by_level for lvl in levels_ordered):
+            continue
+        all_vecs = np.stack([v for lvl in levels_ordered for (_, v) in by_level[lvl]])
+        mean = all_vecs.mean(axis=0)
+        for lvl in levels_ordered:
+            for key, vec in by_level[lvl]:
+                out[key] = vec - mean
+    return out
+
+
 def per_scenario_step_cosines(
     activations: dict[tuple[str, str, str], torch.Tensor],
     levels_ordered: list[str],

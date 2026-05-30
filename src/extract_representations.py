@@ -9,7 +9,7 @@ from pathlib import Path
 
 from lib.representations import extract_representations
 
-DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
+DATASET = Path("data/v2/sentences/sentences_filtered.jsonl")
 POOL = "last"
 
 if __name__ == "__main__":

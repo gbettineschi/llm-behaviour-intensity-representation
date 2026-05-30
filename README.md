@@ -32,17 +32,3 @@ If you have already cloned the repo before doing this, you can fix by installing
    
    echo "*.ipynb filter=nb-clean" >> .git/info/attributes
    ```
-
-**Development**
-
-All code is in `src/`.
-
-Exploration happens in `src/notebooks/`. Let's give each notebook a decent name, always beginning with a numerical index `{index}_{title}.ipynb`.
-
-Once a block of code is validated and meant to be reused, it is consolidated in one of the `.py` files that live in `/src` directly. We have one module for loading data, one for handling the model and its internal representations, and one for analysing them.
-
-At the end, we will write the full correct experiment in `scripts/run.py` with configs in `scripts/config.yaml`, for reproducibility.
-
-If we generate data and we want to keep track of it, we put it inside the `/data` folder. Since our data consists of lightweight text prompts, we can keep it on git. 
-
-Output (activations, plots) is written to `output/` (gitignored).

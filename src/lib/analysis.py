@@ -433,3 +433,71 @@ def within_scenario_linearity_metrics(
         "pc1_frac_per_scenario_mean": float(pc1_per.mean()),
         "n_scenarios": n_scen,
     }
+
+
+# Metrics with the "more linear = smaller" sign; everywhere else, larger is more linear.
+_LOWER_IS_BETTER: frozenset[str] = frozenset({"midpoint_residual_median", "midpoint_residual_pooled"})
+
+DEFAULT_NULL_TEST_KEYS: tuple[str, ...] = (
+    "spearman", "kendall", "probe_r2",
+    "monotone_fraction", "midpoint_residual_median", "pc1_frac_centroids",
+)
+
+
+def permutation_null_within_scenario(
+    activations: dict[tuple[str, str, str], torch.Tensor],
+    levels_ordered: list[str],
+    trait: str | None = None,
+    *,
+    n_perm: int = 100,
+    seed: int = 13,
+    test_keys: tuple[str, ...] = DEFAULT_NULL_TEST_KEYS,
+) -> dict:
+    """Within-scenario label-permutation null for the linearity metrics.
+
+    Inside each scenario the level labels are shuffled — preserving the
+    scenario/topic structure so the null isolates the ordinal-linearity signal
+    rather than also destroying scenario identity. For each permutation,
+    :func:`within_scenario_linearity_metrics` is recomputed and the value of
+    every ``test_keys`` entry is recorded.
+
+    Monte-Carlo p-values use the conservative ``(1 + #beyond) / (1 + n_perm)``
+    estimator (floor ``1 / (1 + n_perm)``). For
+    :data:`_LOWER_IS_BETTER` metrics the left tail is used; the rest use the right.
+
+    Returns
+    -------
+    dict
+        ``{"observed": {key: float}, "null": {key: ndarray}, "p_values": {key: float},
+        "n_perm": int}``.
+    """
+    trait = _infer_trait(activations, trait)
+    triples = scenario_triples(activations, levels_ordered, trait=trait)
+    observed_full = within_scenario_linearity_metrics(activations, levels_ordered, trait=trait)
+    observed = {k: observed_full[k] for k in test_keys}
+
+    rng = np.random.default_rng(seed)
+    null_arrays: dict[str, list[float]] = {k: [] for k in test_keys}
+    for _ in range(n_perm):
+        perm_acts: dict[tuple[str, str, str], np.ndarray] = {}
+        for sid, mat in triples.items():
+            order = rng.permutation(len(levels_ordered))
+            for i, lvl in enumerate(levels_ordered):
+                perm_acts[(trait, lvl, sid)] = mat[order[i]]
+        m = within_scenario_linearity_metrics(perm_acts, levels_ordered, trait=trait)
+        for k in test_keys:
+            null_arrays[k].append(m[k])
+    null = {k: np.asarray(v, dtype=float) for k, v in null_arrays.items()}
+
+    p_values: dict[str, float] = {}
+    for k in test_keys:
+        obs_val = observed[k]
+        if isinstance(obs_val, float) and np.isnan(obs_val):
+            p_values[k] = float("nan")
+            continue
+        if k in _LOWER_IS_BETTER:
+            p_values[k] = float((1 + (null[k] <= obs_val).sum()) / (1 + n_perm))
+        else:
+            p_values[k] = float((1 + (null[k] >= obs_val).sum()) / (1 + n_perm))
+
+    return {"observed": observed, "null": null, "p_values": p_values, "n_perm": n_perm}

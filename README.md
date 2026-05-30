@@ -2,11 +2,6 @@
 
 _Produced by Francesco Braicovich, Gabriele Bettineschi, Giovanni Berlinghieri, Enrico Adamo, and Andrea Porta in May 2026 for the Machine Learning and Artificial Intelligence course at Bocconi University._
 
-## Abstract and introduction
-
-_[placeholder]_
-
-
 ## Setup and development
 **Setup**
 0. Before cloning the repo, make sure you have git lfs installed.

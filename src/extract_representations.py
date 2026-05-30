@@ -12,7 +12,7 @@ from lib.representations import extract_representations
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
 # Token pooling over the prompt's prefill hidden states: "last" = final content token,
 # "avg" = average over content tokens. No generation happens. Output folder is f"{TOKEN_POOLING}_token".
-TOKEN_POOLING = "last"
+TOKEN_POOLING = "avg"
 MODEL = "google/gemma-2-2b"
 LAYERS = list(range(1, 23))
 

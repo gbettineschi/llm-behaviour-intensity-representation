@@ -7,7 +7,7 @@ layer-sweep line plot).
 
 Typical usage:
 
-    from lib.plotting import (
+    from lib.figures import (
         apply_style, C_POS, C_NEG, C_NEUT, C_REF, C_NULL,
         plot_agreement, plot_agreement_pair,
         plot_projection, plot_projection_pair,

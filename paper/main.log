@@ -786,4 +786,80 @@ Package pdftex.def Info: ../results/20260530_001930/ordinal_linearity/avg_token/
 
 [15 <../results/20260530_001930/ordinal_linearity/last_token/step_vectors_cosine_matrix.png> <../results/20260530_001930/ordinal_linearity/last_token/linearity_permutation_null.png> <../results/20260530_001930/ordinal_linearity/avg_token/step_vectors_cosine_matrix.png> <../results/20260530_001930/ordinal_linearity/avg_token/linearity_permutation_null.png>]
 
-[16 <../results/20260530_001930/ordinal_linearity/last_token/inner_products_adjacent_step.png> <../results/20260530_001930/ordinal_linearity/last_token/inner_products_cosine_grid.png> <../results/20260530_001930/ordinal_linearity/avg_token/inner_products_adjacent_step.png> <../results/20260530_001930/ordinal_linearity/avg_token/inner_products_cosine_grid.png>
+[16 <../results/20260530_001930/ordinal_linearity/last_token/inner_products_adjacent_step.png> <../results/20260530_001930/ordinal_linearity/last_token/inner_products_cosine_grid.png> <../results/20260530_001930/ordinal_linearity/avg_token/inner_products_adjacent_step.png> <../results/20260530_001930/ordinal_linearity/avg_token/inner_products_cosine_grid.png> <../results/20260530_001930/ordinal_linearity/last_token/pca_raw_vs_centered.png> <../results/20260530_001930/ordinal_linearity/last_token/per_scenario_grid.png> <../results/20260530_001930/ordinal_linearity/avg_token/pca_raw_vs_centered.png> <../results/20260530_001930/ordinal_linearity/avg_token/per_scenario_grid.png>]
+
+[17 <../results/20260530_001930/ordinal_linearity/last_token/linearity_metric_sweep.png> <../results/20260530_001930/ordinal_linearity/last_token/step_vectors_layer_sweep.png> <../results/20260530_001930/ordinal_linearity/avg_token/linearity_metric_sweep.png> <../results/20260530_001930/ordinal_linearity/avg_token/step_vectors_layer_sweep.png>]
+<../results/20260530_001930/trait_geometry/last_token/steering_direction.png, id=436, 825.8052pt x 252.4632pt>
+File: ../results/20260530_001930/trait_geometry/last_token/steering_direction.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/last_token/steering_direction.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/last_token/steering_direction.png  used on input line 968.
+(pdftex.def)             Requested size: 127.1981pt x 38.88484pt.
+<../results/20260530_001930/ordinal_linearity/last_token/steering_axis_sweep.png, id=437, 457.2282pt x 240.4182pt>
+File: ../results/20260530_001930/ordinal_linearity/last_token/steering_axis_sweep.png Graphic file (type png)
+<use ../results/20260530_001930/ordinal_linearity/last_token/steering_axis_sweep.png>
+Package pdftex.def Info: ../results/20260530_001930/ordinal_linearity/last_token/steering_axis_sweep.png  used on input line 969.
+(pdftex.def)             Requested size: 127.1981pt x 66.88008pt.
+<../results/20260530_001930/trait_geometry/last_token/shared_plane.png, id=438, 401.0985pt x 356.532pt>
+File: ../results/20260530_001930/trait_geometry/last_token/shared_plane.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/last_token/shared_plane.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/last_token/shared_plane.png  used on input line 970.
+(pdftex.def)             Requested size: 127.1981pt x 113.06436pt.
+<../results/20260530_001930/trait_geometry/avg_token/steering_direction.png, id=439, 825.8052pt x 252.4632pt>
+File: ../results/20260530_001930/trait_geometry/avg_token/steering_direction.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/avg_token/steering_direction.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/avg_token/steering_direction.png  used on input line 980.
+(pdftex.def)             Requested size: 127.1981pt x 38.88484pt.
+<../results/20260530_001930/ordinal_linearity/avg_token/steering_axis_sweep.png, id=440, 457.2282pt x 240.4182pt>
+File: ../results/20260530_001930/ordinal_linearity/avg_token/steering_axis_sweep.png Graphic file (type png)
+<use ../results/20260530_001930/ordinal_linearity/avg_token/steering_axis_sweep.png>
+Package pdftex.def Info: ../results/20260530_001930/ordinal_linearity/avg_token/steering_axis_sweep.png  used on input line 981.
+(pdftex.def)             Requested size: 127.1981pt x 66.88008pt.
+<../results/20260530_001930/trait_geometry/avg_token/shared_plane.png, id=441, 401.0985pt x 356.532pt>
+File: ../results/20260530_001930/trait_geometry/avg_token/shared_plane.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/avg_token/shared_plane.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/avg_token/shared_plane.png  used on input line 982.
+(pdftex.def)             Requested size: 127.1981pt x 113.06436pt.
+<../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png, id=444, 370.5042pt x 225.9642pt>
+File: ../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png  used on input line 990.
+(pdftex.def)             Requested size: 194.76982pt x 118.78468pt.
+<../results/20260530_001930/trait_geometry/avg_token/subspace_spectrum.png, id=445, 370.5042pt x 225.9642pt>
+File: ../results/20260530_001930/trait_geometry/avg_token/subspace_spectrum.png Graphic file (type png)
+<use ../results/20260530_001930/trait_geometry/avg_token/subspace_spectrum.png>
+Package pdftex.def Info: ../results/20260530_001930/trait_geometry/avg_token/subspace_spectrum.png  used on input line 991.
+(pdftex.def)             Requested size: 194.76982pt x 118.78468pt.
+
+
+[18
+
+ <../results/20260530_001930/trait_geometry/last_token/steering_direction.png> <../results/20260530_001930/ordinal_linearity/last_token/steering_axis_sweep.png> <../results/20260530_001930/trait_geometry/last_token/shared_plane.png>]
+
+[19 <../results/20260530_001930/trait_geometry/avg_token/steering_direction.png> <../results/20260530_001930/ordinal_linearity/avg_token/steering_axis_sweep.png> <../results/20260530_001930/trait_geometry/avg_token/shared_plane.png> <../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png> <../results/20260530_001930/trait_geometry/avg_token/subspace_spectrum.png>] (./main.aux)
+ ***********
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+ ***********
+
+
+LaTeX Warning: There were undefined references.
+
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: ED8F42FC98781C1D2FE3F4723607569A;3904.
+ ) 
+Here is how much of TeX's memory you used:
+ 15885 strings out of 474662
+ 297044 string characters out of 5751109
+ 717133 words of memory out of 5000000
+ 38277 multiletter control sequences out of 15000+600000
+ 627071 words of font info for 303 fonts, out of 8000000 for 9000
+ 319 hyphenation exceptions out of 8191
+ 75i,13n,79p,1100b,580s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ </Users/francescobraicovich/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt0900.600pk> </Users/francescobraicovich/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2025basic/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on main.pdf (19 pages, 7461001 bytes).
+PDF statistics:
+ 623 PDF objects out of 1000 (max. 8388607)
+ 390 compressed objects within 4 object streams
+ 108 named destinations out of 1000 (max. 500000)
+ 55241 words of extra memory for PDF output out of 61914 (max. 10000000)
+

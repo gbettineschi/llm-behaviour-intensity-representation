@@ -10,8 +10,9 @@ from pathlib import Path
 from lib.representations import extract_representations
 
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
+POOL = "last"
 
 if __name__ == "__main__":
     if not DATASET.exists():
         raise SystemExit(DATASET)
-    extract_representations(DATASET, DATASET.parent.parent / "representations")
+    extract_representations(DATASET, DATASET.parent.parent / "representations", pool=POOL)

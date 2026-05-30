@@ -29,20 +29,19 @@ def load_model(model_name: str, device: str, quantization: str | None = None):
     return model, tokenizer
 
 
-TOKEN_MODES = ("mean", "last", "first")
+TOKEN_POOLS = ("mean", "last")
 
 
-def _reduce_all(hidden: torch.Tensor, valid: torch.Tensor) -> dict[str, torch.Tensor]:
-    # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns each mode as (B, D).
-    w = valid.unsqueeze(-1).to(hidden.dtype)
-    rows = torch.arange(hidden.size(0), device=hidden.device)
-    first_idx = valid.int().argmax(1)
-    last_idx = valid.size(1) - 1 - valid.flip(1).int().argmax(1)
-    return {
-        "mean": (hidden * w).sum(1) / w.sum(1).clamp(min=1),
-        "first": hidden[rows, first_idx, :],
-        "last": hidden[rows, last_idx, :],
-    }
+def _reduce(hidden: torch.Tensor, valid: torch.Tensor, pool: str) -> torch.Tensor:
+    # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns (B, D).
+    if pool == "mean":
+        w = valid.unsqueeze(-1).to(hidden.dtype)
+        return (hidden * w).sum(1) / w.sum(1).clamp(min=1)
+    if pool == "last":
+        rows = torch.arange(hidden.size(0), device=hidden.device)
+        last_idx = valid.size(1) - 1 - valid.flip(1).int().argmax(1)
+        return hidden[rows, last_idx, :]
+    raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
 
 
 def extract_activations(
@@ -52,14 +51,16 @@ def extract_activations(
     layers: list[int],
     device: str,
     *,
+    pool: str = "mean",
     batch_size: int = 8,
-) -> dict[tuple[str, str, str, int], dict[str, torch.Tensor]]:
+) -> dict[tuple[str, str, str, int], torch.Tensor]:
     """Activations at each requested layer, keyed by (trait, intensity, scenario_id, layer).
 
-    Each value is the bundle of per-prompt reductions {"mean", "last", "first"}: "mean" pools
-    content tokens (excluding BOS/EOS/pad), "last"/"first" take a single content token. Samples
-    sharing a key are averaged per reduction. The analysis side picks which reduction to use.
+    ``pool='mean'`` pools content tokens (excluding BOS/EOS/pad); ``pool='last'`` takes the
+    final content token. Samples sharing a key are averaged.
     """
+    if pool not in TOKEN_POOLS:
+        raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
     layers = sorted(set(layers))
     special = {
         t
@@ -67,7 +68,7 @@ def extract_activations(
         if t is not None
     }
 
-    bucket: dict[tuple[str, str, str, int], dict[str, list[torch.Tensor]]] = {}
+    bucket: dict[tuple[str, str, str, int], list[torch.Tensor]] = {}
     for start in range(0, len(samples), batch_size):
         batch = samples[start : start + batch_size]
         enc = tokenizer([s.prompt for s in batch], return_tensors="pt", padding=True).to(device)
@@ -82,50 +83,43 @@ def extract_activations(
         valid[empty] = mask[empty]
 
         for layer in layers:
-            red = _reduce_all(hidden[layer + 1], valid)
-            red = {m: red[m].detach().to("cpu", dtype=torch.float32) for m in TOKEN_MODES}
+            red = _reduce(hidden[layer + 1], valid, pool).detach().to("cpu", dtype=torch.float32)
             for i, s in enumerate(batch):
                 key = (s.trait, s.intensity, s.scenario_id, layer)
-                d = bucket.setdefault(key, {m: [] for m in TOKEN_MODES})
-                for m in TOKEN_MODES:
-                    d[m].append(red[m][i])
+                bucket.setdefault(key, []).append(red[i])
 
-    return {
-        key: {m: torch.stack(vecs[m]).mean(0) for m in TOKEN_MODES}
-        for key, vecs in bucket.items()
-    }
+    return {key: torch.stack(vecs).mean(0) for key, vecs in bucket.items()}
 
 
 def save_representations(
-    activations: dict[tuple[str, str, str, int], dict[str, torch.Tensor]],
+    activations: dict[tuple[str, str, str, int], torch.Tensor],
     out_dir: str | Path,
     *,
     meta: dict,
 ) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    by_layer: dict[int, dict[tuple[str, str, str], dict[str, torch.Tensor]]] = {}
-    for (trait, intensity, scenario_id, layer), bundle in activations.items():
-        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id)] = bundle
-    for layer, bundles in by_layer.items():
-        torch.save(bundles, out_dir / f"layer_{layer}.pt")
+    by_layer: dict[int, dict[tuple[str, str, str], torch.Tensor]] = {}
+    for (trait, intensity, scenario_id, layer), vec in activations.items():
+        by_layer.setdefault(layer, {})[(trait, intensity, scenario_id)] = vec
+    for layer, vecs in by_layer.items():
+        torch.save(vecs, out_dir / f"layer_{layer}.pt")
     (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2))
 
 
-def load_representations(rep_dir: str | Path, *, layer: int | None = None, token: str = "mean"):
-    """One vector per key, selecting `token` ("mean"/"last"/"first") from each saved bundle.
+def load_representations(rep_dir: str | Path, *, layer: int | None = None):
+    """One vector per key.
 
     layer given → {(trait, intensity, scenario_id): vec}; layer None → adds the layer to the key.
     """
     rep_dir = Path(rep_dir)
     if layer is not None:
-        bundles = torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
-        return {key: bundle[token] for key, bundle in bundles.items()}
+        return torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
     out: dict[tuple[str, str, str, int], torch.Tensor] = {}
     for path in sorted(rep_dir.glob("layer_*.pt")):
         n = int(path.stem.split("_")[1])
-        for key, bundle in torch.load(path, weights_only=False).items():
-            out[(*key, n)] = bundle[token]
+        for key, vec in torch.load(path, weights_only=False).items():
+            out[(*key, n)] = vec
     return out
 
 
@@ -148,15 +142,19 @@ def extract_representations(
     *,
     model_name: str = "google/gemma-2-2b",
     layers: list[int] | None = None,
+    pool: str = "mean",
     batch_size: int = 8,
 ) -> Path:
-    """Extract activations for a sentences_filtered.jsonl dataset and save them into out_dir.
+    """Extract activations for a sentences_filtered.jsonl dataset and save them.
 
-    Loads the model, extracts at every requested layer (each saved as the {mean, last, first}
-    bundle), and writes the layer_<N>.pt bundles, a metadata.json manifest, and unembed_cov.pt.
-    The caller chooses out_dir (e.g. data/<timestamp>/representations).
+    ``pool='mean'`` pools content tokens; ``pool='last'`` takes the final content token.
+    Per-layer activations are written under ``out_dir/<pool>/`` so both pools can coexist;
+    the pool-invariant ``unembed_cov.pt`` is written once at ``out_dir/``.
     """
+    if pool not in TOKEN_POOLS:
+        raise ValueError(f"pool must be one of {TOKEN_POOLS}, got {pool!r}")
     dataset, out_dir = Path(dataset), Path(out_dir)
+    pool_dir = out_dir / pool
     layers = layers or list(range(1, 23))
     device = (
         "cuda"
@@ -167,11 +165,11 @@ def extract_representations(
     )
 
     samples = load_accepted(dataset)
-    print(f"{len(samples)} samples from {dataset}  |  device={device}")
+    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  pool={pool}")
 
     model, tokenizer = load_model(model_name, device)
     activations = extract_activations(
-        samples, model, tokenizer, layers, device, batch_size=batch_size
+        samples, model, tokenizer, layers, device, pool=pool, batch_size=batch_size
     )
 
     meta = {
@@ -180,12 +178,15 @@ def extract_representations(
         "model": model_name,
         "device": device,
         "layers": layers,
-        "tokens": list(TOKEN_MODES),
+        "pool": pool,
         "n_samples": len(samples),
         "vectors_per_layer": len(activations) // len(layers),
-        "hidden_dim": next(iter(activations.values()))["mean"].shape[0],
+        "hidden_dim": next(iter(activations.values())).shape[0],
     }
-    save_representations(activations, out_dir, meta=meta)
-    torch.save(unembedding_covariance(model), out_dir / "unembed_cov.pt")
-    print(f"Saved {len(layers)} layers + unembed_cov.pt under {out_dir}")
-    return out_dir
+    save_representations(activations, pool_dir, meta=meta)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cov_path = out_dir / "unembed_cov.pt"
+    if not cov_path.exists():
+        torch.save(unembedding_covariance(model), cov_path)
+    print(f"Saved {len(layers)} layers under {pool_dir} (+ unembed_cov.pt at {out_dir})")
+    return pool_dir

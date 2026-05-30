@@ -2,7 +2,7 @@
 
 This script owns the input/output locations; the library loads the model, extracts, and saves.
 
-Run from the repo root:  uv run python src/generate_representations.py
+Run from the repo root:  uv run python src/extract_representations.py
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from lib.representations import extract_representations
 
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
 # Token pooling over the prompt's prefill hidden states: "last" = final content token,
-# "mean" = average over content tokens. No generation happens.
+# "avg" = average over content tokens. No generation happens. Output folder is f"{TOKEN_POOLING}_token".
 TOKEN_POOLING = "last"
 MODEL = "google/gemma-2-2b"
 LAYERS = list(range(1, 23))

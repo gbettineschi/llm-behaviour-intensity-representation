@@ -29,12 +29,12 @@ def load_model(model_name: str, device: str, quantization: str | None = None):
     return model, tokenizer
 
 
-TOKEN_POOLS = ("mean", "last")
+TOKEN_POOLS = ("avg", "last")
 
 
 def _reduce(hidden: torch.Tensor, valid: torch.Tensor, token_pooling: str) -> torch.Tensor:
     # hidden: (B, L, D); valid: (B, L) bool content-token mask. Returns (B, D).
-    if token_pooling == "mean":
+    if token_pooling == "avg":
         w = valid.unsqueeze(-1).to(hidden.dtype)
         return (hidden * w).sum(1) / w.sum(1).clamp(min=1)
     if token_pooling == "last":
@@ -51,14 +51,14 @@ def extract_activations(
     layers: list[int],
     device: str,
     *,
-    token_pooling: str = "mean",
+    token_pooling: str = "avg",
     batch_size: int = 8,
 ) -> dict[tuple[str, str, str, int], torch.Tensor]:
     """Activations at each requested layer, keyed by (trait, intensity, scenario_id, layer).
 
     Activations come from a single forward pass over the prompt — the **prefill phase
     only**; no tokens are generated. ``token_pooling`` therefore reduces over the prompt's
-    tokens: ``'mean'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
+    tokens: ``'avg'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
     the prompt's final content token. Samples sharing a key are averaged.
     """
     if token_pooling not in TOKEN_POOLS:
@@ -144,21 +144,21 @@ def extract_representations(
     *,
     model_name: str,
     layers: list[int] | None = None,
-    token_pooling: str = "mean",
+    token_pooling: str = "avg",
     batch_size: int = 8,
 ) -> Path:
     """Extract activations for a sentences_filtered.jsonl dataset and save them.
 
     Activations are taken from the prompt's **prefill phase only** (no generation), so
-    ``token_pooling`` reduces over the prompt tokens: ``'mean'`` averages content tokens,
+    ``token_pooling`` reduces over the prompt tokens: ``'avg'`` averages content tokens,
     ``'last'`` takes the prompt's final content token. Per-layer activations are written
-    under ``out_dir/<token_pooling>/`` so both poolings can coexist; the pooling-invariant
+    under ``out_dir/<token_pooling>_token/`` so both poolings can coexist; the pooling-invariant
     ``unembed_cov.pt`` is written once at ``out_dir/``.
     """
     if token_pooling not in TOKEN_POOLS:
         raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
     dataset, out_dir = Path(dataset), Path(out_dir)
-    pool_dir = out_dir / token_pooling
+    pool_dir = out_dir / f"{token_pooling}_token"
     layers = layers or list(range(1, 23))
     device = (
         "cuda"

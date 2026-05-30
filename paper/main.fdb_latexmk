@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1780159276.26346 "main.aux" "main.bbl" "main" 1780159288.2838 0
+["bibtex main"] 1780159276.26346 "main.aux" "main.bbl" "main" 1780159318.17735 0
   "./references.bib" 1780152837.1368 16658 bde70918829bab95e50cb3fb68cd3e34 ""
   "/usr/local/texlive/2025basic/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "main.aux" 1780159288.16969 27013 80373526db9d87db61eb8ff7a135a826 "pdflatex"
+  "main.aux" 1780159318.01765 27013 80373526db9d87db61eb8ff7a135a826 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1780159276.28753 "/Users/francescobraicovich/Documents/Progetti/Bocconi/llm-behaviour-intensity-representation/paper/main.tex" "main.pdf" "main" 1780159288.28432 0
+["pdflatex"] 1780159305.9132 "/Users/francescobraicovich/Documents/Progetti/Bocconi/llm-behaviour-intensity-representation/paper/main.tex" "main.pdf" "main" 1780159318.17771 0
   "../results/20260530_001930/ordinal_linearity/avg_token/inner_products_adjacent_step.png" 1780149834.26829 106981 f0e41acac3541e15268083b493ee3beb ""
   "../results/20260530_001930/ordinal_linearity/avg_token/inner_products_cosine_grid.png" 1780149834.13557 322519 fe44c463440dc8f64bf0ad73b82b04cf ""
   "../results/20260530_001930/ordinal_linearity/avg_token/linearity_metric_sweep.png" 1780149839.27808 250316 8b06a46e6de27ec8e01ba35bc2aa358f ""
@@ -64,7 +64,7 @@
   "../results/20260530_001930/trait_geometry/last_token/shared_plane.png" 1780149920.28746 438873 1d925616f7229cb91c8843202b079ace ""
   "../results/20260530_001930/trait_geometry/last_token/steering_direction.png" 1780149920.94464 167851 3a026b4fc98ea677d26045baff0dc928 ""
   "../results/20260530_001930/trait_geometry/last_token/subspace_spectrum.png" 1780149919.94614 81026 bea2369020928bc643f0dbcb607dfe79 ""
-  "/Users/francescobraicovich/Documents/Progetti/Bocconi/llm-behaviour-intensity-representation/paper/main.tex" 1780159263.98109 51775 a9ee0faa87e893f5d2b79c3cb2fba4c5 ""
+  "/Users/francescobraicovich/Documents/Progetti/Bocconi/llm-behaviour-intensity-representation/paper/main.tex" 1780159305.66402 51796 7713ae944e0e08e1a828bc4f8fd505ca ""
   "/Users/francescobraicovich/Library/texlive/2025basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1772390016 79565 0a792fced4b5e78ae65d9c9b021d484d ""
   "/Users/francescobraicovich/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt0900.600pk" 1780152567.29817 17492 94c8b3f52085ba37223389778df46e3b ""
   "/Users/francescobraicovich/Library/texlive/2025basic/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk" 1772390099.53516 20008 bde1e2076707e500d330245bf85761ec ""
@@ -184,10 +184,10 @@
   "/usr/local/texlive/2025basic/texmf-dist/web2c/texmf.cnf" 1739380943 42148 61becc7c670cd061bb319c643c27fdd4 ""
   "/usr/local/texlive/2025basic/texmf-var/web2c/pdftex/pdflatex.fmt" 1764590175 2663822 49dfb4bdb83c5dd59e94f2bc28620f7b ""
   "/usr/local/texlive/2025basic/texmf.cnf" 1741448314 628 81d1ada0f601fb1ffa62f1323192d946 ""
-  "main.aux" 1780159288.16969 27013 80373526db9d87db61eb8ff7a135a826 "pdflatex"
+  "main.aux" 1780159318.01765 27013 80373526db9d87db61eb8ff7a135a826 "pdflatex"
   "main.bbl" 1780159276.28488 7244 07e2a39f542a574ac3cc36ef4672b2c6 "bibtex main"
-  "main.out" 1780159288.17177 3904 ed8f42fc98781c1d2fe3f4723607569a "pdflatex"
-  "main.tex" 1780159263.98109 51775 a9ee0faa87e893f5d2b79c3cb2fba4c5 ""
+  "main.out" 1780159318.01986 3904 ed8f42fc98781c1d2fe3f4723607569a "pdflatex"
+  "main.tex" 1780159305.66402 51796 7713ae944e0e08e1a828bc4f8fd505ca ""
   "neurips_2026.sty" 1780145040 12861 0d31798105901cb0bdef5c00d37545d4 ""
   (generated)
   "main.aux"

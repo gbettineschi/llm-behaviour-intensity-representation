@@ -51,18 +51,21 @@ def extract_activations(
     layers: list[int],
     device: str,
     *,
-    token_pooling: str = "avg",
+    token_poolings: tuple[str, ...] = ("avg",),
     batch_size: int = 8,
-) -> dict[tuple[str, str, str, str, int], torch.Tensor]:
-    """Activations at each requested layer, keyed by (trait, intensity, scenario_id, paraphrase_id, layer).
+) -> dict[str, dict[tuple[str, str, str, str, int], torch.Tensor]]:
+    """Activations per pooling at each requested layer.
 
+    Returns ``{token_pooling: {(trait, intensity, scenario_id, paraphrase_id, layer): vec}}``.
     Activations come from a single forward pass over the prompt — the **prefill phase
-    only**; no tokens are generated. ``token_pooling`` therefore reduces over the prompt's
-    tokens: ``'avg'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
+    only**; no tokens are generated. Each pooling reduces over the prompt's tokens:
+    ``'avg'`` averages all content tokens (excluding BOS/EOS/pad), ``'last'`` takes
     the prompt's final content token. One vector per paraphrase; nothing is averaged here.
+    All requested poolings share the same forward pass.
     """
-    if token_pooling not in TOKEN_POOLS:
-        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
+    for p in token_poolings:
+        if p not in TOKEN_POOLS:
+            raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {p!r}")
     layers = sorted(set(layers))
     special = {
         t
@@ -70,7 +73,7 @@ def extract_activations(
         if t is not None
     }
 
-    out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}
+    out: dict[str, dict[tuple[str, str, str, str, int], torch.Tensor]] = {p: {} for p in token_poolings}
     for start in range(0, len(samples), batch_size):
         batch = samples[start : start + batch_size]
         enc = tokenizer([s.prompt for s in batch], return_tensors="pt", padding=True).to(device)
@@ -85,12 +88,13 @@ def extract_activations(
         valid[empty] = mask[empty]
 
         for layer in layers:
-            red = _reduce(hidden[layer + 1], valid, token_pooling).detach().to("cpu", dtype=torch.float32)
-            for i, s in enumerate(batch):
-                key = (s.trait, s.intensity, s.scenario_id, s.paraphrase_id, layer)
-                if key in out:
-                    raise ValueError(f"duplicate paraphrase_id encountered: {key}")
-                out[key] = red[i]
+            for p in token_poolings:
+                red = _reduce(hidden[layer + 1], valid, p).detach().to("cpu", dtype=torch.float32)
+                for i, s in enumerate(batch):
+                    key = (s.trait, s.intensity, s.scenario_id, s.paraphrase_id, layer)
+                    if key in out[p]:
+                        raise ValueError(f"duplicate paraphrase_id encountered: {key}")
+                    out[p][key] = red[i]
 
     return out
 
@@ -162,22 +166,23 @@ def extract_representations(
     *,
     model_name: str,
     layers: list[int] | None = None,
-    token_pooling: str = "avg",
+    token_poolings: tuple[str, ...] = TOKEN_POOLS,
     batch_size: int = 8,
 ) -> Path:
     """Extract activations for a sentences_filtered.jsonl dataset and save them.
 
     Activations are taken from the prompt's **prefill phase only** (no generation), so
-    ``token_pooling`` reduces over the prompt tokens: ``'avg'`` averages content tokens,
-    ``'last'`` takes the prompt's final content token. Per-layer activations are written
-    under ``out_dir/<token_pooling>_token/`` so both poolings can coexist; the pooling-invariant
-    ``unembeddings_covariance.pt`` is written once at ``out_dir/``.
+    each pooling reduces over the prompt tokens: ``'avg'`` averages content tokens,
+    ``'last'`` takes the prompt's final content token. All poolings share one forward
+    pass. Per-layer activations are written under ``out_dir/<token_pooling>_token/`` so
+    both poolings coexist; the pooling-invariant ``unembeddings_covariance.pt`` is
+    written once at ``out_dir/``. ``layers`` defaults to all transformer layers
+    ``1..num_hidden_layers``. Extraction is deterministic (no seed involved).
     """
-    if token_pooling not in TOKEN_POOLS:
-        raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {token_pooling!r}")
+    for p in token_poolings:
+        if p not in TOKEN_POOLS:
+            raise ValueError(f"token_pooling must be one of {TOKEN_POOLS}, got {p!r}")
     dataset, out_dir = Path(dataset), Path(out_dir)
-    pool_dir = out_dir / f"{token_pooling}_token"
-    layers = layers or list(range(1, 23))
     device = (
         "cuda"
         if torch.cuda.is_available()
@@ -187,28 +192,32 @@ def extract_representations(
     )
 
     samples = load_accepted(dataset)
-    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  token_pooling={token_pooling}")
+    print(f"{len(samples)} samples from {dataset}  |  device={device}  |  token_poolings={token_poolings}")
 
     model, tokenizer = load_model(model_name, device)
-    activations = extract_activations(
-        samples, model, tokenizer, layers, device, token_pooling=token_pooling, batch_size=batch_size
+    layers = layers or list(range(1, model.config.num_hidden_layers + 1))
+    per_pooling = extract_activations(
+        samples, model, tokenizer, layers, device, token_poolings=token_poolings, batch_size=batch_size
     )
 
-    meta = {
-        "generated_at": datetime.now().strftime("%Y%m%d_%H%M%S"),
-        "source_dataset": str(dataset),
-        "model": model_name,
-        "device": device,
-        "layers": layers,
-        "token_pooling": token_pooling,
-        "n_samples": len(samples),
-        "vectors_per_layer": len(activations) // len(layers),
-        "hidden_dim": next(iter(activations.values())).shape[0],
-    }
-    save_representations(activations, pool_dir, meta=meta)
+    for p, activations in per_pooling.items():
+        pool_dir = out_dir / f"{p}_token"
+        meta = {
+            "generated_at": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "source_dataset": str(dataset),
+            "model": model_name,
+            "device": device,
+            "layers": layers,
+            "token_pooling": p,
+            "n_samples": len(samples),
+            "vectors_per_layer": len(activations) // len(layers),
+            "hidden_dim": next(iter(activations.values())).shape[0],
+        }
+        save_representations(activations, pool_dir, meta=meta)
+        print(f"Saved {len(layers)} layers under {pool_dir}")
     out_dir.mkdir(parents=True, exist_ok=True)
     cov_path = out_dir / "unembeddings_covariance.pt"
     if not cov_path.exists():
         torch.save(unembedding_covariance(model), cov_path)
-    print(f"Saved {len(layers)} layers under {pool_dir} (+ unembeddings_covariance.pt at {out_dir})")
-    return pool_dir
+        print(f"Saved unembeddings_covariance.pt at {out_dir}")
+    return out_dir

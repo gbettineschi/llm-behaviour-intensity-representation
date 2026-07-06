@@ -13,14 +13,15 @@ within-scenario fixed-effects transform — so the per-scenario offset can be
 isolated from the trait signal. A layer-sweep on the binary contrast is also
 produced.
 
-Figures are written to ``results/<dataset>/replication_tigges/<token_pooling>_token/``;
+Figures are written to
+``results/<dataset>/replication_tigges/<model>/<token_pooling>_token/seed_<k>/``;
 numeric summaries are printed, and numeric exports land under ``numeric/``.
+With more than one seed, a mean±std aggregate is written next to the seed dirs.
 
 Run from the repo root:  uv run python src/replicate_tigges.py
 
 Or explicitly:
-    uv run python src/replicate_tigges.py --token-pooling avg
-    uv run python src/replicate_tigges.py --token-pooling last
+    uv run python src/replicate_tigges.py --model gemma-2-2b --token-pooling avg --seeds 0,1,2
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from lib.analysis import within_center_paraphrase
+from lib.config import DEFAULT_MODEL, DEFAULT_SEEDS, MODELS, child_seed, rep_dir, results_dir, run_metadata, seeds_base_dir
 from lib.directions import (
     METHODS,
     NAMES,
@@ -47,6 +49,7 @@ from lib.figures import (
 from lib.exports import (
     save_fig as _save,
     write_csv as _write_csv,
+    write_json as _write_json,
     write_square_matrix as _write_square_matrix,
     write_tex_tabular as _write_tex_tabular,
 )
@@ -55,13 +58,16 @@ from lib.representations import load_representations
 
 # --- config ----------------------------------------------------------------
 
-LAYER = 13
+ANALYSIS = "replication_tigges"
+MODEL = DEFAULT_MODEL
 TRAIT = "politeness"
 TOKEN_POOLING = "avg"
+SEED = 0
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
 DATASET_ROOT = DATASET.parent.parent
-REP_DIR = DATASET_ROOT / "representations" / f"{TOKEN_POOLING}_token"
-RESULTS_DIR = Path("results") / DATASET_ROOT.name / "replication_tigges" / f"{TOKEN_POOLING}_token"
+LAYER = MODELS[MODEL]["focal_layer"]
+REP_DIR = rep_dir(DATASET_ROOT, MODEL, TOKEN_POOLING)
+RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TOKEN_POOLING, SEED)
 
 NEG, NEU, POS = "negative", "neutral", "positive"
 BINARY = (NEG, POS)
@@ -74,15 +80,18 @@ PAPER_REF = {"MeanDiff": ".80", "KMeans": ".78", "LogReg": ".89", "PCA": ".81"}
 # --- pieces ----------------------------------------------------------------
 
 
-def _configure(token_pooling: str) -> None:
-    global TOKEN_POOLING, REP_DIR, RESULTS_DIR
+def _configure(model: str, token_pooling: str, seed: int) -> None:
+    global MODEL, TOKEN_POOLING, SEED, LAYER, REP_DIR, RESULTS_DIR
+    MODEL = model
     TOKEN_POOLING = token_pooling
-    REP_DIR = DATASET_ROOT / "representations" / f"{token_pooling}_token"
-    RESULTS_DIR = Path("results") / DATASET_ROOT.name / "replication_tigges" / f"{token_pooling}_token"
+    SEED = seed
+    LAYER = MODELS[model]["focal_layer"]
+    REP_DIR = rep_dir(DATASET_ROOT, model, token_pooling)
+    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, token_pooling, seed)
 
 
 
-def contrast_analysis(activations, levels, out_dir: Path, *, paper_ref=None) -> None:
+def contrast_analysis(activations, levels, out_dir: Path, *, paper_ref=None, seed: int = 0) -> None:
     """Direction-agreement and projection-separation for one binary contrast,
     on both raw and within-scenario-centered activations.
 
@@ -112,8 +121,8 @@ def contrast_analysis(activations, levels, out_dir: Path, *, paper_ref=None) -> 
     print("  " + "-" * (32 + len(extra)))
     acc_rows: list[list[object]] = []
     for m in METHODS:
-        r_mean, r_sd = cv_direction_accuracy(m, X_raw, y_raw, scen_raw)
-        c_mean, c_sd = cv_direction_accuracy(m, X_cent, y_cent, scen_cent)
+        r_mean, r_sd = cv_direction_accuracy(m, X_raw, y_raw, scen_raw, seed=seed)
+        c_mean, c_sd = cv_direction_accuracy(m, X_cent, y_cent, scen_cent, seed=seed)
         ref = f"    {paper_ref.get(m, '')}" if paper_ref else ""
         print(f"  {m:>9} {r_mean:>9.3f} {c_mean:>10.3f}{ref}")
         acc_rows.append([m, r_mean, r_sd, c_mean, c_sd, paper_ref.get(m, "") if paper_ref else ""])
@@ -131,7 +140,7 @@ def contrast_analysis(activations, levels, out_dir: Path, *, paper_ref=None) -> 
     _write_tex_tabular(num_dir / "cv_accuracy.tex", tex_header, tex_rows)
 
     for tag, X, y in [("raw", X_raw, y_raw), ("centered", X_cent, y_cent)]:
-        dirs = {m: direction(m, X, y) for m in NAMES}
+        dirs = {m: direction(m, X, y, seed=seed) for m in NAMES}
         M = cosine_matrix(dirs, NAMES)
         fig, _ = plot_agreement(
             M, NAMES,
@@ -162,7 +171,7 @@ def contrast_analysis(activations, levels, out_dir: Path, *, paper_ref=None) -> 
         )
 
 
-def layer_sweep(out_dir: Path) -> None:
+def layer_sweep(out_dir: Path, *, seed: int = 0) -> None:
     """MeanDiff CV accuracy + mean cross-method cosine on the binary contrast,
     across every layer in ``REP_DIR``."""
     acts_multi = load_representations(REP_DIR)
@@ -173,8 +182,8 @@ def layer_sweep(out_dir: Path) -> None:
     for L in layers:
         aL = {(t, i, s, p): v for (t, i, s, p, l), v in acts_multi.items() if l == L}
         X, y, scen = level_table(aL, BINARY, TRAIT)
-        accuracy.append(cv_direction_accuracy("MeanDiff", X, y, scen)[0])
-        dset = {m: direction(m, X, y) for m in METHODS}
+        accuracy.append(cv_direction_accuracy("MeanDiff", X, y, scen, seed=seed)[0])
+        dset = {m: direction(m, X, y, seed=seed) for m in METHODS}
         agreement.append(
             float(np.mean([dset[a] @ dset[b] for a in METHODS for b in METHODS if a < b]))
         )
@@ -191,21 +200,26 @@ def layer_sweep(out_dir: Path) -> None:
 
 # --- entrypoint ------------------------------------------------------------
 
-def main(token_pooling: str = TOKEN_POOLING) -> Path:
-    _configure(token_pooling)
+def main(model: str = MODEL, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
+    _configure(model, token_pooling, seed)
     apply_style()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        RESULTS_DIR / "run_metadata.json",
+        run_metadata(model=MODEL, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+    )
     print(f"Saving figures under {RESULTS_DIR}\n")
 
+    dir_seed = child_seed(seed, "directions")
     activations = load_representations(REP_DIR, layer=LAYER)
     print(f"Loaded {len(activations)} paraphrase vectors at layer {LAYER} (token_pooling={TOKEN_POOLING!r})\n")
 
-    contrast_analysis(activations, BINARY, RESULTS_DIR, paper_ref=PAPER_REF)
+    contrast_analysis(activations, BINARY, RESULTS_DIR, paper_ref=PAPER_REF, seed=dir_seed)
     print()
     for pair in ADJACENT_PAIRS:
-        contrast_analysis(activations, pair, RESULTS_DIR)
+        contrast_analysis(activations, pair, RESULTS_DIR, seed=dir_seed)
         print()
-    layer_sweep(RESULTS_DIR)
+    layer_sweep(RESULTS_DIR, seed=dir_seed)
 
     print(f"\nDone. Figures in {RESULTS_DIR}")
     return RESULTS_DIR
@@ -216,8 +230,22 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Replicate Tigges et al. 2024 §2.2.")
     ap.add_argument(
+        "--model", choices=sorted(MODELS), default=DEFAULT_MODEL,
+        help="Model whose representations to analyse (default: %(default)s).",
+    )
+    ap.add_argument(
         "--token-pooling", choices=("avg", "last"), default=TOKEN_POOLING,
         help="Prompt-token pooling whose representations to analyse (default: %(default)s).",
     )
+    ap.add_argument(
+        "--seeds", default=",".join(str(s) for s in DEFAULT_SEEDS),
+        help="Comma-separated master seeds; one full run per seed (default: %(default)s).",
+    )
     args = ap.parse_args()
-    main(args.token_pooling)
+    seeds = [int(s) for s in args.seeds.split(",")]
+    for s in seeds:
+        main(args.model, args.token_pooling, s)
+    if len(seeds) > 1:
+        from aggregate_results import aggregate_analysis
+
+        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.token_pooling))

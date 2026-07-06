@@ -155,6 +155,70 @@ def test_within_scenario_recovers_confounded_ranking():
            f"within={within['spearman']:.4f} naive={naive['spearman']:.4f}")
 
 
+def test_child_seed_deterministic():
+    print("test_child_seed_deterministic")
+    from lib.config import child_seed
+
+    _check("same (master, name) -> same seed", child_seed(0, "bootstrap") == child_seed(0, "bootstrap"))
+    _check("different name -> different seed", child_seed(0, "bootstrap") != child_seed(0, "permutation_null"))
+    _check("different master -> different seed", child_seed(0, "bootstrap") != child_seed(1, "bootstrap"))
+    s = child_seed(3, "reliability")
+    _check("uint32 range", isinstance(s, int) and 0 <= s < 2**32, str(s))
+
+
+def test_direction_seed():
+    print("test_direction_seed")
+    from lib.directions import NAMES, direction
+
+    rng = np.random.default_rng(3)
+    X = np.vstack([rng.normal(0, 1, (40, 16)), rng.normal(1.5, 1, (40, 16))])
+    y = np.array([0] * 40 + [1] * 40)
+    for m in NAMES:
+        d1, d2 = direction(m, X, y, seed=1), direction(m, X, y, seed=1)
+        _check(f"{m} reproducible for same seed", np.allclose(d1, d2))
+        _check(f"{m} oriented (pos class higher)", (X[y == 1] @ d1).mean() > (X[y == 0] @ d1).mean())
+    r1, r2 = direction("Random", X, y, seed=1), direction("Random", X, y, seed=2)
+    _check("Random differs across seeds", not np.allclose(r1, r2))
+
+
+def test_aggregate_csv():
+    print("test_aggregate_csv")
+    import csv
+    import json
+    import tempfile
+
+    from aggregate_results import aggregate_analysis
+
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        rows = {0: [1.0, 2.0], 1: [3.0, 4.0]}
+        for seed, varying in rows.items():
+            num = base / f"seed_{seed}" / "numeric"
+            num.mkdir(parents=True)
+            with (num / "a.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["method", "constant", "varying"])
+                w.writerow(["MeanDiff", 7.0, varying[0]])
+                w.writerow(["KMeans", 8.0, varying[1]])
+            # misaligned key column across seeds -> must be skipped
+            with (num / "bad.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["name", "x"])
+                w.writerow([f"row_of_seed_{seed}", 1.0])
+        out = aggregate_analysis(base)
+        with (out / "numeric" / "a.csv").open() as f:
+            got = list(csv.reader(f))
+        _check("header has mean/std/n_seeds", got[0] == ["method", "constant", "varying_mean", "varying_std", "n_seeds"], str(got[0]))
+        _check("constant passthrough", float(got[1][1]) == 7.0)
+        # CSV values are formatted to 10 significant digits by exports.fmt
+        _check("mean correct", abs(float(got[1][2]) - 2.0) < 1e-8, got[1][2])
+        _check("std ddof=1 correct", abs(float(got[1][3]) - np.sqrt(2.0)) < 1e-8, got[1][3])
+        _check("n_seeds = 2", int(got[1][4]) == 2)
+        report = json.loads((out / "aggregation_report.json").read_text())
+        _check("misaligned file reported", "numeric/bad.csv" in report["skipped_misaligned"], str(report["skipped_misaligned"]))
+        _check("misaligned file not written", not (out / "numeric" / "bad.csv").exists())
+
+
 def main():
     tests = [
         test_perfectly_linear,
@@ -163,6 +227,9 @@ def main():
         test_within_center_and_triples,
         test_groupkfold_prevents_leakage,
         test_within_scenario_recovers_confounded_ranking,
+        test_child_seed_deterministic,
+        test_direction_seed,
+        test_aggregate_csv,
     ]
     failed = 0
     for t in tests:

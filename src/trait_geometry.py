@@ -18,8 +18,10 @@ bend is real and what geometry it implies, in five steps:
     5. Per-intent robustness — the bend, computed separately for each of the ten
        communicative intents.
 
-Figures land in ``results/<dataset>/trait_geometry/<token_pooling>_token/``;
+Figures land in
+``results/<dataset>/trait_geometry/<model>/<token_pooling>_token/seed_<k>/``;
 numeric summaries are printed, and numeric exports land under ``numeric/``.
+With more than one seed, a mean±std aggregate is written next to the seed dirs.
 
 Run from the repo root:  uv run python src/trait_geometry.py --token-pooling avg
 """
@@ -33,6 +35,16 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from lib.config import (
+    DEFAULT_MODEL,
+    DEFAULT_SEEDS,
+    MODELS,
+    child_seed,
+    rep_dir,
+    results_dir,
+    run_metadata,
+    seeds_base_dir,
+)
 from lib.analysis import scenario_triples
 from lib.figures import C_NEG, C_NEUT, C_NULL, C_POS, C_REF, apply_style, levels_palette
 from lib.geometry import (
@@ -62,30 +74,45 @@ from lib.sentences import LEVELS
 
 # --- config ----------------------------------------------------------------
 
-LAYER = 13
+ANALYSIS = "trait_geometry"
+MODEL = DEFAULT_MODEL
+LAYER = MODELS[MODEL]["focal_layer"]
 TRAIT = "politeness"
 TOKEN_POOLING = "avg"
+SEED = 0
 DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
 DATASET_ROOT = DATASET.parent.parent
-REP_ROOT = DATASET_ROOT / "representations"
-REP_DIR = REP_ROOT / f"{TOKEN_POOLING}_token"
-RESULTS_DIR = Path("results") / DATASET_ROOT.name / "trait_geometry" / f"{TOKEN_POOLING}_token"
+REP_DIR = rep_dir(DATASET_ROOT, MODEL, TOKEN_POOLING)
+RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TOKEN_POOLING, SEED)
 
 N_BOOT = 2000        # scenario bootstrap resamples for geometry CIs
-BOOT_SEED = 0
 N_NULL = 1000        # linear-ladder + noise simulations
-NULL_SEED = 0
 N_REL_SPLITS = 300   # scenario half-splits for markedness reliability
-REL_SEED = 0
 CV_SPLITS = 10       # folds for the shared-bend cross-validation
 
+# Per-component seeds derived from the master SEED (rebound by _configure).
+BOOT_SEED = child_seed(SEED, "bootstrap")
+NULL_SEED = child_seed(SEED, "linear_null")
+REL_SEED = child_seed(SEED, "markedness_rel")
+VAL_REL_SEED = child_seed(SEED, "valence_rel")
+BEND_CV_SEED = child_seed(SEED, "shared_bend_cv")
 
-def _configure(token_pooling: str) -> None:
-    """Rebind the pooling-dependent globals (mirrors ``ordinal_linearity.py``)."""
-    global TOKEN_POOLING, REP_DIR, RESULTS_DIR
+
+def _configure(model: str, token_pooling: str, seed: int) -> None:
+    """Rebind the model/pooling/seed-dependent globals (mirrors ``ordinal_linearity.py``)."""
+    global MODEL, TOKEN_POOLING, SEED, LAYER, REP_DIR, RESULTS_DIR
+    global BOOT_SEED, NULL_SEED, REL_SEED, VAL_REL_SEED, BEND_CV_SEED
+    MODEL = model
     TOKEN_POOLING = token_pooling
-    REP_DIR = REP_ROOT / f"{token_pooling}_token"
-    RESULTS_DIR = Path("results") / DATASET_ROOT.name / "trait_geometry" / f"{token_pooling}_token"
+    SEED = seed
+    LAYER = MODELS[model]["focal_layer"]
+    REP_DIR = rep_dir(DATASET_ROOT, model, token_pooling)
+    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, token_pooling, seed)
+    BOOT_SEED = child_seed(seed, "bootstrap")
+    NULL_SEED = child_seed(seed, "linear_null")
+    REL_SEED = child_seed(seed, "markedness_rel")
+    VAL_REL_SEED = child_seed(seed, "valence_rel")
+    BEND_CV_SEED = child_seed(seed, "shared_bend_cv")
 
 
 # --- helpers ---------------------------------------------------------------
@@ -288,7 +315,7 @@ def report_shared_plane(triples, out_dir: Path) -> dict:
     """Two-axis hypothesis: project all scenarios into a shared plane."""
     plane = shared_plane(triples)
     rel = markedness_reliability(triples, n_splits=N_REL_SPLITS, seed=REL_SEED)
-    cv = shared_bend_cv(triples, n_splits=CV_SPLITS, seed=BOOT_SEED)
+    cv = shared_bend_cv(triples, n_splits=CV_SPLITS, seed=BEND_CV_SEED)
 
     print("\n" + "=" * 70)
     print("4. Shared (valence, markedness) plane  — the two-axis / superposition model")
@@ -471,7 +498,7 @@ def report_steering_direction(triples, intents, out_dir: Path) -> dict:
     global vector reproduces, and the principal-angle tilt of each scenario's
     plane against the shared plane.
     """
-    val_rel = valence_reliability(triples, n_splits=N_REL_SPLITS, seed=REL_SEED)
+    val_rel = valence_reliability(triples, n_splits=N_REL_SPLITS, seed=VAL_REL_SEED)
     mark_rel = markedness_reliability(triples, n_splits=N_REL_SPLITS, seed=REL_SEED)
     align = steering_alignment(triples)
     angles = plane_principal_angles(triples)
@@ -602,10 +629,14 @@ def report_steering_direction(triples, intents, out_dir: Path) -> dict:
 
 # --- entrypoint ------------------------------------------------------------
 
-def main(token_pooling: str = TOKEN_POOLING) -> Path:
-    _configure(token_pooling)
+def main(model: str = MODEL, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
+    _configure(model, token_pooling, seed)
     apply_style()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    _write_json(
+        RESULTS_DIR / "run_metadata.json",
+        run_metadata(model=MODEL, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+    )
     print(f"Saving figures under {RESULTS_DIR}\n")
 
     para = load_representations(REP_DIR, layer=LAYER)
@@ -634,8 +665,22 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Geometry of the trait triple.")
     ap.add_argument(
+        "--model", choices=sorted(MODELS), default=DEFAULT_MODEL,
+        help="Model whose representations to analyse (default: %(default)s).",
+    )
+    ap.add_argument(
         "--token-pooling", choices=("avg", "last"), default=TOKEN_POOLING,
         help="Prompt-token pooling whose representations to analyse (default: %(default)s).",
     )
+    ap.add_argument(
+        "--seeds", default=",".join(str(s) for s in DEFAULT_SEEDS),
+        help="Comma-separated master seeds; one full run per seed (default: %(default)s).",
+    )
     args = ap.parse_args()
-    main(args.token_pooling)
+    seeds = [int(s) for s in args.seeds.split(",")]
+    for s in seeds:
+        main(args.model, args.token_pooling, s)
+    if len(seeds) > 1:
+        from aggregate_results import aggregate_analysis
+
+        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.token_pooling))

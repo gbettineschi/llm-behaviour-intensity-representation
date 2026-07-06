@@ -195,7 +195,8 @@ def extract_representations(
     print(f"{len(samples)} samples from {dataset}  |  device={device}  |  token_poolings={token_poolings}")
 
     model, tokenizer = load_model(model_name, device)
-    layers = layers or list(range(1, model.config.num_hidden_layers + 1))
+    # layer L reads hidden_states[L + 1], so the valid range ends at num_hidden_layers - 1
+    layers = layers or list(range(1, model.config.num_hidden_layers))
     per_pooling = extract_activations(
         samples, model, tokenizer, layers, device, token_poolings=token_poolings, batch_size=batch_size
     )

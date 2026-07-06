@@ -1,0 +1,4 @@
+step,r_half_mean,r_half_std,R_full,n_seeds
+positive-neutral,0.9422304611,8.748097671e-06,0.9702519961,3
+neutral-negative,0.9738951524,2.694774432e-06,0.9867747737,3
+positive-negative,0.9790222239,5.120832238e-06,0.9893983932,3

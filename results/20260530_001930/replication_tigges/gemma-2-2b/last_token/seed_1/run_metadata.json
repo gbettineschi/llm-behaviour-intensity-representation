@@ -1,0 +1,16 @@
+{
+  "model": "gemma-2-2b",
+  "hf_id": "google/gemma-2-2b",
+  "seed": 1,
+  "token_pooling": "last",
+  "focal_layer": 13,
+  "dataset": "data/20260530_001930/sentences/sentences_filtered.jsonl",
+  "timestamp": "20260707_000702",
+  "git_commit": "c7075ff8a7083919f5186f55f35cc2bfe80b2a47",
+  "versions": {
+    "numpy": "2.4.4",
+    "torch": "2.11.0",
+    "transformers": "5.7.0",
+    "scikit-learn": "1.8.0"
+  }
+}

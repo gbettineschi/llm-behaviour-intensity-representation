@@ -1,0 +1,10 @@
+row,col,cosine
+positive-neutral,positive-neutral,1
+positive-neutral,neutral-negative,-0.08816290754
+positive-neutral,positive-negative,0.485476195
+neutral-negative,positive-neutral,-0.08816290754
+neutral-negative,neutral-negative,1
+neutral-negative,positive-negative,0.8280446253
+positive-negative,positive-neutral,0.485476195
+positive-negative,neutral-negative,0.8280446253
+positive-negative,positive-negative,1

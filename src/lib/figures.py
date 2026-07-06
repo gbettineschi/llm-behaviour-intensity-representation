@@ -120,7 +120,7 @@ def plot_agreement_pair(matrices, titles, names, *, suptitle="", figsize=(10, 4.
     return fig, axes
 
 
-def plot_projection(proj, y, *, neg_label, pos_label, title, figsize=(5, 3.5)):
+def plot_projection(proj, y, *, neg_label, pos_label, title, figsize=(7, 3.5)):
     """Single two-class projection histogram (Mean-Difference axis)."""
     fig, ax = plt.subplots(figsize=figsize)
     _draw_projection(ax, proj, y, neg_label, pos_label, title)

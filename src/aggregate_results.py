@@ -1,6 +1,6 @@
 """Aggregate per-seed analysis results into mean±std summaries for the paper.
 
-Given a base dir ``results/<ts>/<analysis>/<model>/<pooling>_token`` containing
+Given a base dir ``results/<ts>/<analysis>/<model>/<trait>/<pooling>_token`` containing
 ``seed_<k>/`` runs, mirrors every numeric export into ``aggregated/``:
 
     * CSVs — non-numeric (key) columns must match exactly across seeds; numeric
@@ -20,7 +20,7 @@ Caveats (documented, accepted): Monte-Carlo p-values are averaged across seeds
 (floor 1/(1+n_perm)); bootstrap CI bounds are averaged, draws are not pooled.
 
 Run from the repo root:
-    uv run python src/aggregate_results.py --dir results/<ts>/<analysis>/<model>/<pooling>_token
+    uv run python src/aggregate_results.py --dir results/<ts>/<analysis>/<model>/<trait>/<pooling>_token
     uv run python src/aggregate_results.py --discover results/<ts>
 """
 
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Aggregate per-seed results into mean±std summaries.")
     g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument("--dir", type=Path, help="one results/<ts>/<analysis>/<model>/<pooling>_token dir")
+    g.add_argument("--dir", type=Path, help="one results/<ts>/<analysis>/<model>/<trait>/<pooling>_token dir")
     g.add_argument("--discover", type=Path, help="results/<ts> root; aggregate every dir containing seed_* runs")
     args = ap.parse_args()
 

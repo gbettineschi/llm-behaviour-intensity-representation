@@ -25,24 +25,33 @@ DEFAULT_SEEDS = (0, 1, 2)
 
 
 # --- paths ------------------------------------------------------------------
-def rep_dir(data_root: Path, model: str, token_pooling: str) -> Path:
-    """``data/<ts>/representations/<model>/<pooling>_token``."""
-    return data_root / "representations" / model / f"{token_pooling}_token"
+def dataset_path(data_root: Path, trait: str) -> Path:
+    """``data/<ts>/sentences/<trait>/sentences_filtered.jsonl``."""
+    return data_root / "sentences" / trait / "sentences_filtered.jsonl"
+
+
+def rep_dir(data_root: Path, model: str, trait: str, token_pooling: str) -> Path:
+    """``data/<ts>/representations/<model>/<trait>/<pooling>_token``."""
+    return data_root / "representations" / model / trait / f"{token_pooling}_token"
 
 
 def unembed_cov_path(data_root: Path, model: str) -> Path:
-    """``data/<ts>/representations/<model>/unembeddings_covariance.pt``."""
+    """``data/<ts>/representations/<model>/unembeddings_covariance.pt``.
+
+    Model-level, not per-trait: the unembedding covariance depends only on the
+    model's output embeddings.
+    """
     return data_root / "representations" / model / "unembeddings_covariance.pt"
 
 
-def seeds_base_dir(dataset_name: str, analysis: str, model: str, token_pooling: str) -> Path:
+def seeds_base_dir(dataset_name: str, analysis: str, model: str, trait: str, token_pooling: str) -> Path:
     """Parent of the per-seed result dirs (and of ``aggregated/``)."""
-    return Path("results") / dataset_name / analysis / model / f"{token_pooling}_token"
+    return Path("results") / dataset_name / analysis / model / trait / f"{token_pooling}_token"
 
 
-def results_dir(dataset_name: str, analysis: str, model: str, token_pooling: str, seed: int) -> Path:
-    """``results/<ts>/<analysis>/<model>/<pooling>_token/seed_<seed>``."""
-    return seeds_base_dir(dataset_name, analysis, model, token_pooling) / f"seed_{seed}"
+def results_dir(dataset_name: str, analysis: str, model: str, trait: str, token_pooling: str, seed: int) -> Path:
+    """``results/<ts>/<analysis>/<model>/<trait>/<pooling>_token/seed_<seed>``."""
+    return seeds_base_dir(dataset_name, analysis, model, trait, token_pooling) / f"seed_{seed}"
 
 
 # --- seeds --------------------------------------------------------------
@@ -58,7 +67,7 @@ def child_seed(master: int, name: str) -> int:
 
 
 # --- provenance --------------------------------------------------------
-def run_metadata(*, model: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int) -> dict:
+def run_metadata(*, model: str, trait: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int) -> dict:
     """Provenance record written as ``run_metadata.json`` in each seed dir."""
     try:
         commit = subprocess.run(
@@ -75,6 +84,7 @@ def run_metadata(*, model: str, seed: int, token_pooling: str, dataset: Path, fo
     return {
         "model": model,
         "hf_id": MODELS[model]["hf_id"],
+        "trait": trait,
         "seed": seed,
         "token_pooling": token_pooling,
         "focal_layer": focal_layer,

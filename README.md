@@ -30,19 +30,27 @@ If you have already cloned the repo before doing this, you can fix by installing
 
 ## Running the analysis
 
-Models are declared in `src/lib/config.py` (`gemma-2-2b`, `llama-3.2-3b`, `qwen2.5-1.5b`); each uses a mid-depth focal layer (`num_hidden_layers // 2`).
+Models are declared in `src/lib/config.py` (`gemma-2-2b`, `llama-3.2-3b`, `qwen2.5-1.5b`); each uses a mid-depth focal layer (`num_hidden_layers // 2`). Traits are declared in `src/lib/traits.py` (currently `politeness`); every script takes `--trait` and defaults to it.
 
-1. Extract activations for a model (deterministic — prefill only, no sampling; both token poolings share one forward pass). Output lands in `data/<ts>/representations/<model>/`.
+1. Generate a trait's sentence dataset (needs `OPENROUTER_API_KEY` in a repo-root `.env`). Output lands in `data/<ts>/sentences/<trait>/`; pass `--data-root` to add a new trait to an existing dataset root so all traits share one timestamp.
    ```
-   uv run python src/extract_representations.py --model qwen2.5-1.5b
+   uv run python src/generate_sentences.py --trait politeness --data-root data/20260530_001930
    ```
-2. Run each analysis. One full run per master seed (default `0,1,2`); the analysis-stage Monte-Carlo machinery (bootstrap, permutation nulls, CV folds, KMeans init, reliability half-splits) derives per-component streams from the master seed. Per-seed results land in `results/<ts>/<analysis>/<model>/<pooling>_token/seed_<k>/` (raw, with `run_metadata.json` provenance) and, with more than one seed, a mean±std aggregate in `aggregated/` next to them.
+2. Extract activations for a model (deterministic — prefill only, no sampling; both token poolings share one forward pass). Output lands in `data/<ts>/representations/<model>/<trait>/`.
    ```
-   uv run python src/replicate_tigges.py   --model gemma-2-2b --token-pooling avg --seeds 0,1,2
-   uv run python src/ordinal_linearity.py  --model gemma-2-2b --token-pooling avg --seeds 0,1,2
-   uv run python src/trait_geometry.py     --model gemma-2-2b --token-pooling avg --seeds 0,1,2
+   uv run python src/extract_representations.py --model qwen2.5-1.5b --trait politeness
    ```
-3. Aggregation can also be run standalone (e.g. over every analysis at once):
+3. Run each analysis. One full run per master seed (default `0,1,2`); the analysis-stage Monte-Carlo machinery (bootstrap, permutation nulls, CV folds, KMeans init, reliability half-splits) derives per-component streams from the master seed. Per-seed results land in `results/<ts>/<analysis>/<model>/<trait>/<pooling>_token/seed_<k>/` (raw, with `run_metadata.json` provenance) and, with more than one seed, a mean±std aggregate in `aggregated/` next to them.
+   ```
+   uv run python src/replicate_tigges.py   --model gemma-2-2b --trait politeness --token-pooling avg --seeds 0,1,2
+   uv run python src/ordinal_linearity.py  --model gemma-2-2b --trait politeness --token-pooling avg --seeds 0,1,2
+   uv run python src/trait_geometry.py     --model gemma-2-2b --trait politeness --token-pooling avg --seeds 0,1,2
+   ```
+4. Aggregation can also be run standalone (e.g. over every analysis at once):
    ```
    uv run python src/aggregate_results.py --discover results/20260530_001930
    ```
+
+### Adding a trait
+
+Add one entry to `TRAITS` in `src/lib/traits.py`: the rubric guide, the intents to balance scenarios across, the invariant field that must stay fixed across levels, cue families, and a seed example (see the `politeness` entry for the shape). All three levels keep the signed scale — negative / neutral / positive. Then run steps 1–4 with `--trait <name>`; no other code changes are needed.

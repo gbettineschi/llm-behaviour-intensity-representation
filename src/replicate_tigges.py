@@ -1,4 +1,4 @@
-"""Replicate Tigges et al. 2024 §2.2 on the politeness dataset.
+"""Replicate Tigges et al. 2024 §2.2 on a trait dataset.
 
 Loads paraphrase-level activations produced by ``extract_representations.py``
 and, for each binary contrast (positive vs negative, positive vs neutral,
@@ -14,14 +14,14 @@ isolated from the trait signal. A layer-sweep on the binary contrast is also
 produced.
 
 Figures are written to
-``results/<dataset>/replication_tigges/<model>/<token_pooling>_token/seed_<k>/``;
+``results/<dataset>/replication_tigges/<model>/<trait>/<token_pooling>_token/seed_<k>/``;
 numeric summaries are printed, and numeric exports land under ``numeric/``.
 With more than one seed, a mean±std aggregate is written next to the seed dirs.
 
 Run from the repo root:  uv run python src/replicate_tigges.py
 
 Or explicitly:
-    uv run python src/replicate_tigges.py --model gemma-2-2b --token-pooling avg --seeds 0,1,2
+    uv run python src/replicate_tigges.py --model gemma-2-2b --trait politeness --token-pooling avg --seeds 0,1,2
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from lib.analysis import within_center_paraphrase
-from lib.config import DEFAULT_MODEL, DEFAULT_SEEDS, MODELS, child_seed, rep_dir, results_dir, run_metadata, seeds_base_dir
+from lib.config import DEFAULT_MODEL, DEFAULT_SEEDS, MODELS, child_seed, dataset_path, rep_dir, results_dir, run_metadata, seeds_base_dir
 from lib.directions import (
     METHODS,
     NAMES,
@@ -54,20 +54,21 @@ from lib.exports import (
     write_tex_tabular as _write_tex_tabular,
 )
 from lib.representations import load_representations
+from lib.traits import DEFAULT_TRAIT, TRAITS
 
 
 # --- config ----------------------------------------------------------------
 
 ANALYSIS = "replication_tigges"
 MODEL = DEFAULT_MODEL
-TRAIT = "politeness"
+TRAIT = DEFAULT_TRAIT
 TOKEN_POOLING = "avg"
 SEED = 0
-DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
-DATASET_ROOT = DATASET.parent.parent
+DATASET_ROOT = Path("data/20260530_001930")
+DATASET = dataset_path(DATASET_ROOT, TRAIT)
 LAYER = MODELS[MODEL]["focal_layer"]
-REP_DIR = rep_dir(DATASET_ROOT, MODEL, TOKEN_POOLING)
-RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TOKEN_POOLING, SEED)
+REP_DIR = rep_dir(DATASET_ROOT, MODEL, TRAIT, TOKEN_POOLING)
+RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TRAIT, TOKEN_POOLING, SEED)
 
 NEG, NEU, POS = "negative", "neutral", "positive"
 BINARY = (NEG, POS)
@@ -80,14 +81,16 @@ PAPER_REF = {"MeanDiff": ".80", "KMeans": ".78", "LogReg": ".89", "PCA": ".81"}
 # --- pieces ----------------------------------------------------------------
 
 
-def _configure(model: str, token_pooling: str, seed: int) -> None:
-    global MODEL, TOKEN_POOLING, SEED, LAYER, REP_DIR, RESULTS_DIR
+def _configure(model: str, trait: str, token_pooling: str, seed: int) -> None:
+    global MODEL, TRAIT, TOKEN_POOLING, SEED, DATASET, LAYER, REP_DIR, RESULTS_DIR
     MODEL = model
+    TRAIT = trait
     TOKEN_POOLING = token_pooling
     SEED = seed
+    DATASET = dataset_path(DATASET_ROOT, trait)
     LAYER = MODELS[model]["focal_layer"]
-    REP_DIR = rep_dir(DATASET_ROOT, model, token_pooling)
-    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, token_pooling, seed)
+    REP_DIR = rep_dir(DATASET_ROOT, model, trait, token_pooling)
+    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, trait, token_pooling, seed)
 
 
 
@@ -200,13 +203,13 @@ def layer_sweep(out_dir: Path, *, seed: int = 0) -> None:
 
 # --- entrypoint ------------------------------------------------------------
 
-def main(model: str = MODEL, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
-    _configure(model, token_pooling, seed)
+def main(model: str = MODEL, trait: str = TRAIT, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
+    _configure(model, trait, token_pooling, seed)
     apply_style()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     _write_json(
         RESULTS_DIR / "run_metadata.json",
-        run_metadata(model=MODEL, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+        run_metadata(model=MODEL, trait=TRAIT, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
     )
     print(f"Saving figures under {RESULTS_DIR}\n")
 
@@ -234,6 +237,10 @@ if __name__ == "__main__":
         help="Model whose representations to analyse (default: %(default)s).",
     )
     ap.add_argument(
+        "--trait", choices=sorted(TRAITS), default=DEFAULT_TRAIT,
+        help="Trait whose dataset/representations to analyse (default: %(default)s).",
+    )
+    ap.add_argument(
         "--token-pooling", choices=("avg", "last"), default=TOKEN_POOLING,
         help="Prompt-token pooling whose representations to analyse (default: %(default)s).",
     )
@@ -244,8 +251,8 @@ if __name__ == "__main__":
     args = ap.parse_args()
     seeds = [int(s) for s in args.seeds.split(",")]
     for s in seeds:
-        main(args.model, args.token_pooling, s)
+        main(args.model, args.trait, args.token_pooling, s)
     if len(seeds) > 1:
         from aggregate_results import aggregate_analysis
 
-        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.token_pooling))
+        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.trait, args.token_pooling))

@@ -1,12 +1,13 @@
 {
   "model": "gemma-2-2b",
   "hf_id": "google/gemma-2-2b",
+  "trait": "politeness",
   "seed": 0,
   "token_pooling": "avg",
   "focal_layer": 13,
-  "dataset": "data/20260530_001930/sentences/sentences_filtered.jsonl",
-  "timestamp": "20260706_235005",
-  "git_commit": "77a17427b2b23397950ef3aad83f3fc2c63c0d27",
+  "dataset": "data/20260530_001930/sentences/politeness/sentences_filtered.jsonl",
+  "timestamp": "20260707_004130",
+  "git_commit": "43fae84de35cfad0cf4bcaf6b9e0d01ca6cbf229",
   "versions": {
     "numpy": "2.4.4",
     "torch": "2.11.0",

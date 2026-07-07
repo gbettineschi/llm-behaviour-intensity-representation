@@ -1,15 +1,20 @@
-"""Generate a politeness sentence dataset into data/<timestamp>/sentences/.
+"""Generate a trait sentence dataset into data/<timestamp>/sentences/<trait>/.
 
-This script owns the output location (data/ + a fresh timestamp); the library just writes into
-the directory it's given. Needs OPENROUTER_API_KEY in a repo-root .env (copy .env.example).
+This script owns the output location (data/ + a timestamp); the library just writes into
+the directory it's given. Traits are declared in src/lib/traits.py. Pass --data-root to
+add a trait to an existing dataset root (e.g. data/20260530_001930) so all traits share
+one root; by default a fresh timestamp is created. Needs OPENROUTER_API_KEY in a
+repo-root .env (copy .env.example).
 
-Run from the repo root:  uv run python src/generate_sentences.py
+Run from the repo root:  uv run python src/generate_sentences.py --trait politeness
 """
 
+import argparse
 from datetime import datetime
 from pathlib import Path
 
 from lib.sentences import generate_sentences
+from lib.traits import DEFAULT_TRAIT, TRAITS
 
 MODELS = {
     "generator": {
@@ -35,8 +40,18 @@ MODELS = {
 }
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--trait", choices=sorted(TRAITS), default=DEFAULT_TRAIT)
+    ap.add_argument(
+        "--data-root", type=Path, default=None,
+        help="Existing data/<timestamp> root to add this trait to (default: a fresh timestamp).",
+    )
+    args = ap.parse_args()
+
+    root = args.data_root or Path("data") / datetime.now().strftime("%Y%m%d_%H%M%S")
     out = generate_sentences(
-        Path("data") / datetime.now().strftime("%Y%m%d_%H%M%S") / "sentences",
+        root / "sentences" / args.trait,
+        trait=args.trait,
         n_scenarios=100,
         paraphrases_per_level=3,
         min_acceptance_score=0.70,

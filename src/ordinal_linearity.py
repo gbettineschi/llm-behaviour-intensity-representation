@@ -11,7 +11,7 @@ in activation space. The script bundles five complementary views:
        whitenings (Euclidean / anisotropy / Park causal / LDA / within-subjects
        noise) and adds Spearman-Brown noise-disattenuated cosines.
     3. PCA views — raw vs within-scenario-centered top-two components, plus a
-       small-multiples grid of individual scenarios in the (politeness axis ×
+       small-multiples grid of individual scenarios in the (trait axis ×
        top orthogonal) plane.
     4. Linearity metrics — naive pooled and within-scenario estimators at the
        focal layer, with a within-scenario label-permutation null.
@@ -22,7 +22,7 @@ is printed as a sanity check that the trait is not trivially decodable from
 surface form.
 
 Figures land in
-``results/<dataset>/ordinal_linearity/<model>/<token_pooling>_token/seed_<k>/``;
+``results/<dataset>/ordinal_linearity/<model>/<trait>/<token_pooling>_token/seed_<k>/``;
 numeric summaries are printed, and numeric exports land under ``numeric/``.
 With more than one seed, a mean±std aggregate is written next to the seed dirs.
 
@@ -47,6 +47,7 @@ from lib.config import (
     DEFAULT_SEEDS,
     MODELS,
     child_seed,
+    dataset_path,
     rep_dir,
     results_dir,
     run_metadata,
@@ -91,6 +92,7 @@ from lib.exports import (
 )
 from lib.representations import load_representations, pool_by_scenario_level
 from lib.sentences import LEVELS, load_accepted
+from lib.traits import DEFAULT_TRAIT, TRAITS
 
 
 # --- config ----------------------------------------------------------------
@@ -98,14 +100,14 @@ from lib.sentences import LEVELS, load_accepted
 ANALYSIS = "ordinal_linearity"
 MODEL = DEFAULT_MODEL
 LAYER = MODELS[MODEL]["focal_layer"]
-TRAIT = "politeness"
+TRAIT = DEFAULT_TRAIT
 TOKEN_POOLING = "avg"
 SEED = 0
-DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
-DATASET_ROOT = DATASET.parent.parent
+DATASET_ROOT = Path("data/20260530_001930")
+DATASET = dataset_path(DATASET_ROOT, TRAIT)
 UNEMBED_COV_PATH = unembed_cov_path(DATASET_ROOT, MODEL)
-REP_DIR = rep_dir(DATASET_ROOT, MODEL, TOKEN_POOLING)
-RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TOKEN_POOLING, SEED)
+REP_DIR = rep_dir(DATASET_ROOT, MODEL, TRAIT, TOKEN_POOLING)
+RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TRAIT, TOKEN_POOLING, SEED)
 
 N_REL_SPLITS = 300       # scenario half-splits for the Spearman-Brown reliability
 N_PERM = 100             # within-scenario label permutations for the null
@@ -120,18 +122,20 @@ WITHIN_SEED = child_seed(SEED, "within_metrics")
 LEXICAL_SEED = child_seed(SEED, "lexical_cv")
 
 
-def _configure(model: str, token_pooling: str, seed: int) -> None:
-    """Rebind the model/pooling/seed-dependent globals so every step reads the
-    matching representation directory and writes to the matching results folder."""
-    global MODEL, TOKEN_POOLING, SEED, LAYER, REP_DIR, RESULTS_DIR, UNEMBED_COV_PATH
+def _configure(model: str, trait: str, token_pooling: str, seed: int) -> None:
+    """Rebind the model/trait/pooling/seed-dependent globals so every step reads
+    the matching representation directory and writes to the matching results folder."""
+    global MODEL, TRAIT, TOKEN_POOLING, SEED, DATASET, LAYER, REP_DIR, RESULTS_DIR, UNEMBED_COV_PATH
     global REL_SEED, PERM_SEED, PROBE_SEED, WITHIN_SEED, LEXICAL_SEED
     MODEL = model
+    TRAIT = trait
     TOKEN_POOLING = token_pooling
     SEED = seed
+    DATASET = dataset_path(DATASET_ROOT, trait)
     LAYER = MODELS[model]["focal_layer"]
     UNEMBED_COV_PATH = unembed_cov_path(DATASET_ROOT, model)
-    REP_DIR = rep_dir(DATASET_ROOT, model, token_pooling)
-    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, token_pooling, seed)
+    REP_DIR = rep_dir(DATASET_ROOT, model, trait, token_pooling)
+    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, trait, token_pooling, seed)
     REL_SEED = child_seed(seed, "reliability")
     PERM_SEED = child_seed(seed, "permutation_null")
     PROBE_SEED = child_seed(seed, "probe_cv")
@@ -306,7 +310,7 @@ def inner_product_comparison(activations_scen, levels, out_dir: Path) -> None:
 
 def pca_views(activations_scen, levels, out_dir: Path) -> None:
     """Raw vs within-centered PCA, plus per-scenario small multiples in the
-    (politeness axis × top orthogonal) plane."""
+    (trait axis × top orthogonal) plane."""
     triples = scenario_triples(activations_scen, levels, trait=TRAIT)
     sids = sorted(triples)
     mats = np.stack([triples[s] for s in sids])                  # (S, L, D)
@@ -362,7 +366,7 @@ def pca_views(activations_scen, levels, out_dir: Path) -> None:
     )
     _write_json(out_dir / "numeric" / "pca" / "pca_raw_vs_centered_explained_var.json", explained)
 
-    # --- panel B: per-scenario grid in (politeness axis × top orthogonal) ---
+    # --- panel B: per-scenario grid in (trait axis × top orthogonal) ---
     centered = mats - mats.mean(axis=1, keepdims=True)
     axis = (mats[:, -1] - mats[:, 0]).mean(0)
     axis = axis / (np.linalg.norm(axis) or 1.0)
@@ -684,13 +688,13 @@ def steering_axis_sweep(out_dir: Path) -> None:
 
 # --- entrypoint ------------------------------------------------------------
 
-def main(model: str = MODEL, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
-    _configure(model, token_pooling, seed)
+def main(model: str = MODEL, trait: str = TRAIT, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
+    _configure(model, trait, token_pooling, seed)
     apply_style()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     _write_json(
         RESULTS_DIR / "run_metadata.json",
-        run_metadata(model=MODEL, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+        run_metadata(model=MODEL, trait=TRAIT, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
     )
     print(f"Saving figures under {RESULTS_DIR}\n")
 
@@ -723,6 +727,10 @@ if __name__ == "__main__":
         help="Model whose representations to analyse (default: %(default)s).",
     )
     ap.add_argument(
+        "--trait", choices=sorted(TRAITS), default=DEFAULT_TRAIT,
+        help="Trait whose dataset/representations to analyse (default: %(default)s).",
+    )
+    ap.add_argument(
         "--token-pooling", choices=("avg", "last"), default=TOKEN_POOLING,
         help="Prompt-token pooling whose representations to analyse (default: %(default)s).",
     )
@@ -733,8 +741,8 @@ if __name__ == "__main__":
     args = ap.parse_args()
     seeds = [int(s) for s in args.seeds.split(",")]
     for s in seeds:
-        main(args.model, args.token_pooling, s)
+        main(args.model, args.trait, args.token_pooling, s)
     if len(seeds) > 1:
         from aggregate_results import aggregate_analysis
 
-        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.token_pooling))
+        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.trait, args.token_pooling))

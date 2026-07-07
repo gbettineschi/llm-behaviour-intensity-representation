@@ -168,6 +168,7 @@ def extract_representations(
     layers: list[int] | None = None,
     token_poolings: tuple[str, ...] = TOKEN_POOLS,
     batch_size: int = 8,
+    cov_path: Path | None = None,
 ) -> Path:
     """Extract activations for a sentences_filtered.jsonl dataset and save them.
 
@@ -176,8 +177,10 @@ def extract_representations(
     ``'last'`` takes the prompt's final content token. All poolings share one forward
     pass. Per-layer activations are written under ``out_dir/<token_pooling>_token/`` so
     both poolings coexist; the pooling-invariant ``unembeddings_covariance.pt`` is
-    written once at ``out_dir/``. ``layers`` defaults to all transformer layers
-    ``1..num_hidden_layers``. Extraction is deterministic (no seed involved).
+    written once at ``cov_path`` (default ``out_dir/``) — pass a model-level path when
+    ``out_dir`` is a per-trait subdirectory, since the covariance depends only on the
+    model. ``layers`` defaults to all transformer layers ``1..num_hidden_layers``.
+    Extraction is deterministic (no seed involved).
     """
     for p in token_poolings:
         if p not in TOKEN_POOLS:
@@ -216,9 +219,9 @@ def extract_representations(
         }
         save_representations(activations, pool_dir, meta=meta)
         print(f"Saved {len(layers)} layers under {pool_dir}")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    cov_path = out_dir / "unembeddings_covariance.pt"
+    cov_path = cov_path or out_dir / "unembeddings_covariance.pt"
+    cov_path.parent.mkdir(parents=True, exist_ok=True)
     if not cov_path.exists():
         torch.save(unembedding_covariance(model), cov_path)
-        print(f"Saved unembeddings_covariance.pt at {out_dir}")
+        print(f"Saved {cov_path}")
     return out_dir

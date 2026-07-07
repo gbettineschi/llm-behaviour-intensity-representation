@@ -19,7 +19,7 @@ bend is real and what geometry it implies, in five steps:
        communicative intents.
 
 Figures land in
-``results/<dataset>/trait_geometry/<model>/<token_pooling>_token/seed_<k>/``;
+``results/<dataset>/trait_geometry/<model>/<trait>/<token_pooling>_token/seed_<k>/``;
 numeric summaries are printed, and numeric exports land under ``numeric/``.
 With more than one seed, a mean±std aggregate is written next to the seed dirs.
 
@@ -40,6 +40,7 @@ from lib.config import (
     DEFAULT_SEEDS,
     MODELS,
     child_seed,
+    dataset_path,
     rep_dir,
     results_dir,
     run_metadata,
@@ -70,6 +71,7 @@ from lib.exports import (
 )
 from lib.representations import load_representations, pool_by_scenario_level
 from lib.sentences import LEVELS
+from lib.traits import DEFAULT_TRAIT, TRAITS
 
 
 # --- config ----------------------------------------------------------------
@@ -77,13 +79,13 @@ from lib.sentences import LEVELS
 ANALYSIS = "trait_geometry"
 MODEL = DEFAULT_MODEL
 LAYER = MODELS[MODEL]["focal_layer"]
-TRAIT = "politeness"
+TRAIT = DEFAULT_TRAIT
 TOKEN_POOLING = "avg"
 SEED = 0
-DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
-DATASET_ROOT = DATASET.parent.parent
-REP_DIR = rep_dir(DATASET_ROOT, MODEL, TOKEN_POOLING)
-RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TOKEN_POOLING, SEED)
+DATASET_ROOT = Path("data/20260530_001930")
+DATASET = dataset_path(DATASET_ROOT, TRAIT)
+REP_DIR = rep_dir(DATASET_ROOT, MODEL, TRAIT, TOKEN_POOLING)
+RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TRAIT, TOKEN_POOLING, SEED)
 
 N_BOOT = 2000        # scenario bootstrap resamples for geometry CIs
 N_NULL = 1000        # linear-ladder + noise simulations
@@ -98,16 +100,18 @@ VAL_REL_SEED = child_seed(SEED, "valence_rel")
 BEND_CV_SEED = child_seed(SEED, "shared_bend_cv")
 
 
-def _configure(model: str, token_pooling: str, seed: int) -> None:
-    """Rebind the model/pooling/seed-dependent globals (mirrors ``ordinal_linearity.py``)."""
-    global MODEL, TOKEN_POOLING, SEED, LAYER, REP_DIR, RESULTS_DIR
+def _configure(model: str, trait: str, token_pooling: str, seed: int) -> None:
+    """Rebind the model/trait/pooling/seed-dependent globals (mirrors ``ordinal_linearity.py``)."""
+    global MODEL, TRAIT, TOKEN_POOLING, SEED, DATASET, LAYER, REP_DIR, RESULTS_DIR
     global BOOT_SEED, NULL_SEED, REL_SEED, VAL_REL_SEED, BEND_CV_SEED
     MODEL = model
+    TRAIT = trait
     TOKEN_POOLING = token_pooling
     SEED = seed
+    DATASET = dataset_path(DATASET_ROOT, trait)
     LAYER = MODELS[model]["focal_layer"]
-    REP_DIR = rep_dir(DATASET_ROOT, model, token_pooling)
-    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, token_pooling, seed)
+    REP_DIR = rep_dir(DATASET_ROOT, model, trait, token_pooling)
+    RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, model, trait, token_pooling, seed)
     BOOT_SEED = child_seed(seed, "bootstrap")
     NULL_SEED = child_seed(seed, "linear_null")
     REL_SEED = child_seed(seed, "markedness_rel")
@@ -122,7 +126,7 @@ def _present_levels(triples_source) -> list[str]:
 
 
 def _intent_of(sid: str) -> str:
-    """``politeness-bad-news-delivery-042`` → ``bad-news-delivery``."""
+    """``<trait>-bad-news-delivery-042`` → ``bad-news-delivery``."""
     return re.sub(rf"^{TRAIT}-(.*)-\d+$", r"\1", sid)
 
 
@@ -629,13 +633,13 @@ def report_steering_direction(triples, intents, out_dir: Path) -> dict:
 
 # --- entrypoint ------------------------------------------------------------
 
-def main(model: str = MODEL, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
-    _configure(model, token_pooling, seed)
+def main(model: str = MODEL, trait: str = TRAIT, token_pooling: str = TOKEN_POOLING, seed: int = SEED) -> Path:
+    _configure(model, trait, token_pooling, seed)
     apply_style()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     _write_json(
         RESULTS_DIR / "run_metadata.json",
-        run_metadata(model=MODEL, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+        run_metadata(model=MODEL, trait=TRAIT, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
     )
     print(f"Saving figures under {RESULTS_DIR}\n")
 
@@ -669,6 +673,10 @@ if __name__ == "__main__":
         help="Model whose representations to analyse (default: %(default)s).",
     )
     ap.add_argument(
+        "--trait", choices=sorted(TRAITS), default=DEFAULT_TRAIT,
+        help="Trait whose dataset/representations to analyse (default: %(default)s).",
+    )
+    ap.add_argument(
         "--token-pooling", choices=("avg", "last"), default=TOKEN_POOLING,
         help="Prompt-token pooling whose representations to analyse (default: %(default)s).",
     )
@@ -679,8 +687,8 @@ if __name__ == "__main__":
     args = ap.parse_args()
     seeds = [int(s) for s in args.seeds.split(",")]
     for s in seeds:
-        main(args.model, args.token_pooling, s)
+        main(args.model, args.trait, args.token_pooling, s)
     if len(seeds) > 1:
         from aggregate_results import aggregate_analysis
 
-        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.token_pooling))
+        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.trait, args.token_pooling))

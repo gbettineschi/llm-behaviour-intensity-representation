@@ -1,7 +1,9 @@
-"""Politeness sentence-dataset generation (English-only).
+"""Trait sentence-dataset generation (English-only).
 
-One module: shared types/IO (Sample, load_accepted, …), politeness guide, scenario schema, LLM client,
-and the Pipeline. `generate_sentences(out_dir, ...)` runs the stages and writes into out_dir;
+One module: shared types/IO (Sample, load_accepted, …), scenario schema, LLM client,
+and the Pipeline. Trait-specific content (rubric guide, intents, invariant field, …)
+comes from the registry in ``lib.traits``; the pipeline itself is trait-agnostic.
+`generate_sentences(out_dir, trait=..., ...)` runs the stages and writes into out_dir;
 the caller owns where that is. Stages run in order:
 
     scenarios -> base_sentences -> paraphrases -> judge_and_filter -> export
@@ -35,10 +37,9 @@ from json_repair import repair_json
 
 from jsonschema import Draft202012Validator
 
-# --- shared types & IO helpers (this module is `lib.sentences`)
+from lib.traits import DEFAULT_TRAIT, LEVELS, TRAITS
 
-TRAITS = ["politeness"]
-LEVELS = ["negative", "neutral", "positive"]
+# --- shared types & IO helpers (this module is `lib.sentences`)
 
 
 class Sample(NamedTuple):
@@ -98,208 +99,50 @@ def jaccard(a: str, b: str) -> float:
     return len(sa & sb) / max(1, len(sa | sb))
 
 
-# --- politeness guide
-
-POLITENESS_GUIDE = """\
-# Politeness rubric (signed 3-point scale)
-
-Rewrite one fixed message at three politeness levels — negative (impolite), neutral
-(unmarked), positive (polite) — changing only politeness, never the content. Neutral is a
-true zero: neither courtesy nor rudeness markers. Negative and positive are equal-and-opposite
-departures from it.
-
-## Keep constant across the three levels
-- the intent target (what is requested / refused / criticised / etc.)
-- named entities, dates, deadlines, and the core intent
-- the polarity of the act (a refusal stays a refusal; an apology stays an apology)
-- urgency, scope, and the amount imposed
-- length: all three levels should be about the same number of words
-
-## The three levels
-**Negative — impolite.** Dismissive, curt, grudging, impatient, or condescending; it must read
-as clearly rude to an ordinary reader, not merely plain or short. Rudeness comes from tone and
-framing, never from changing the content, and never from profanity, threats, or attacks on the
-person (those would be lexical giveaways).
-
-**Neutral — unmarked.** Plain, matter-of-fact, even-toned; no courtesy and no rudeness markers.
-
-**Positive — polite.** Respectful and mitigated: appreciation, deference, acknowledging the
-imposition. Politeness is in the framing, not extra words — keep it the same length.
-
-## Per-intent examples
-**request.** Negative: rude, impatient demand ("Just send me the file already."). Neutral: plain direct request with no softeners or brusqueness ("Can you send me the file?"). Positive: deferential framing with gratitude or imposition acknowledgment ("I'd really appreciate it if you could send me the file when you get a chance."). The requested action stays identical.
-
-**refusal.** Negative: abrupt, dismissive decline with no acknowledgment of the offer ("No. I'm not doing that."). Neutral: plain decline with brief reason ("I won't be able to make it."). Positive: appreciative refusal acknowledging the offer and apologising ("Thank you so much for the invitation — I'm afraid I won't be able to make it this time."). The refusal target stays identical.
-
-**disagreement.** Negative: dismissive, contemptuous contradiction ("That's flat-out wrong."). Neutral: plain contradiction ("I don't think that's right."). Positive: respectful disagreement with framing ("I see your point, but I'd respectfully push back — I don't think that holds."). The disagreed-with claim stays identical.
-
-**criticism_or_feedback.** Negative: harsh, belittling judgment ("This report is sloppy and nowhere near good enough."). Neutral: plain feedback ("This report needs more work."). Positive: appreciative, face-saving feedback ("There's a lot of good material here; I think the report would benefit from some additional work in a few places."). The criticised aspect stays identical.
-
-**bad_news_delivery.** Negative: blunt, dismissive delivery that shuts the listener down ("Your refund is denied — that's final."). Neutral: plain delivery with brief reason ("We can't approve your refund."). Positive: empathetic delivery with appreciation and apology ("I'm really sorry to have to tell you this, but we won't be able to approve your refund."). The bad news stays identical.
-
-**apology.** Negative: grudging, dismissive non-apology that minimises the fault ("Yeah, I missed the deadline. It happens."). Neutral: plain apology with brief explanation ("I'm sorry I missed the deadline — I should have flagged it earlier."). Positive: full face-restoring apology with acknowledgment of impact ("I really do apologise for missing the deadline; I know it put extra pressure on the team and I should have raised it sooner."). The apologised-for action stays identical.
-
-**complaint.** Negative: hostile, accusatory venting ("This is unacceptable — sort out the noise now."). Neutral: plain statement of the grievance ("The room next door is very noisy and it's keeping me awake."). Positive: courteous complaint with framing ("I'm sorry to raise this, but the neighbouring room has been quite noisy — would it be possible to help?"). The grievance stays identical.
-
-**reminder.** Negative: nagging, exasperated prod ("You still haven't filed that expense report. Do it."). Neutral: plain reminder ("Just a reminder that the expense report is still outstanding."). Positive: gentle, considerate reminder ("Whenever you have a moment, it would be great to get the expense report filed — no rush."). The outstanding item stays identical.
-
-**inquiry_sensitive.** Negative: blunt, prying question with no tact ("Why were you out all last week?"). Neutral: plain question ("Can I ask why you were away last week?"). Positive: tactful, considerate framing ("I hope everything's alright — if you're comfortable sharing, I wondered about last week."). The question's content stays identical.
-
-**correction.** Negative: contemptuous put-down ("That's wrong — you're using the tool completely incorrectly."). Neutral: plain correction ("That's not quite right; the tool should be used this way."). Positive: gentle, face-saving correction ("Easy mistake — I think it actually works a little differently; may I show you?"). The corrected fact stays identical.
-
-## Cue diversity
-Within a level, do not lean on one marker. Spread across lexical courtesy markers, syntactic
-indirectness, gratitude framing, imposition acknowledgment, and softened or impersonal phrasing.
-"""
-
-
 # --- scenario schema
 
-# The trait-specific field every politeness scenario must carry: the fixed thing the act is
-# about. Named once so the trait catalogue and the json_schema `required` list stay in sync.
-POLITENESS_REQUIRED = ["intent_target"]
+RUBRIC_VERSION = "v3"
+DATASET_VERSION = "v3"
 
-SCENARIO_SCHEMA: Dict[str, Any] = {
-    "rubric_version": "v3",
-    "dataset_version": "v3",
-    # Keyed by trait so a future trait can be added by restoring a block here + in rubric.py.
-    "traits": {
-        "politeness": {
-            "description": "Mitigation of face threat, deference, social consideration. Negative = impolite/rude; neutral = plain/matter-of-fact; positive = polite/mitigated.",
-            "required_fields": POLITENESS_REQUIRED,
-            "intents": [
-                {
-                    "id": "request",
-                    "description": "Asking the listener to do or provide something.",
-                    "example_goal": "ask a colleague to send a file",
-                    "extra_constraints": [
-                        "Keep the requested action fixed across levels.",
-                        "Do not change urgency or scope across levels.",
-                    ],
-                },
-                {
-                    "id": "refusal",
-                    "description": "Declining a request, invitation, proposal, or offer made by the listener.",
-                    "example_goal": "turn down a meeting invitation",
-                    "extra_constraints": [
-                        "The refusal target (what is being declined) must remain identical across levels.",
-                        "Do not change the refusal into a partial acceptance or a counter-offer.",
-                    ],
-                },
-                {
-                    "id": "disagreement",
-                    "description": "Expressing a contrary opinion, correction, or pushback on a claim.",
-                    "example_goal": "push back on a colleague's analysis",
-                    "extra_constraints": [
-                        "The point of disagreement must remain identical across levels.",
-                        "Do not soften disagreement into agreement at any level.",
-                    ],
-                },
-                {
-                    "id": "criticism_or_feedback",
-                    "description": "Pointing out a problem with the listener's work, output, or behaviour.",
-                    "example_goal": "tell a junior their report needs rework",
-                    "extra_constraints": [
-                        "The criticised aspect must remain identical across levels.",
-                        "Do not turn criticism into pure praise.",
-                    ],
-                },
-                {
-                    "id": "bad_news_delivery",
-                    "description": "Telling the listener something they will not want to hear (denial, rejection, negative outcome).",
-                    "example_goal": "inform a customer their refund is denied",
-                    "extra_constraints": [
-                        "The bad news content must remain identical across levels.",
-                        "Do not change a denial into an approval or a hedged maybe.",
-                    ],
-                },
-                {
-                    "id": "apology",
-                    "description": "Acknowledging fault or expressing regret for a specific wrongdoing.",
-                    "example_goal": "apologise for missing a deadline",
-                    "extra_constraints": [
-                        "The thing being apologised for must remain identical across levels.",
-                        "Do not change which party is at fault.",
-                    ],
-                },
-                {
-                    "id": "complaint",
-                    "description": "Voicing a grievance about a problem or situation affecting the speaker (service issue, environmental nuisance, missed commitment, etc.). Distinct from criticism_or_feedback, which targets the listener's work.",
-                    "example_goal": "complain to a hotel manager about a noisy neighbouring room",
-                    "extra_constraints": [
-                        "The grievance (what is wrong) must remain identical across levels.",
-                        "Do not turn the complaint into pure praise or into a refusal of service.",
-                    ],
-                },
-                {
-                    "id": "reminder",
-                    "description": "Prompting the listener about an outstanding obligation, deadline, or commitment they owe.",
-                    "example_goal": "remind a colleague that an expense report is overdue",
-                    "extra_constraints": [
-                        "The reminded item (what is outstanding) must remain identical across levels.",
-                        "Do not change the reminder into a new request or an apology.",
-                    ],
-                },
-                {
-                    "id": "inquiry_sensitive",
-                    "description": "Asking a personal, awkward, or socially delicate question.",
-                    "example_goal": "ask a coworker why they missed work last week",
-                    "extra_constraints": [
-                        "The question's content must remain identical across levels.",
-                        "Do not change the topic or scope of the inquiry.",
-                    ],
-                },
-                {
-                    "id": "correction",
-                    "description": "Pointing out a factual or procedural mistake the listener made.",
-                    "example_goal": "correct a junior's misuse of a tool",
-                    "extra_constraints": [
-                        "The corrected fact or step must remain identical across levels.",
-                        "Do not change the correction into agreement or an unrelated tip.",
-                    ],
-                },
-            ],
-            "generation_constraints": [
-                "Intent_target must be fixed across levels and paraphrases.",
-                "Urgency and imposition must stay constant across levels.",
-                "No insults, threats, or profanity even at the negative (impolite) pole.",
-                "Diversify politeness across directness, deference, gratitude, softeners, and impersonal phrasing.",
-                "Keep every paraphrase, at every level, close to target_word_count.",
-            ],
-        },
-    },
-    "json_schema": {
+# Fields every scenario must carry regardless of trait; each trait's spec adds
+# its `required_fields` (e.g. politeness's `intent_target`, the fixed thing the
+# act is about).
+_SHARED_REQUIRED = [
+    "scenario_id",
+    "trait",
+    "intent",
+    "domain",
+    "audience_relation",
+    "communicative_goal",
+    "target_word_count",
+]
+
+
+def scenario_json_schema(trait: str) -> Dict[str, Any]:
+    properties: Dict[str, Any] = {
+        "scenario_id": {"type": "string", "minLength": 3},
+        "trait": {"const": trait},
+        "rubric_version": {"type": "string"},
+        "dataset_version": {"type": "string"},
+        "intent": {"type": "string", "minLength": 2},
+        "domain": {"type": "string", "minLength": 2},
+        "audience_relation": {"type": "string"},
+        "communicative_goal": {"type": "string", "minLength": 5},
+        "target_word_count": {"type": "integer", "minimum": 4, "maximum": 60},
+    }
+    for field_name in TRAITS[trait]["required_fields"]:
+        properties[field_name] = {"type": "string", "minLength": 3}
+    return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "additionalProperties": True,
-        "properties": {
-            "scenario_id": {"type": "string", "minLength": 3},
-            "trait": {"const": "politeness"},
-            "rubric_version": {"type": "string"},
-            "dataset_version": {"type": "string"},
-            "intent": {"type": "string", "minLength": 2},
-            "domain": {"type": "string", "minLength": 2},
-            "audience_relation": {"type": "string"},
-            "communicative_goal": {"type": "string", "minLength": 5},
-            "intent_target": {"type": "string", "minLength": 3},
-            "target_word_count": {"type": "integer", "minimum": 4, "maximum": 60},
-        },
-        "required": [
-            "scenario_id",
-            "trait",
-            "intent",
-            "domain",
-            "audience_relation",
-            "communicative_goal",
-            "target_word_count",
-        ]
-        + POLITENESS_REQUIRED,
-    },
-}
+        "properties": properties,
+        "required": _SHARED_REQUIRED + TRAITS[trait]["required_fields"],
+    }
 
 
-def make_validator() -> Draft202012Validator:
-    return Draft202012Validator(SCENARIO_SCHEMA["json_schema"])
+def make_validator(trait: str) -> Draft202012Validator:
+    return Draft202012Validator(scenario_json_schema(trait))
 
 
 # --- llm client
@@ -387,7 +230,7 @@ class Pipeline:
         scenario_batch_size: int = 5,
         max_duplicate_jaccard: float = 0.85,
         max_workers: int = 3,
-        traits=("politeness",),
+        trait: str = DEFAULT_TRAIT,
     ):
         self.output_root = Path(output_dir)
         ensure_dir(self.output_root)
@@ -403,12 +246,13 @@ class Pipeline:
         self.scenario_batch_size = scenario_batch_size
         self.max_duplicate_jaccard = max_duplicate_jaccard
         self.max_workers = max_workers
-        self.traits = list(traits)
+        self.trait = trait
+        self._trait_info(trait)  # fail fast on an unknown trait
 
         self.levels: List[str] = list(LEVELS)
-        self._validator = make_validator()
-        self.dataset_version = SCENARIO_SCHEMA["dataset_version"]
-        self.rubric_version = SCENARIO_SCHEMA["rubric_version"]
+        self._validator = make_validator(trait)
+        self.dataset_version = DATASET_VERSION
+        self.rubric_version = RUBRIC_VERSION
         self.random_seed = _RANDOM_SEED
 
     # --- helpers
@@ -436,10 +280,10 @@ class Pipeline:
 
     def _trait_info(self, trait: str) -> Dict[str, Any]:
         try:
-            return SCENARIO_SCHEMA["traits"][trait]
+            return TRAITS[trait]
         except KeyError as e:
             raise KeyError(
-                f"Trait '{trait}' is not defined in the scenario schema."
+                f"Trait '{trait}' is not defined in the lib.traits registry."
             ) from e
 
     def _intents_for(self, trait: str) -> List[Dict[str, Any]]:
@@ -464,7 +308,7 @@ class Pipeline:
         return queue
 
     def _content_invariant(self, scenario: Dict[str, Any]) -> str:
-        v = scenario.get("intent_target")
+        v = scenario.get(self._trait_info(self.trait)["invariant_field"])
         return v.strip() if isinstance(v, str) else ""
 
     def _validate_scenario(self, scenario: Dict[str, Any]) -> Tuple[bool, List[str]]:
@@ -473,18 +317,10 @@ class Pipeline:
 
     def _seed_example(self, trait: str) -> Dict[str, Any]:
         # Shown to the generator as a worked example before any real scenarios exist.
-        return {
-            "scenario_id": f"{trait}-001",
-            "trait": trait,
-            "rubric_version": self.rubric_version,
-            "dataset_version": self.dataset_version,
-            "intent": "request",
-            "domain": "workplace",
-            "audience_relation": "peer",
-            "communicative_goal": "ask a teammate to share the latest budget spreadsheet",
-            "intent_target": "send the latest budget spreadsheet by end of day",
-            "target_word_count": 18,
-        }
+        example = dict(self._trait_info(trait)["seed_example"])
+        example["rubric_version"] = self.rubric_version
+        example["dataset_version"] = self.dataset_version
+        return example
 
     # --- stage 1: scenarios
 
@@ -719,7 +555,7 @@ class Pipeline:
         return (
             "You create controlled ordinal ladders for NLP research. "
             "Keep content fixed and vary only trait intensity.\n\n"
-            f"Politeness guide:\n{POLITENESS_GUIDE}\n\n"
+            f"{trait.capitalize()} guide:\n{self._trait_info(trait)['guide']}\n\n"
             "CRITICAL: You MUST return only valid JSON. Do not include any text before or after the JSON. "
             "Do not add explanations, preambles, or comments. The entire response must be parseable as JSON."
         )
@@ -808,6 +644,7 @@ class Pipeline:
         sentences = base_obj["base_sentences"]
         n_levels = len(sentences)
         target_len = base_obj.get("scenario", {}).get("target_word_count", 18)
+        spec = self._trait_info(self.trait)
         prompt = (
             f"Given these canonical {n_levels}-level base sentences:\n"
             f"{json.dumps(sentences, ensure_ascii=False, indent=2)}\n\n"
@@ -815,11 +652,9 @@ class Pipeline:
             "Generate one paraphrase per level.\n"
             "For each paraphrase, provide: level, cue_family, text.\n"
             "DIVERSITY — hard requirement: each paraphrase must be a genuinely distinct "
-            "sentence — its own syntactic structure and its own cue family (lexical "
-            "marker, syntactic framing, gratitude framing, evidential framing, "
-            "indirectness, modal framing). Do not reuse the structure of any other "
-            "paraphrase for this scenario. The polite level especially must not collapse "
-            "onto a single 'I appreciate your X, but Y' scaffold.\n"
+            "sentence — its own syntactic structure and its own cue family "
+            f"({', '.join(spec['cue_families'])}). Do not reuse the structure of any other "
+            f"paraphrase for this scenario. {spec['paraphrase_note']}\n"
             "Keep the proposition or requested action unchanged.\n"
             f"LENGTH — hard requirement: write every paraphrase, at every level, at about "
             f"{target_len} words. Negative, neutral and positive paraphrases must all "
@@ -941,9 +776,9 @@ class Pipeline:
 
     def _context_system_prompt(self, trait: str) -> str:
         return (
-            "You verify CONTENT PRESERVATION for a controlled politeness dataset. "
+            f"You verify CONTENT PRESERVATION for a controlled {trait} dataset. "
             "Each text expresses a fixed underlying content (the 'invariant content'); "
-            "politeness and tone vary deliberately and MUST NOT affect your judgement. "
+            f"{trait} and tone vary deliberately and MUST NOT affect your judgement. "
             "For each text, score in [0.0, 1.0] how faithfully it preserves the invariant "
             "content: 1.0 = same content, intent, and polarity; lower = content drift, "
             "added/dropped/flipped meaning, or a different request/answer. Do NOT reward or "
@@ -1241,6 +1076,7 @@ _DATASET_FIELDS = (
 def generate_sentences(
     out_dir,
     *,
+    trait: str = DEFAULT_TRAIT,
     n_scenarios: int = 300,
     paraphrases_per_level: int = 3,
     min_acceptance_score: float = 0.70,
@@ -1257,7 +1093,7 @@ def generate_sentences(
     model-agnostic.
 
     Writes scenarios.jsonl, sentences_unfiltered.jsonl, sentences_filtered.jsonl, metadata.json into out_dir. The caller
-    chooses the directory (e.g. data/<timestamp>/prompts). Needs OPENROUTER_API_KEY (a repo-root .env
+    chooses the directory (e.g. data/<timestamp>/sentences/<trait>). Needs OPENROUTER_API_KEY (a repo-root .env
     is loaded automatically).
     """
     out = Path(out_dir)
@@ -1271,10 +1107,8 @@ def generate_sentences(
         intensity_min_gap=intensity_min_gap,
         max_length_ratio=max_length_ratio,
         max_workers=max_workers,
+        trait=trait,
     )
-    trait = pipe.traits[
-        0
-    ]  # politeness-only; a second trait would need per-trait filenames
     scenarios = pipe.make_scenarios(trait)
     base = pipe.make_base_sentences(trait, scenarios)
     paraphrases = pipe.make_paraphrases(trait, base)
@@ -1295,7 +1129,7 @@ def generate_sentences(
     for s in scenarios:
         by_intent[s.get("intent", "?")] = by_intent.get(s.get("intent", "?"), 0) + 1
     manifest = {
-        "timestamp": out.parent.name,
+        "timestamp": out.parent.parent.name,  # out is data/<ts>/sentences/<trait>
         "trait": trait,
         "params": {
             "n_scenarios": n_scenarios,

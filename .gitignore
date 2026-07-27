@@ -22,3 +22,16 @@ CLAUDE.md
 .vscode
 
 activations/
+
+# Representations: commit only the focal layer per model (metadata.json and
+# unembeddings_covariance.pt are untouched by this rule and stay committed).
+# Layer sets already tracked before this rule (gemma-2-2b, qwen2.5-1.5b under
+# politeness) are unaffected — gitignore does not untrack tracked files.
+data/*/representations/**/layer_*.pt
+!data/*/representations/gemma-2-2b/*/*_token/layer_13.pt
+!data/*/representations/llama-3.2-3b/*/*_token/layer_14.pt
+!data/*/representations/qwen2.5-1.5b/*/*_token/layer_14.pt
+!data/*/representations/qwen2.5-0.5b/*/*_token/layer_12.pt
+!data/*/representations/qwen2.5-1.5b-instruct/*/*_token/layer_14.pt
+!data/*/representations/qwen2.5-3b/*/*_token/layer_18.pt
+!data/*/representations/qwen2.5-7b/*/*_token/layer_14.pt

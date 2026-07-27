@@ -222,6 +222,8 @@ def extract_representations(
     cov_path = cov_path or out_dir / "unembeddings_covariance.pt"
     cov_path.parent.mkdir(parents=True, exist_ok=True)
     if not cov_path.exists():
-        torch.save(unembedding_covariance(model), cov_path)
+        # Saved as float32: at 7B-model hidden sizes (D~3584) float64 would exceed
+        # GitHub's 100MB file limit. Computed in float64 above for precision.
+        torch.save(unembedding_covariance(model).to(torch.float32), cov_path)
         print(f"Saved {cov_path}")
     return out_dir

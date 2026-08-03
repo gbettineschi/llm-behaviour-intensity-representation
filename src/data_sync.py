@@ -1,0 +1,77 @@
+"""Push and pull model representations to a Hugging Face dataset repo.
+
+Tensors are not stored in Git. After extraction, push them; before analysis,
+pull them. The committed ``representations.lock.json`` pins the exact revision.
+
+    python src/data_sync.py push --run 20260530_001930
+    python src/data_sync.py pull --run 20260530_001930
+    python src/data_sync.py pull --run 20260530_001930 --model gemma-2-2b --trait politeness
+"""
+
+import argparse
+from pathlib import Path
+
+from huggingface_hub import HfApi, snapshot_download
+
+from lib.hub import DEFAULT_REPO_ID, allow_patterns, read_lock, write_lock
+
+DATA_ROOT = Path("data")
+
+
+def cmd_push(args: argparse.Namespace) -> None:
+    data_root = DATA_ROOT / args.run
+    rep_dir = data_root / "representations"
+    if not rep_dir.is_dir():
+        raise SystemExit(f"nothing to push: {rep_dir} does not exist")
+
+    api = HfApi()
+    api.create_repo(args.repo, repo_type="dataset", private=True, exist_ok=True)
+    commit = api.upload_folder(
+        folder_path=str(rep_dir),
+        path_in_repo=f"{args.run}/representations",
+        repo_id=args.repo,
+        repo_type="dataset",
+        commit_message=f"representations for run {args.run}",
+    )
+
+    files = sorted(str(p.relative_to(data_root)) for p in rep_dir.rglob("*.pt"))
+    path = write_lock(
+        data_root, repo_id=args.repo, revision=commit.oid, run_id=args.run, files=files
+    )
+    print(f"pushed {len(files)} tensors to {args.repo} at {commit.oid}")
+    print(f"wrote {path} -- commit it so others pull the same revision")
+
+
+def cmd_pull(args: argparse.Namespace) -> None:
+    data_root = DATA_ROOT / args.run
+    lock = read_lock(data_root)
+    patterns = allow_patterns(args.run, model=args.model, trait=args.trait)
+    snapshot_download(
+        repo_id=lock["repo_id"],
+        repo_type="dataset",
+        revision=lock["revision"],
+        allow_patterns=patterns,
+        local_dir=str(DATA_ROOT),
+    )
+    print(f"pulled {patterns} at {lock['revision'][:7]} into {DATA_ROOT}/{args.run}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    for name, handler, needs_filters in (("push", cmd_push, False), ("pull", cmd_pull, True)):
+        p = sub.add_parser(name)
+        p.add_argument("--run", required=True, help="run id, e.g. 20260530_001930")
+        p.add_argument("--repo", default=DEFAULT_REPO_ID, help="Hub dataset repo id")
+        if needs_filters:
+            p.add_argument("--model", default=None, help="fetch only this model")
+            p.add_argument("--trait", default=None, help="fetch only this trait")
+        p.set_defaults(func=handler)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

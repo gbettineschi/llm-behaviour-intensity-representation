@@ -9,6 +9,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "transformers",
+    "huggingface-hub>=1.13.0",
     "torch",
     "numpy",
     "scipy",

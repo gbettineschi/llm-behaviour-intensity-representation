@@ -115,6 +115,14 @@ def save_representations(
     (out_dir / "metadata.json").write_text(json.dumps(meta, indent=2))
 
 
+def _run_id_from_rep_dir(rep_dir: Path) -> str:
+    """``data/<run_id>/representations/...`` → ``<run_id>``."""
+    for parent in rep_dir.parents:
+        if parent.name == "representations":
+            return parent.parent.name
+    return "<run_id>"
+
+
 def load_representations(rep_dir: str | Path, *, layer: int | None = None):
     """One vector per paraphrase.
 
@@ -122,6 +130,12 @@ def load_representations(rep_dir: str | Path, *, layer: int | None = None):
     ``layer`` None → adds the layer to the key.
     """
     rep_dir = Path(rep_dir)
+    if not rep_dir.is_dir() or not any(rep_dir.glob("layer_*.pt")):
+        raise FileNotFoundError(
+            f"No representations under {rep_dir}.\n"
+            f"Tensors are not stored in Git. Fetch them from the Hugging Face Hub:\n"
+            f"    python src/data_sync.py pull --run {_run_id_from_rep_dir(rep_dir)}"
+        )
     if layer is not None:
         return torch.load(rep_dir / f"layer_{layer}.pt", weights_only=False)
     out: dict[tuple[str, str, str, str, int], torch.Tensor] = {}

@@ -37,6 +37,21 @@ def write_lock(
     return path
 
 
+def allow_patterns(
+    run_id: str, *, model: str | None = None, trait: str | None = None
+) -> list[str]:
+    """Hub glob patterns selecting a subset of one run's representations.
+
+    The unembedding covariance is model-level rather than per-trait, so it stays
+    included whenever a trait filter narrows the layer files.
+    """
+    base = f"{run_id}/representations"
+    m = model or "*"
+    if trait is None:
+        return [f"{base}/{m}/**"]
+    return [f"{base}/{m}/{trait}/**", f"{base}/{m}/unembeddings_covariance.pt"]
+
+
 def read_lock(data_root: str | Path) -> dict:
     """Load the lock file, or explain how to create it."""
     path = lock_path(data_root)

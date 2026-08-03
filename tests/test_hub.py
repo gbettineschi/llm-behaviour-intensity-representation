@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from lib.hub import lock_path, read_lock, write_lock  # noqa: E402
+from lib.hub import allow_patterns, lock_path, read_lock, write_lock  # noqa: E402
 
 
 def test_lock_roundtrip():
@@ -52,11 +52,44 @@ def test_read_lock_missing_names_push_command():
     print("  test_read_lock_missing_names_push_command PASSED")
 
 
+def test_allow_patterns_no_filters():
+    assert allow_patterns("R") == ["R/representations/*/**"], allow_patterns("R")
+    print("  test_allow_patterns_no_filters PASSED")
+
+
+def test_allow_patterns_model_only():
+    got = allow_patterns("R", model="gemma-2-2b")
+    assert got == ["R/representations/gemma-2-2b/**"], got
+    print("  test_allow_patterns_model_only PASSED")
+
+
+def test_allow_patterns_trait_only_keeps_unembed_cov():
+    got = allow_patterns("R", trait="politeness")
+    assert got == [
+        "R/representations/*/politeness/**",
+        "R/representations/*/unembeddings_covariance.pt",
+    ], got
+    print("  test_allow_patterns_trait_only_keeps_unembed_cov PASSED")
+
+
+def test_allow_patterns_model_and_trait():
+    got = allow_patterns("R", model="gemma-2-2b", trait="politeness")
+    assert got == [
+        "R/representations/gemma-2-2b/politeness/**",
+        "R/representations/gemma-2-2b/unembeddings_covariance.pt",
+    ], got
+    print("  test_allow_patterns_model_and_trait PASSED")
+
+
 def main():
     tests = [
         test_lock_roundtrip,
         test_write_lock_sorts_files,
         test_read_lock_missing_names_push_command,
+        test_allow_patterns_no_filters,
+        test_allow_patterns_model_only,
+        test_allow_patterns_trait_only_keeps_unembed_cov,
+        test_allow_patterns_model_and_trait,
     ]
     failed = 0
     for t in tests:

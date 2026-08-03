@@ -4,14 +4,7 @@ _Produced by Francesco Braicovich, Gabriele Bettineschi, Giovanni Berlinghieri, 
 
 ## Setup and development
 **Setup**
-1. Before cloning the repo, make sure you have git lfs installed.
-   ```
-   git lfs install
-   ```
-If you have already cloned the repo before doing this, you can fix by installing git lfs (command above) and then running:
-   ```
-   git lfs pull
-   ```
+1. Clone the repo. Model representations are **not** in Git — they live in a Hugging Face dataset repo and are fetched separately (step 7).
 2. Install dependencies with uv.
    ```
    uv sync
@@ -26,6 +19,18 @@ If you have already cloned the repo before doing this, you can fix by installing
    git config --local filter.nb-clean.clean ".venv/bin/nb-clean clean --preserve-cell-outputs --remove-all-notebook-metadata"
    
    echo "*.ipynb filter=nb-clean" >> .git/info/attributes
+   ```
+6. Enable the commit guard, which stops tensors being committed by accident.
+   ```
+   git config core.hooksPath .githooks
+   ```
+7. Fetch the representations for the run you want to analyse.
+   ```
+   uv run python src/data_sync.py pull --run 20260530_001930
+   ```
+   Narrow it down if you only need part of the sweep — the full set is large:
+   ```
+   uv run python src/data_sync.py pull --run 20260530_001930 --model gemma-2-2b --trait politeness
    ```
 
 ## Running the analysis
@@ -63,9 +68,28 @@ Models are declared in `src/lib/config.py`: `gemma-2-2b`, `llama-3.2-3b` (gated)
 
 Add one entry to `TRAITS` in `src/lib/traits.py`: the rubric guide, the intents to balance scenarios across, the invariant field that must stay fixed across levels, cue families, and a seed example (see the `politeness` entry for the shape). All three levels keep the signed scale — negative / neutral / positive. Then run steps 1–4 with `--trait <name>`; no other code changes are needed.
 
-### Storage: focal-layer-only commits
+## Data and results
 
-Only the focal layer's `.pt` per model/trait/pooling is committed (plus `metadata.json` and the model-level `unembeddings_covariance.pt`); every other layer is gitignored (see `.gitignore`). The unembedding covariance is saved as float32 — at 7B hidden sizes (D≈3584) float64 would exceed GitHub's 100MB file limit — and upcast back to float64 on load. The politeness representations for `gemma-2-2b` and `qwen2.5-1.5b`, committed before this policy, keep their full layer sets. A full layer sweep for any other model/trait needs local re-extraction (`extract_representations.py` is deterministic, so it reproduces the same activations).
+| Artifact | Where it lives | Why |
+| --- | --- | --- |
+| Code, configs, sentence datasets | Git | small, reviewable, versions with the code |
+| `results/**/aggregated/` | Git | text — metric changes show up in PR diffs |
+| `results/**/seed_*/` | not tracked | regenerates byte-identically from the same seed |
+| `data/**/representations/*.pt` | Hugging Face dataset repo | too large for Git; fetched with `data_sync` |
+
+`data/<run_id>/representations.lock.json` is committed and pins the exact Hub revision, so everyone analysing a run reads the same tensor bytes.
+
+After extracting new representations, publish them and commit the updated lock:
+
+```
+uv run python src/data_sync.py push --run <run_id>
+git add data/<run_id>/representations.lock.json
+git commit -m "data: publish representations for <run_id>"
+```
+
+This replaces the previous focal-layer-only commit policy. That policy existed only to fit Git's size limits, and it cost real capability: every model/trait except `gemma-2-2b` and `qwen2.5-1.5b` under politeness had just its focal layer available, so layer sweeps needed local re-extraction. With representations on the Hub, full layer sets are kept for every combo.
+
+**Troubleshooting.** `FileNotFoundError: No representations under ...` means you have not fetched the tensors — run the `pull` command it prints. If a commit is rejected with "refusing to commit PyTorch tensors", that is the guard working: push the tensors to the Hub instead.
 
 ### Extracting `qwen2.5-7b` on a cloud GPU
 
@@ -78,6 +102,11 @@ uv run python src/extract_representations.py --model qwen2.5-7b --trait formalit
 uv run python src/extract_representations.py --model qwen2.5-7b --trait certainty
 uv run python src/extract_representations.py --model qwen2.5-7b --trait urgency
 uv run python src/extract_representations.py --model qwen2.5-7b --trait enthusiasm
-# copy data/<ts>/representations/qwen2.5-7b/ back into the local repo's data/<ts>/
+uv run python src/data_sync.py push --run <ts>
+```
+Then locally, pull what you just published and commit the refreshed lock:
+```
+uv run python src/data_sync.py pull --run <ts> --model qwen2.5-7b
+git add data/<ts>/representations.lock.json && git commit -m "data: add qwen2.5-7b representations"
 ```
 Everything downstream (analysis drivers, `run_analyses.py`, `collect_summary.py`) is model-agnostic and picks it up once the representations land.

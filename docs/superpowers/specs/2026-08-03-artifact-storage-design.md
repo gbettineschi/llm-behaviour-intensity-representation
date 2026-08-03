@@ -43,6 +43,29 @@ mode is not a bill — LFS stops working repo-wide until the next billing cycle.
 Branch switching is *not* a factor: `git lfs` caches fetched objects in
 `.git/lfs/objects`, so bandwidth is paid once per unique file per person.
 
+### Correction: the project already pays for this in capability, not bytes
+
+The `~10 GB` figure above is what a *full* layer sweep would cost. The repository
+never reaches it, because `multi-model-seeded-analysis` already added a
+focal-layer-only commit policy: `.gitignore` keeps `layer_*.pt` out of Git except
+one hand-listed focal layer per model. Committed tensors therefore stay under
+roughly 1 GB, and the LFS quota wall is never actually hit.
+
+That reframes the decision rather than removing it. The cost has been paid in
+scientific capability instead of storage:
+
+- Only `gemma-2-2b` and `qwen2.5-1.5b` under `politeness` have full layer sets.
+  Every other model/trait combination has just its focal layer, so any layer
+  sweep requires local re-extraction — and the analysis code plots layer sweeps
+  (`plot_layer_sweep`, `linearity_metric_sweep`) as a core output.
+- `unembeddings_covariance.pt` is downcast to float32 purely because float64 at
+  `d_model = 3584` would exceed GitHub's 100 MB per-file limit, then upcast again
+  on load.
+
+Both compromises exist to fit Git, not because the science wanted them. Moving
+representations to the Hub removes the constraint that forced them, which is the
+stronger argument for this design than the quota ceiling.
+
 ## Decision
 
 **Git stores what you read. Hugging Face stores what you compute.**

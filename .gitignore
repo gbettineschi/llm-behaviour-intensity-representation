@@ -23,19 +23,10 @@ CLAUDE.md
 
 activations/
 
-# Representations: commit only the focal layer per model (metadata.json and
-# unembeddings_covariance.pt are untouched by this rule and stay committed).
-# Layer sets already tracked before this rule (gemma-2-2b, qwen2.5-1.5b under
-# politeness) are unaffected — gitignore does not untrack tracked files.
-data/*/representations/**/layer_*.pt
-!data/*/representations/gemma-2-2b/*/*_token/layer_13.pt
-!data/*/representations/llama-3.2-3b/*/*_token/layer_14.pt
-!data/*/representations/qwen2.5-1.5b/*/*_token/layer_14.pt
-!data/*/representations/qwen2.5-0.5b/*/*_token/layer_12.pt
-!data/*/representations/qwen2.5-1.5b-instruct/*/*_token/layer_14.pt
-!data/*/representations/qwen2.5-3b/*/*_token/layer_18.pt
-!data/*/representations/qwen2.5-7b/*/*_token/layer_14.pt
-# Model representations - stored on the Hugging Face Hub, fetched with src/data_sync.py
+# Model representations: every layer of every model/trait lives on the Hugging
+# Face Hub, fetched with src/data_sync.py and pinned by representations.lock.json.
+# This replaces the previous focal-layer-only policy, which existed solely to fit
+# Git's size limits and cost us full layer sweeps for all but two model/trait combos.
 data/**/representations/**/*.pt
 
 # Per-seed analysis dumps - regenerate byte-identically by re-running the same seed

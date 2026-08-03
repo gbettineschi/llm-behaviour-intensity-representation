@@ -1,0 +1,12 @@
+#!/bin/sh
+# Model tensors live on the Hugging Face Hub, never in Git.
+# See docs/superpowers/specs/2026-08-03-artifact-storage-design.md
+staged=$(git diff --cached --name-only --diff-filter=AM | grep '\.pt$' || true)
+if [ -n "$staged" ]; then
+    echo "error: refusing to commit PyTorch tensors:"
+    echo "$staged" | sed 's/^/  /'
+    echo
+    echo "Tensors belong on the Hugging Face Hub:"
+    echo "    python src/data_sync.py push --run <run_id>"
+    exit 1
+fi

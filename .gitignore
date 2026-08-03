@@ -35,3 +35,8 @@ data/*/representations/**/layer_*.pt
 !data/*/representations/qwen2.5-1.5b-instruct/*/*_token/layer_14.pt
 !data/*/representations/qwen2.5-3b/*/*_token/layer_18.pt
 !data/*/representations/qwen2.5-7b/*/*_token/layer_14.pt
+# Model representations - stored on the Hugging Face Hub, fetched with src/data_sync.py
+data/**/representations/**/*.pt
+
+# Per-seed analysis dumps - regenerate byte-identically by re-running the same seed
+results/**/seed_*/

@@ -66,14 +66,16 @@ Models are declared in `src/lib/config.py`: `gemma-2-2b`, `llama-3.2-3b` (gated)
 
 ### Adding a trait
 
-Add one entry to `TRAITS` in `src/lib/traits.py`: the rubric guide, the intents to balance scenarios across, the invariant field that must stay fixed across levels, cue families, and a seed example (see the `politeness` entry for the shape). All three levels keep the signed scale — negative / neutral / positive. Then run steps 1–4 with `--trait <name>`; no other code changes are needed.
+Add one entry to `TRAITS` in `src/lib/traits.py`. Every key is read without a default, so copy the `politeness` entry and replace all ten: `description`, `axis` (the human-eval label), `guide` (the rubric), `invariant_field`, `required_fields`, `cue_families`, `paraphrase_note`, `seed_example`, `intents`, and `generation_constraints`. Omitting one raises a `KeyError` partway through generation, after the LLM calls have started.
+
+Reuse `_SHARED_INTENTS` unless a shared per-intent constraint would pin the trait you are varying — see `_URGENCY_INTENTS`, which exists because the shared `request` intent holds urgency fixed. All three levels keep the signed scale — negative / neutral / positive. Then run steps 1–4 with `--trait <name>`; no other code changes are needed.
 
 ## Data and results
 
 | Artifact | Where it lives | Why |
 | --- | --- | --- |
 | Code, configs, sentence datasets | Git | small, reviewable, versions with the code |
-| `results/**/aggregated/` | Git | text — metric changes show up in PR diffs |
+| `results/**/aggregated/` | Git | mostly text — metric changes show up in PR diffs (the `*_bands.png` figures alongside them are binary) |
 | `results/**/seed_*/` | not tracked | regenerates byte-identically from the same seed |
 | `data/**/representations/*.pt` | [Hugging Face dataset repo](https://huggingface.co/datasets/llm-behaviour-intensity/activations) | too large for Git; fetched with `data_sync` |
 

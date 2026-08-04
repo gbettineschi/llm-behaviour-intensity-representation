@@ -29,5 +29,9 @@ activations/
 # Git's size limits and cost us full layer sweeps for all but two model/trait combos.
 data/**/representations/**/*.pt
 
+# huggingface_hub download cache created by src/data_sync.py pull
+# (the library writes its own .gitignore in here too; this makes the intent explicit)
+data/.cache/
+
 # Per-seed analysis dumps - regenerate byte-identically by re-running the same seed
 results/**/seed_*/

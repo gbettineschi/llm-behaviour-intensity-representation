@@ -1,6 +1,6 @@
 {
-  "generated_at": "20260530_124257",
-  "source_dataset": "data/20260530_001930/sentences/sentences_filtered.jsonl",
+  "generated_at": "20260804_210134",
+  "source_dataset": "data/20260530_001930/sentences/politeness/sentences_filtered.jsonl",
   "model": "google/gemma-2-2b",
   "device": "mps",
   "layers": [
@@ -25,7 +25,10 @@
     19,
     20,
     21,
-    22
+    22,
+    23,
+    24,
+    25
   ],
   "token_pooling": "last",
   "n_samples": 633,

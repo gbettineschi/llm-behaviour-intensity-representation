@@ -1,6 +1,6 @@
 {
   "repo_id": "llm-behaviour-intensity/activations",
-  "revision": "2a77857e5f477ed205634b7643b3facc43336c84",
+  "revision": "8c07f06b5627e6311d76602fe9b158484a975e37",
   "run_id": "20260530_001930",
   "files": [
     "representations/gemma-2-2b/politeness/avg_token/layer_1.pt",
@@ -18,6 +18,9 @@
     "representations/gemma-2-2b/politeness/avg_token/layer_20.pt",
     "representations/gemma-2-2b/politeness/avg_token/layer_21.pt",
     "representations/gemma-2-2b/politeness/avg_token/layer_22.pt",
+    "representations/gemma-2-2b/politeness/avg_token/layer_23.pt",
+    "representations/gemma-2-2b/politeness/avg_token/layer_24.pt",
+    "representations/gemma-2-2b/politeness/avg_token/layer_25.pt",
     "representations/gemma-2-2b/politeness/avg_token/layer_3.pt",
     "representations/gemma-2-2b/politeness/avg_token/layer_4.pt",
     "representations/gemma-2-2b/politeness/avg_token/layer_5.pt",
@@ -40,6 +43,9 @@
     "representations/gemma-2-2b/politeness/last_token/layer_20.pt",
     "representations/gemma-2-2b/politeness/last_token/layer_21.pt",
     "representations/gemma-2-2b/politeness/last_token/layer_22.pt",
+    "representations/gemma-2-2b/politeness/last_token/layer_23.pt",
+    "representations/gemma-2-2b/politeness/last_token/layer_24.pt",
+    "representations/gemma-2-2b/politeness/last_token/layer_25.pt",
     "representations/gemma-2-2b/politeness/last_token/layer_3.pt",
     "representations/gemma-2-2b/politeness/last_token/layer_4.pt",
     "representations/gemma-2-2b/politeness/last_token/layer_5.pt",

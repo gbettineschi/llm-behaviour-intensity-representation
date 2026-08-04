@@ -298,6 +298,30 @@ def test_no_trait_intent_holds_its_own_trait_constant():
                 _check(f"{trait}/{intent['id']} does not pin {trait}", trait not in c.lower(), c)
 
 
+def test_git_commit_dirty_flag_tracks_src_only():
+    """The provenance -dirty flag must reflect uncommitted *code*, not the results
+    a run is writing. A whole-tree check stamps every result dirty from its own
+    output, which makes the flag carry no information at all."""
+    print("test_git_commit_dirty_flag_tracks_src_only")
+    import subprocess
+
+    from lib.config import git_commit
+
+    c = git_commit()
+    _check("returns a commit", c is not None, str(c))
+    _check("sha is 40 hex chars", len(c.split("-")[0]) == 40, str(c))
+    src_dirty = bool(
+        subprocess.run(
+            ["git", "status", "--porcelain", "--", "src"], capture_output=True, text=True
+        ).stdout.strip()
+    )
+    _check(
+        "dirty flag matches src/ state, ignoring results/",
+        c.endswith("-dirty") == src_dirty,
+        f"stamp={c} src_dirty={src_dirty}",
+    )
+
+
 def test_aggregate_respects_explicit_seed_list():
     """A seed_* dir left over from an earlier run must not be folded into the mean
     when the caller says which seeds it just ran."""
@@ -382,6 +406,7 @@ def main():
         test_aggregate_csv,
         test_collect_summary_reads_aggregated_only_tree,
         test_no_trait_intent_holds_its_own_trait_constant,
+        test_git_commit_dirty_flag_tracks_src_only,
         test_aggregate_respects_explicit_seed_list,
         test_aggregate_json_keeps_provenance_per_seed,
         test_run_analyses_skips_dirs_without_tensors,

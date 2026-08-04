@@ -82,17 +82,23 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def git_commit() -> str | None:
-    """HEAD, suffixed ``-dirty`` when the tree has uncommitted changes.
+    """HEAD, suffixed ``-dirty`` when ``src/`` has uncommitted changes.
 
     Without the suffix a result stamped with commit X may have been produced by
-    code that was never committed, so checking X out does not reproduce it.
+    code that was never committed, so checking X out would not reproduce it.
+
+    Scoped to ``src/`` on purpose: a run writes its own tracked artifacts into
+    ``results/`` as it goes, so a whole-tree check would stamp every result
+    ``-dirty`` from its own output and the flag would carry no information.
+    Only the code that computed the numbers bears on reproducibility.
     """
     try:
         sha = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=_REPO_ROOT, capture_output=True, text=True, check=True
         ).stdout.strip()
         dirty = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=_REPO_ROOT, capture_output=True, text=True, check=True
+            ["git", "status", "--porcelain", "--", "src"],
+            cwd=_REPO_ROOT, capture_output=True, text=True, check=True,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return None

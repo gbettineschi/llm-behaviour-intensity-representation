@@ -322,6 +322,20 @@ def test_git_commit_dirty_flag_tracks_src_only():
     )
 
 
+def test_jsonify_keeps_booleans_boolean():
+    """bool is a subclass of int, so an unguarded int branch exports True as 1 —
+    which in a provenance file reads as a count, not a flag."""
+    print("test_jsonify_keeps_booleans_boolean")
+    from lib.exports import jsonify
+
+    _check("True stays True", jsonify(True) is True, repr(jsonify(True)))
+    _check("False stays False", jsonify(False) is False, repr(jsonify(False)))
+    _check("numpy bool stays bool", jsonify(np.bool_(True)) is True, repr(jsonify(np.bool_(True))))
+    _check("nested in a dict", jsonify({"verified": True})["verified"] is True)
+    _check("real ints unaffected", jsonify(50) == 50 and isinstance(jsonify(50), int))
+    _check("numpy int unaffected", jsonify(np.int64(7)) == 7)
+
+
 def test_aggregate_respects_explicit_seed_list():
     """A seed_* dir left over from an earlier run must not be folded into the mean
     when the caller says which seeds it just ran."""
@@ -407,6 +421,7 @@ def main():
         test_collect_summary_reads_aggregated_only_tree,
         test_no_trait_intent_holds_its_own_trait_constant,
         test_git_commit_dirty_flag_tracks_src_only,
+        test_jsonify_keeps_booleans_boolean,
         test_aggregate_respects_explicit_seed_list,
         test_aggregate_json_keeps_provenance_per_seed,
         test_run_analyses_skips_dirs_without_tensors,

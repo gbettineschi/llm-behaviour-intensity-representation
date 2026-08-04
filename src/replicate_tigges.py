@@ -209,7 +209,10 @@ def main(model: str = MODEL, trait: str = TRAIT, token_pooling: str = TOKEN_POOL
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     _write_json(
         RESULTS_DIR / "run_metadata.json",
-        run_metadata(model=MODEL, trait=TRAIT, seed=SEED, token_pooling=TOKEN_POOLING, dataset=DATASET, focal_layer=LAYER),
+        run_metadata(
+            model=MODEL, trait=TRAIT, seed=SEED, token_pooling=TOKEN_POOLING,
+            dataset=DATASET, focal_layer=LAYER, data_root=DATASET_ROOT,
+        ),
     )
     print(f"Saving figures under {RESULTS_DIR}\n")
 

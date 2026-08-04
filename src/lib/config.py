@@ -12,13 +12,16 @@ from __future__ import annotations
 import subprocess
 import zlib
 from datetime import datetime
+from functools import lru_cache
 from importlib import metadata as _im
 from pathlib import Path
 
 import numpy as np
 
+from lib.hub import read_lock, verify_lock
+
 MODELS: dict[str, dict] = {
-    "gemma-2-2b": {"hf_id": "google/gemma-2-2b", "focal_layer": 13, "params_b": 2.0},  # 26 layers (extracted 1-22)
+    "gemma-2-2b": {"hf_id": "google/gemma-2-2b", "focal_layer": 13, "params_b": 2.0},  # 26 layers
     "llama-3.2-3b": {"hf_id": "meta-llama/Llama-3.2-3B", "focal_layer": 14, "params_b": 3.0},  # 28 layers, gated
     "qwen2.5-1.5b": {"hf_id": "Qwen/Qwen2.5-1.5B", "focal_layer": 14, "params_b": 1.5},  # 28 layers
     "qwen2.5-0.5b": {"hf_id": "Qwen/Qwen2.5-0.5B", "focal_layer": 12, "params_b": 0.5},  # 24 layers
@@ -105,8 +108,39 @@ def git_commit() -> str | None:
     return f"{sha}-dirty" if dirty else sha
 
 
-def run_metadata(*, model: str, trait: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int) -> dict:
-    """Provenance record written as ``run_metadata.json`` in each seed dir."""
+@lru_cache(maxsize=None)
+def _representations_provenance(data_root: Path, model: str, trait: str) -> dict:
+    """Which tensor revision these results came from, and whether the bytes matched.
+
+    Cached: one driver run calls this once per seed, and hashing the same files
+    three times would be pure waste.
+    """
+    try:
+        lock = read_lock(data_root)
+    except FileNotFoundError:
+        return {"repo_id": None, "revision": None, "verified": None}
+    res = verify_lock(data_root, model=model, trait=trait)
+    return {
+        "repo_id": lock["repo_id"],
+        "revision": lock["revision"],
+        # None when the lock predates digests; False means the analysis ran on
+        # bytes that are not the pinned ones, so it will not reproduce.
+        "verified": (not res["mismatched"]) if (res["matched"] or res["mismatched"]) else None,
+        "n_matched": len(res["matched"]),
+        "n_mismatched": len(res["mismatched"]),
+    }
+
+
+def run_metadata(
+    *, model: str, trait: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int,
+    data_root: Path | None = None,
+) -> dict:
+    """Provenance record written as ``run_metadata.json`` in each seed dir.
+
+    ``data_root`` links the result to the tensors that produced it: without it a
+    result records the code it ran but not the data, which is the half of
+    reproducibility that actually varies between machines.
+    """
     commit = git_commit()
     versions = {}
     for pkg in ("numpy", "torch", "transformers", "scikit-learn"):
@@ -124,5 +158,8 @@ def run_metadata(*, model: str, trait: str, seed: int, token_pooling: str, datas
         "dataset": str(dataset),
         "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
         "git_commit": commit,
+        "representations": _representations_provenance(Path(data_root), model, trait)
+        if data_root is not None
+        else None,
         "versions": versions,
     }

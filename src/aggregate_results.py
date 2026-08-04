@@ -189,10 +189,26 @@ def aggregate_analysis(base_dir: str | Path, seeds: list[int] | None = None) -> 
             _write_json(out_dir / rel, _aggregate_json(docs, len(seed_dirs)))
             report["aggregated" if docs.count(docs[0]) < len(docs) else "passthrough"].append(str(rel))
 
+    # Carry the tensor provenance up from the seed dirs. aggregated/ is the
+    # tracked artifact and the per-seed dirs are gitignored, so this is the only
+    # place a committed result can record which tensor revision produced it.
+    # Seeds disagreeing means the data changed mid-run, which is worth seeing.
+    reps = [
+        json.loads((d / "run_metadata.json").read_text(encoding="utf-8")).get("representations")
+        for d in seed_dirs
+        if (d / "run_metadata.json").exists()
+    ]
+    if not reps:
+        representations = None
+    elif all(r == reps[0] for r in reps):
+        representations = reps[0]
+    else:
+        representations = {"per_seed": reps}
     _write_json(out_dir / "run_metadata.json", {
         "seeds": [int(d.name.split("_")[1]) for d in seed_dirs],
         "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
         "git_commit": git_commit(),
+        "representations": representations,
     })
     _write_json(out_dir / "aggregation_report.json", report)
     return out_dir

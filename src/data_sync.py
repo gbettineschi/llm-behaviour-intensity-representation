@@ -1,11 +1,14 @@
-"""Push and pull model representations to a Hugging Face dataset repo.
+"""Push, pull and verify model representations against a Hugging Face dataset repo.
 
 Tensors are not stored in Git. After extraction, push them; before analysis,
-pull them. The committed ``representations.lock.json`` pins the exact revision.
+pull them. The committed ``representations.lock.json`` pins the exact revision
+*and* a sha256 per file, so ``verify`` can prove the bytes on your disk are the
+ones a given commit refers to.
 
-    python src/data_sync.py push --run 20260530_001930
-    python src/data_sync.py pull --run 20260530_001930
-    python src/data_sync.py pull --run 20260530_001930 --model gemma-2-2b --trait politeness
+    python src/data_sync.py push   --run 20260530_001930
+    python src/data_sync.py pull   --run 20260530_001930
+    python src/data_sync.py pull   --run 20260530_001930 --model gemma-2-2b --trait politeness
+    python src/data_sync.py verify --run 20260530_001930
 """
 
 import argparse
@@ -13,7 +16,14 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 
-from lib.hub import DEFAULT_REPO_ID, allow_patterns, read_lock, write_lock
+from lib.hub import (
+    DEFAULT_REPO_ID,
+    allow_patterns,
+    file_digest,
+    read_lock,
+    verify_lock,
+    write_lock,
+)
 
 DATA_ROOT = Path("data")
 COV_NAME = "unembeddings_covariance.pt"
@@ -54,6 +64,7 @@ def cmd_push(args: argparse.Namespace) -> None:
 
     api = HfApi()
     api.create_repo(args.repo, repo_type="dataset", private=True, exist_ok=True)
+    uploaded = sorted(str(p.relative_to(data_root)) for p in rep_dir.rglob("*.pt"))
     commit = api.upload_folder(
         folder_path=str(rep_dir),
         path_in_repo=f"{args.run}/representations",
@@ -62,12 +73,29 @@ def cmd_push(args: argparse.Namespace) -> None:
         commit_message=f"representations for run {args.run}",
     )
 
-    files = sorted(str(p.relative_to(data_root)) for p in rep_dir.rglob("*.pt"))
+    # Read the manifest back off the Hub rather than from the local rglob.
+    # upload_folder is additive, so the revision holds everything previously
+    # pushed too; recording only what this machine happened to have on disk
+    # would drop other models from the lock. The Hub also reports the LFS
+    # sha256 for each object, so the digests come from the source of truth.
+    files: dict[str, str] = {}
+    prefix = f"{args.run}/"
+    for entry in api.list_repo_tree(
+        args.repo, repo_type="dataset", revision=commit.oid, recursive=True, expand=True
+    ):
+        if not entry.path.endswith(".pt") or not entry.path.startswith(prefix):
+            continue
+        rel = entry.path[len(prefix):]
+        lfs = getattr(entry, "lfs", None)
+        digest = getattr(lfs, "sha256", None) if lfs else None
+        files[rel] = digest or file_digest(data_root / rel)
+
     path = write_lock(
         data_root, repo_id=args.repo, revision=commit.oid, run_id=args.run, files=files
     )
-    print(f"pushed {len(files)} tensors to {args.repo} at {commit.oid}")
-    print(f"wrote {path} -- commit it so others pull the same revision")
+    print(f"uploaded {len(uploaded)} tensors from this machine")
+    print(f"pinned {len(files)} tensors at {args.repo}@{commit.oid[:12]} with sha256 digests")
+    print(f"wrote {path} -- commit it so others pull the same bytes")
 
 
 def cmd_pull(args: argparse.Namespace) -> None:
@@ -95,6 +123,29 @@ def cmd_pull(args: argparse.Namespace) -> None:
     print(f"pulled {len(got)} tensors at {lock['revision'][:7]} into {DATA_ROOT}/{args.run}")
 
 
+def cmd_verify(args: argparse.Namespace) -> None:
+    data_root = DATA_ROOT / args.run
+    lock = read_lock(data_root)
+    res = verify_lock(data_root, model=args.model, trait=args.trait)
+    print(f"lock: {lock['repo_id']}@{lock['revision'][:12]}")
+    print(f"  matched    {len(res['matched'])}")
+    print(f"  missing    {len(res['missing'])}   (not pulled — fine for a selective pull)")
+    print(f"  MISMATCHED {len(res['mismatched'])}")
+    if res["mismatched"]:
+        for rel in res["mismatched"][:10]:
+            print(f"    {rel}")
+        raise SystemExit(
+            f"\n{len(res['mismatched'])} file(s) on disk differ from the pinned revision.\n"
+            "Results computed from them are not reproducible from this commit. Re-pull with:\n"
+            f"    python src/data_sync.py pull --run {args.run}\n"
+            "or, if the local tensors are the ones you want, publish them:\n"
+            f"    python src/data_sync.py push --run {args.run}"
+        )
+    if not res["matched"]:
+        raise SystemExit("nothing to verify: no pinned tensors are on disk")
+    print("\nOK — every tensor on disk matches the revision this commit pins.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -112,6 +163,12 @@ def main() -> None:
     pull.add_argument("--model", default=None, help="fetch only this model")
     pull.add_argument("--trait", default=None, help="fetch only this trait")
     pull.set_defaults(func=cmd_pull)
+
+    verify = sub.add_parser("verify", help="check the tensors on disk against the digests the lock pins")
+    verify.add_argument("--run", required=True, help=run_help)
+    verify.add_argument("--model", default=None, help="check only this model")
+    verify.add_argument("--trait", default=None, help="check only this trait")
+    verify.set_defaults(func=cmd_verify)
 
     args = parser.parse_args()
     args.func(args)

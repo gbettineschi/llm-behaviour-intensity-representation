@@ -79,7 +79,19 @@ Reuse `_SHARED_INTENTS` unless a shared per-intent constraint would pin the trai
 | `results/**/seed_*/` | not tracked | regenerates byte-identically from the same seed |
 | `data/**/representations/*.pt` | [Hugging Face dataset repo](https://huggingface.co/datasets/llm-behaviour-intensity/activations) | too large for Git; fetched with `data_sync` |
 
-Tensors live at [`llm-behaviour-intensity/activations`](https://huggingface.co/datasets/llm-behaviour-intensity/activations). `data/<run_id>/representations.lock.json` is committed and pins the exact Hub revision, so everyone analysing a run reads the same tensor bytes.
+### How Git and the Hub stay connected
+
+Tensors live at [`llm-behaviour-intensity/activations`](https://huggingface.co/datasets/llm-behaviour-intensity/activations). `data/<run_id>/representations.lock.json` is committed and records two things: the Hub **revision** the tensors came from, and a **sha256 for every file**.
+
+The digests are what make the link checkable rather than merely stated. A revision id alone says where the bytes came from; it cannot tell you whether the bytes on your disk are still those bytes. Re-extract locally, or extract on a machine with a different accelerator, and you get tensors that differ from the pinned ones while every path and filename stays identical. So:
+
+```
+uv run python src/data_sync.py verify --run <run_id>
+```
+
+reports `matched` / `missing` / `MISMATCHED` and exits non-zero if anything on disk differs from what the commit pins. `missing` is normal after a selective pull; `MISMATCHED` never is. Scope it with `--model` / `--trait` like `pull`.
+
+Every analysis result records the same thing without being asked: `run_metadata.json` carries a `representations` block naming the repo, the revision, and whether the tensors it read actually matched (`verified`). A result with `"verified": false` was computed from bytes the commit does not describe and will not reproduce. That block is written per seed and carried up into the tracked `aggregated/run_metadata.json`, so the committed record names the tensor revision behind every published number.
 
 After extracting new representations, publish them and commit the updated lock:
 
@@ -89,9 +101,11 @@ git add data/<run_id>/representations.lock.json
 git commit -m "data: publish representations for <run_id>"
 ```
 
+`push` reads the manifest back off the Hub rather than from local disk, so pushing from a machine that holds only one model does not drop the others from the lock.
+
 This replaces the previous focal-layer-only commit policy. That policy existed only to fit Git's size limits, and it cost real capability: every model/trait except `gemma-2-2b` and `qwen2.5-1.5b` under politeness had just its focal layer available, so layer sweeps needed local re-extraction. With representations on the Hub, full layer sets are kept for every combo.
 
-**Troubleshooting.** `FileNotFoundError: No representations under ...` means you have not fetched the tensors — run the `pull` command it prints. If a commit is rejected with "refusing to commit PyTorch tensors", that is the guard working: push the tensors to the Hub instead.
+**Troubleshooting.** `FileNotFoundError: No representations under ...` means you have not fetched the tensors — run the `pull` command it prints. If a commit is rejected with "refusing to commit PyTorch tensors", that is the guard working: push the tensors to the Hub instead. If `verify` reports mismatches, your local tensors are not the pinned ones: `pull` to get the pinned bytes back, or `push` if the local ones are the version you actually want everyone to use.
 
 ### Extracting `qwen2.5-7b` on a cloud GPU
 

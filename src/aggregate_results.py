@@ -128,16 +128,21 @@ def aggregate_analysis(base_dir: str | Path) -> Path:
     apply_style()
     print(f"Aggregating {len(seed_dirs)} seeds under {base_dir}")
 
+    # Union over every seed, not just seed_0: a file only some seeds wrote must
+    # still be reported as skipped_missing rather than silently disappearing.
     relpaths = sorted(
-        p.relative_to(seed_dirs[0])
-        for pattern in ("**/*.csv", "**/*.json")
-        for p in seed_dirs[0].glob(pattern)
+        {
+            p.relative_to(d)
+            for d in seed_dirs
+            for pattern in ("**/*.csv", "**/*.json")
+            for p in d.glob(pattern)
+        }
     )
     for rel in relpaths:
         if _is_skipped(rel):
             report["skipped_draws"].append(str(rel))
             continue
-        if any(not (d / rel).exists() for d in seed_dirs[1:]):
+        if any(not (d / rel).exists() for d in seed_dirs):
             report["skipped_missing"].append(str(rel))
             continue
         if rel.suffix == ".csv":

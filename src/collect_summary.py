@@ -17,23 +17,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from lib.config import MODELS, seeds_base_dir
+from lib.config import DEFAULT_DATA_ROOT, MODELS, seeds_base_dir
 from lib.traits import TRAITS
 
-DATASET_ROOT = Path("data/20260530_001930")
+DATASET_ROOT = DEFAULT_DATA_ROOT
 POOLINGS = ("avg", "last")
-
-# Nominal (marketing) parameter counts in billions — a scale-axis column for
-# the summary table, not used anywhere else.
-MODEL_SIZE_B = {
-    "gemma-2-2b": 2.0,
-    "llama-3.2-3b": 3.0,
-    "qwen2.5-0.5b": 0.5,
-    "qwen2.5-1.5b": 1.5,
-    "qwen2.5-1.5b-instruct": 1.5,
-    "qwen2.5-3b": 3.0,
-    "qwen2.5-7b": 7.0,
-}
 
 
 def _combo_dir(analysis: str, model: str, trait: str, pooling: str) -> Path:
@@ -89,7 +77,7 @@ def collect_combo(model: str, trait: str, pooling: str) -> dict | None:
 
     row = {
         "model": model,
-        "params_b": MODEL_SIZE_B.get(model),
+        "params_b": MODELS[model].get("params_b"),
         "instruct": "instruct" in model,
         "trait": trait,
         "token_pooling": pooling,

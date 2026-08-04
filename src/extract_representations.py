@@ -7,13 +7,12 @@ Run from the repo root:  uv run python src/extract_representations.py --model ge
 """
 
 import argparse
-from pathlib import Path
 
-from lib.config import DEFAULT_MODEL, MODELS, dataset_path, unembed_cov_path
+from lib.config import DEFAULT_DATA_ROOT, DEFAULT_MODEL, MODELS, dataset_path, unembed_cov_path
 from lib.representations import extract_representations
 from lib.traits import DEFAULT_TRAIT, TRAITS
 
-DATA_ROOT = Path("data/20260530_001930")
+DATA_ROOT = DEFAULT_DATA_ROOT
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)

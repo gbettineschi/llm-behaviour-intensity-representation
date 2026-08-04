@@ -205,6 +205,13 @@ def test_aggregate_csv():
                 w = csv.writer(f)
                 w.writerow(["name", "x"])
                 w.writerow([f"row_of_seed_{seed}", 1.0])
+        # present in seed_1 only: discovery unions over every seed, so this must be
+        # reported as missing rather than silently ignored (it is invisible to a
+        # seed_0-only glob).
+        with (base / "seed_1" / "numeric" / "late.csv").open("w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["name", "x"])
+            w.writerow(["only_in_seed_1", 1.0])
         out = aggregate_analysis(base)
         with (out / "numeric" / "a.csv").open() as f:
             got = list(csv.reader(f))
@@ -217,6 +224,8 @@ def test_aggregate_csv():
         report = json.loads((out / "aggregation_report.json").read_text())
         _check("misaligned file reported", "numeric/bad.csv" in report["skipped_misaligned"], str(report["skipped_misaligned"]))
         _check("misaligned file not written", not (out / "numeric" / "bad.csv").exists())
+        _check("file missing from seed_0 reported", "numeric/late.csv" in report["skipped_missing"], str(report["skipped_missing"]))
+        _check("file missing from seed_0 not written", not (out / "numeric" / "late.csv").exists())
 
 
 def main():

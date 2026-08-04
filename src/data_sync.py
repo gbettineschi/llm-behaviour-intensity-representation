@@ -59,15 +59,20 @@ def cmd_pull(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+    run_help = "run id, e.g. 20260530_001930"
 
-    for name, handler, needs_filters in (("push", cmd_push, False), ("pull", cmd_pull, True)):
-        p = sub.add_parser(name)
-        p.add_argument("--run", required=True, help="run id, e.g. 20260530_001930")
-        p.add_argument("--repo", default=DEFAULT_REPO_ID, help="Hub dataset repo id")
-        if needs_filters:
-            p.add_argument("--model", default=None, help="fetch only this model")
-            p.add_argument("--trait", default=None, help="fetch only this trait")
-        p.set_defaults(func=handler)
+    push = sub.add_parser("push", help="upload a run's tensors and rewrite its lock file")
+    push.add_argument("--run", required=True, help=run_help)
+    push.add_argument("--repo", default=DEFAULT_REPO_ID, help="Hub dataset repo id to publish to")
+    push.set_defaults(func=cmd_push)
+
+    # No --repo on pull: the lock pins repo and revision together, so honouring a
+    # repo override here would fetch one repo at another repo's revision.
+    pull = sub.add_parser("pull", help="fetch tensors at the revision the lock file pins")
+    pull.add_argument("--run", required=True, help=run_help)
+    pull.add_argument("--model", default=None, help="fetch only this model")
+    pull.add_argument("--trait", default=None, help="fetch only this trait")
+    pull.set_defaults(func=cmd_pull)
 
     args = parser.parse_args()
     args.func(args)

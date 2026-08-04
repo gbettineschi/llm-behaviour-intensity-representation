@@ -13,16 +13,15 @@ Or scoped:
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 import ordinal_linearity
 import replicate_tigges
 import trait_geometry
 from aggregate_results import aggregate_analysis
-from lib.config import DEFAULT_SEEDS, MODELS, rep_dir, seeds_base_dir
+from lib.config import DEFAULT_DATA_ROOT, DEFAULT_SEEDS, MODELS, rep_dir, seeds_base_dir
 from lib.traits import TRAITS
 
-DATASET_ROOT = Path("data/20260530_001930")
+DATASET_ROOT = DEFAULT_DATA_ROOT
 
 # analysis name -> driver's main(model, trait, token_pooling, seed)
 DRIVERS = {

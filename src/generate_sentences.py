@@ -16,7 +16,9 @@ from pathlib import Path
 from lib.sentences import generate_sentences
 from lib.traits import DEFAULT_TRAIT, TRAITS
 
-MODELS = {
+# The LLMs that *build* the dataset — unrelated to lib.config.MODELS, which is
+# the registry of models whose activations are studied.
+PIPELINE_LLMS = {
     "generator": {
         "model": "openrouter/google/gemini-2.0-flash-001",
         "family": "google",
@@ -55,6 +57,6 @@ if __name__ == "__main__":
         n_scenarios=100,
         paraphrases_per_level=3,
         min_acceptance_score=0.70,
-        models=MODELS,
+        models=PIPELINE_LLMS,
     )
     print(f"Done. Dataset written to {out}")

@@ -29,5 +29,17 @@ git add ok.py
 "$HOOK" >/dev/null 2>&1 || { echo "FAIL: hook rejected a normal commit"; exit 1; }
 echo "  allows ordinary files PASSED"
 
+# A renamed .pt must be rejected too: `git mv` stages it with status R, which an
+# A/M-only --diff-filter silently lets through.
+git commit -qm "add ok.py"
+git add -f weights.pt
+git commit -qm "add tensor (the hook is not installed in this scratch repo)"
+git mv weights.pt renamed.pt
+if "$HOOK" >/dev/null 2>&1; then
+    echo "FAIL: hook allowed a renamed .pt"; exit 1
+fi
+"$HOOK" 2>&1 | grep -q "renamed.pt" || { echo "FAIL: hook did not name the renamed file"; exit 1; }
+echo "  rejects renamed .pt PASSED"
+
 echo
-echo "All 2 tests PASSED"
+echo "All 3 tests PASSED"

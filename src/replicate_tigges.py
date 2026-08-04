@@ -30,7 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from lib.analysis import within_center_paraphrase
-from lib.config import DEFAULT_MODEL, DEFAULT_SEEDS, MODELS, child_seed, dataset_path, rep_dir, results_dir, run_metadata, seeds_base_dir
+from lib.config import DEFAULT_DATA_ROOT, DEFAULT_MODEL, DEFAULT_SEEDS, MODELS, child_seed, dataset_path, rep_dir, results_dir, run_metadata, seeds_base_dir
 from lib.directions import (
     METHODS,
     NAMES,
@@ -64,7 +64,7 @@ MODEL = DEFAULT_MODEL
 TRAIT = DEFAULT_TRAIT
 TOKEN_POOLING = "avg"
 SEED = 0
-DATASET_ROOT = Path("data/20260530_001930")
+DATASET_ROOT = DEFAULT_DATA_ROOT
 DATASET = dataset_path(DATASET_ROOT, TRAIT)
 LAYER = MODELS[MODEL]["focal_layer"]
 REP_DIR = rep_dir(DATASET_ROOT, MODEL, TRAIT, TOKEN_POOLING)

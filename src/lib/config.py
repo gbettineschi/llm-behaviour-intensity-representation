@@ -2,7 +2,9 @@
 analysis drivers.
 
 Focal layer rule: ``num_hidden_layers // 2`` (mid depth), declared explicitly
-per model so it is visible and auditable.
+per model so it is visible and auditable. ``params_b`` is the nominal
+(marketing) parameter count in billions — the scale axis for cross-model
+summaries, not used in any analysis.
 """
 
 from __future__ import annotations
@@ -16,16 +18,21 @@ from pathlib import Path
 import numpy as np
 
 MODELS: dict[str, dict] = {
-    "gemma-2-2b": {"hf_id": "google/gemma-2-2b", "focal_layer": 13},  # 26 layers (extracted 1-22)
-    "llama-3.2-3b": {"hf_id": "meta-llama/Llama-3.2-3B", "focal_layer": 14},  # 28 layers, gated
-    "qwen2.5-1.5b": {"hf_id": "Qwen/Qwen2.5-1.5B", "focal_layer": 14},  # 28 layers
-    "qwen2.5-0.5b": {"hf_id": "Qwen/Qwen2.5-0.5B", "focal_layer": 12},  # 24 layers
-    "qwen2.5-1.5b-instruct": {"hf_id": "Qwen/Qwen2.5-1.5B-Instruct", "focal_layer": 14},  # 28 layers
-    "qwen2.5-3b": {"hf_id": "Qwen/Qwen2.5-3B", "focal_layer": 18},  # 36 layers
-    "qwen2.5-7b": {"hf_id": "Qwen/Qwen2.5-7B", "focal_layer": 14},  # 28 layers, cloud-GPU extraction
+    "gemma-2-2b": {"hf_id": "google/gemma-2-2b", "focal_layer": 13, "params_b": 2.0},  # 26 layers (extracted 1-22)
+    "llama-3.2-3b": {"hf_id": "meta-llama/Llama-3.2-3B", "focal_layer": 14, "params_b": 3.0},  # 28 layers, gated
+    "qwen2.5-1.5b": {"hf_id": "Qwen/Qwen2.5-1.5B", "focal_layer": 14, "params_b": 1.5},  # 28 layers
+    "qwen2.5-0.5b": {"hf_id": "Qwen/Qwen2.5-0.5B", "focal_layer": 12, "params_b": 0.5},  # 24 layers
+    "qwen2.5-1.5b-instruct": {"hf_id": "Qwen/Qwen2.5-1.5B-Instruct", "focal_layer": 14, "params_b": 1.5},  # 28 layers
+    "qwen2.5-3b": {"hf_id": "Qwen/Qwen2.5-3B", "focal_layer": 18, "params_b": 3.0},  # 36 layers
+    "qwen2.5-7b": {"hf_id": "Qwen/Qwen2.5-7B", "focal_layer": 14, "params_b": 7.0},  # 28 layers, cloud-GPU extraction
 }
 DEFAULT_MODEL = "gemma-2-2b"
 DEFAULT_SEEDS = (0, 1, 2)
+
+# The run every driver reads unless told otherwise. Declared once so adding a
+# run is a one-line change here rather than a sweep through every script.
+DEFAULT_RUN = "20260530_001930"
+DEFAULT_DATA_ROOT = Path("data") / DEFAULT_RUN
 
 
 # --- paths ------------------------------------------------------------------

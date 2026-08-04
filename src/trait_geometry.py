@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from lib.config import (
+    DEFAULT_DATA_ROOT,
     DEFAULT_MODEL,
     DEFAULT_SEEDS,
     MODELS,
@@ -82,7 +83,7 @@ LAYER = MODELS[MODEL]["focal_layer"]
 TRAIT = DEFAULT_TRAIT
 TOKEN_POOLING = "avg"
 SEED = 0
-DATASET_ROOT = Path("data/20260530_001930")
+DATASET_ROOT = DEFAULT_DATA_ROOT
 DATASET = dataset_path(DATASET_ROOT, TRAIT)
 REP_DIR = rep_dir(DATASET_ROOT, MODEL, TRAIT, TOKEN_POOLING)
 RESULTS_DIR = results_dir(DATASET_ROOT.name, ANALYSIS, MODEL, TRAIT, TOKEN_POOLING, SEED)

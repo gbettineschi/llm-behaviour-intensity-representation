@@ -103,10 +103,14 @@ uv run python src/extract_representations.py --model qwen2.5-7b --trait certaint
 uv run python src/extract_representations.py --model qwen2.5-7b --trait urgency
 uv run python src/extract_representations.py --model qwen2.5-7b --trait enthusiasm
 uv run python src/data_sync.py push --run <ts>
+git add data/<ts>/representations.lock.json
+git commit -m "data: add qwen2.5-7b representations" && git push
 ```
-Then locally, pull what you just published and commit the refreshed lock:
+The `git commit` on the cloud box is the part that matters: `push` rewrites the lock **on the machine that uploaded**, and `pull` reads the *local* lock to decide which revision to fetch. Skip it and your laptop keeps pinning the pre-upload revision, at which the new tensors do not exist — the pull then succeeds while downloading nothing.
+
+Then locally, take the new lock and fetch against it:
 ```
+git pull
 uv run python src/data_sync.py pull --run <ts> --model qwen2.5-7b
-git add data/<ts>/representations.lock.json && git commit -m "data: add qwen2.5-7b representations"
 ```
 Everything downstream (analysis drivers, `run_analyses.py`, `collect_summary.py`) is model-agnostic and picks it up once the representations land.

@@ -38,8 +38,12 @@ def run_sweep(
         for trait in traits:
             for pooling in poolings:
                 rd = rep_dir(DATASET_ROOT, model, trait, pooling)
-                if not rd.exists():
-                    print(f"skip {model}/{trait}/{pooling}: no representations at {rd}")
+                # Test for tensors, not for the directory: metadata.json is tracked
+                # in Git while the tensors are not, so every rep dir exists on a
+                # fresh clone and an exists() check would let the combo through to
+                # a FileNotFoundError that aborts the whole sweep.
+                if not rd.is_dir() or not any(rd.glob("layer_*.pt")):
+                    print(f"skip {model}/{trait}/{pooling}: no tensors at {rd} (data_sync.py pull)")
                     continue
                 for analysis, driver_main in DRIVERS.items():
                     for seed in seeds:

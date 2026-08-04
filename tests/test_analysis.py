@@ -228,6 +228,80 @@ def test_aggregate_csv():
         _check("file missing from seed_0 not written", not (out / "numeric" / "late.csv").exists())
 
 
+def test_collect_summary_reads_aggregated_only_tree():
+    """A fresh clone has aggregated/ but no seed dirs, because results/**/seed_*/
+    is gitignored. Every column must still be populated from aggregated/."""
+    print("test_collect_summary_reads_aggregated_only_tree")
+    import csv
+    import json
+    import tempfile
+
+    import collect_summary
+
+    def _write(path, header, rows):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(header)
+            w.writerows(rows)
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        combo = "gemma-2-2b/politeness/avg_token"
+        geom = root / "trait_geometry" / combo / "aggregated"
+        lin = root / "ordinal_linearity" / combo / "aggregated"
+        # Column shapes exactly as aggregate_results emits them: deterministic
+        # columns pass through, varying ones gain _mean/_std.
+        _write(geom / "numeric" / "geometry" / "geometry_bootstrap_summary.csv",
+               ["metric", "point", "ci_lo_mean", "ci_lo_std", "ci_hi_mean", "ci_hi_std", "n_seeds"],
+               [["apex_angle_deg", 73.2, 68.0, 0.4, 78.1, 0.3, 3]])
+        _write(geom / "numeric" / "noise_null" / "noise_null_summary.csv",
+               ["metric", "observed", "p_value", "n_sim", "n_seeds"],
+               [["step_cosine", -0.289, 0.000999, 1000, 3],
+                ["midpoint_residual", 0.661, 0.000999, 1000, 3]])
+        _write(geom / "numeric" / "shared_plane" / "shared_plane_summary.csv",
+               ["markedness_R_full", "shared_bend_r2_cv"], [[0.91, 0.55]])
+        _write(lin / "numeric" / "linearity" / "linearity_metrics.csv",
+               ["metric", "within_scenario"], [["spearman", 0.895], ["probe_r2", 0.77]])
+        (geom / "run_metadata.json").write_text(json.dumps({"seeds": [0, 1, 2]}))
+
+        orig = collect_summary.DATASET_ROOT
+        try:
+            # _combo_dir builds results/<name>/... so point the tree at our temp root
+            collect_summary.seeds_base_dir = (
+                lambda name, analysis, model, trait, pooling: root / analysis / model / trait / f"{pooling}_token"
+            )
+            row = collect_summary.collect_combo("gemma-2-2b", "politeness", "avg")
+        finally:
+            collect_summary.DATASET_ROOT = orig
+
+        _check("row found with no seed dirs present", row is not None)
+        _check("n_seeds from aggregated provenance", row["n_seeds"] == 3, str(row["n_seeds"]))
+        _check("apex_angle_deg populated", row["apex_angle_deg"] == 73.2, str(row["apex_angle_deg"]))
+        _check("apex_angle_ci_lo from _mean column", row["apex_angle_ci_lo"] == 68.0, str(row["apex_angle_ci_lo"]))
+        _check("step_cosine populated", row["step_cosine"] == -0.289, str(row["step_cosine"]))
+        _check("step_cosine_null_p populated", row["step_cosine_null_p"] == 0.000999, str(row["step_cosine_null_p"]))
+        _check("midpoint_residual populated", row["midpoint_residual"] == 0.661, str(row["midpoint_residual"]))
+        _check("spearman_within_scenario populated", row["spearman_within_scenario"] == 0.895)
+
+
+def test_run_analyses_skips_dirs_without_tensors():
+    """Rep dirs survive a clone (metadata.json is tracked, tensors are not), so
+    the sweep must skip on absent tensors rather than on an absent directory."""
+    print("test_run_analyses_skips_dirs_without_tensors")
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rd = Path(td) / "representations" / "m" / "t" / "avg_token"
+        rd.mkdir(parents=True)
+        (rd / "metadata.json").write_text("{}")  # what a fresh clone actually has
+        has_tensors = rd.is_dir() and any(rd.glob("layer_*.pt"))
+        _check("dir with only metadata.json is skipped", not has_tensors)
+        _check("plain exists() would NOT have skipped it", rd.exists())
+        (rd / "layer_1.pt").write_bytes(b"x")
+        _check("dir with a tensor is not skipped", rd.is_dir() and any(rd.glob("layer_*.pt")))
+
+
 def main():
     tests = [
         test_perfectly_linear,
@@ -239,6 +313,8 @@ def main():
         test_child_seed_deterministic,
         test_direction_seed,
         test_aggregate_csv,
+        test_collect_summary_reads_aggregated_only_tree,
+        test_run_analyses_skips_dirs_without_tensors,
     ]
     failed = 0
     for t in tests:

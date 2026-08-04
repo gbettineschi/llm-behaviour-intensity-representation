@@ -3,16 +3,23 @@ the headline numbers from every analysis driver, for reviewing the sweep at a
 glance.
 
 Scrapes the numeric CSVs the drivers already emit — no analysis logic lives
-here. Bootstrap-CI and null-p-value columns (drawn from Monte-Carlo machinery
-that doesn't aggregate meaningfully across seeds, per aggregate_results.py)
-are always read from seed_0; columns that are legitimate cross-seed averages
-are read from aggregated/ when more than one seed was run, else from seed_0.
+here. Every column is read from ``aggregated/`` when the combo was aggregated,
+falling back to the lowest per-seed directory otherwise. Cross-seed values carry
+the caveats aggregate_results.py documents: bootstrap CI bounds are averaged
+rather than pooled, and Monte-Carlo p-values are averaged (floored at
+1/(1+n_sim)). Point estimates are deterministic across seeds and pass through
+unchanged.
+
+Reading a hardcoded ``seed_0`` would not work: per-seed dirs are gitignored, so
+a fresh clone has only ``aggregated/``, and the dirs are named by the master
+seed *value*, so ``--seeds 3,4`` produces no ``seed_0`` at all.
 
 Run from the repo root:  uv run python src/collect_summary.py
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -32,10 +39,33 @@ def _read_csv(path: Path) -> pd.DataFrame | None:
     return pd.read_csv(path) if path.exists() else None
 
 
+def _seed_dirs(base: Path) -> list[Path]:
+    """Per-seed dirs under a combo, lowest master seed first."""
+    dirs = [p for p in base.glob("seed_*") if p.is_dir() and p.name.split("_", 1)[1].isdigit()]
+    return sorted(dirs, key=lambda p: int(p.name.split("_", 1)[1]))
+
+
 def _seeded_or_aggregated(base: Path, rel_csv: str) -> pd.DataFrame | None:
-    """Aggregated version when >1 seed was run, else the (only) seed_0 file."""
+    """The aggregated file if the combo was aggregated, else the lowest seed's."""
     agg = _read_csv(base / "aggregated" / "numeric" / rel_csv)
-    return agg if agg is not None else _read_csv(base / "seed_0" / "numeric" / rel_csv)
+    if agg is not None:
+        return agg
+    for d in _seed_dirs(base):
+        df = _read_csv(d / "numeric" / rel_csv)
+        if df is not None:
+            return df
+    return None
+
+
+def _n_seeds(base: Path) -> int:
+    """Seeds behind this combo — from the aggregate's provenance record when
+    present, since the per-seed dirs it counted are gitignored."""
+    meta = base / "aggregated" / "run_metadata.json"
+    if meta.exists():
+        seeds = json.loads(meta.read_text(encoding="utf-8")).get("seeds")
+        if seeds:
+            return len(seeds)
+    return len(_seed_dirs(base)) or 1
 
 
 def _col(df: pd.DataFrame, name: str) -> pd.Series | None:
@@ -64,16 +94,12 @@ def collect_combo(model: str, trait: str, pooling: str) -> dict | None:
     if not geom_dir.exists() and not lin_dir.exists():
         return None
 
-    # Bootstrap-CI / null-p-value columns: always seed_0 (see module docstring).
-    bootstrap = _read_csv(geom_dir / "seed_0" / "numeric" / "geometry" / "geometry_bootstrap_summary.csv")
-    null = _read_csv(geom_dir / "seed_0" / "numeric" / "noise_null" / "noise_null_summary.csv")
-
-    # Cross-seed-averageable columns: aggregated/ if present, else seed_0.
+    bootstrap = _seeded_or_aggregated(geom_dir, "geometry/geometry_bootstrap_summary.csv")
+    null = _seeded_or_aggregated(geom_dir, "noise_null/noise_null_summary.csv")
     linearity = _seeded_or_aggregated(lin_dir, "linearity/linearity_metrics.csv")
     shared_plane = _seeded_or_aggregated(geom_dir, "shared_plane/shared_plane_summary.csv")
 
-    seed_dirs = list((geom_dir if geom_dir.exists() else lin_dir).glob("seed_*"))
-    n_seeds = len(seed_dirs) or 1
+    n_seeds = _n_seeds(geom_dir if geom_dir.exists() else lin_dir)
 
     row = {
         "model": model,

@@ -75,9 +75,9 @@ Add one entry to `TRAITS` in `src/lib/traits.py`: the rubric guide, the intents 
 | Code, configs, sentence datasets | Git | small, reviewable, versions with the code |
 | `results/**/aggregated/` | Git | text — metric changes show up in PR diffs |
 | `results/**/seed_*/` | not tracked | regenerates byte-identically from the same seed |
-| `data/**/representations/*.pt` | Hugging Face dataset repo | too large for Git; fetched with `data_sync` |
+| `data/**/representations/*.pt` | [Hugging Face dataset repo](https://huggingface.co/datasets/llm-behaviour-intensity/activations) | too large for Git; fetched with `data_sync` |
 
-`data/<run_id>/representations.lock.json` is committed and pins the exact Hub revision, so everyone analysing a run reads the same tensor bytes.
+Tensors live at [`llm-behaviour-intensity/activations`](https://huggingface.co/datasets/llm-behaviour-intensity/activations). `data/<run_id>/representations.lock.json` is committed and pins the exact Hub revision, so everyone analysing a run reads the same tensor bytes.
 
 After extracting new representations, publish them and commit the updated lock:
 

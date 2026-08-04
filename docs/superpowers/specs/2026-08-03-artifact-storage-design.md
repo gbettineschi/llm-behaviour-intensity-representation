@@ -141,7 +141,7 @@ Committed to Git. This is what replaces having tensors in Git:
 
 ```json
 {
-  "repo_id": "<user>/llm-behaviour-intensity-representations",
+  "repo_id": "llm-behaviour-intensity/activations",
   "revision": "<40-char commit sha>",
   "run_id": "20260530_001930",
   "files": ["representations/gemma-2-2b/politeness/avg_token/layer_1.pt", "..."]

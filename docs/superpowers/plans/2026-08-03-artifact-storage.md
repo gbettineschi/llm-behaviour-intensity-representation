@@ -14,7 +14,7 @@
 - **Tests reach `src/` via** `sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))` followed by imports with `# noqa: E402`.
 - **Scripts inside `src/` import siblings as** `from lib.hub import ...` (no `src.` prefix) — Python puts the script's directory on `sys.path`.
 - **No precision or tensor-layout changes.** Results must stay bit-for-bit identical.
-- **HF repo id default:** `gbettineschi/llm-behaviour-intensity-representations`, `repo_type="dataset"`, `private=True`.
+- **HF repo id default:** `llm-behaviour-intensity/activations`, `repo_type="dataset"`, `private=True`.
 - **Run id in use:** `20260530_001930`.
 - **Lint:** `ruff` is the only dev dependency; keep lines under 100 chars.
 
@@ -133,7 +133,7 @@ import json
 from pathlib import Path
 
 LOCK_NAME = "representations.lock.json"
-DEFAULT_REPO_ID = "gbettineschi/llm-behaviour-intensity-representations"
+DEFAULT_REPO_ID = "llm-behaviour-intensity/activations"
 
 
 def lock_path(data_root: str | Path) -> Path:
@@ -831,7 +831,7 @@ the model's output embeddings.
 Extraction is deterministic; seeds affect only the analysis stage. Every run is
 pinned from the source repository by `data/<run_id>/representations.lock.json`.
 
-Source code: https://github.com/gbettineschi/llm-behaviour-intensity-representation
+Source code: https://github.com/llm-behaviour-intensity/llm-behaviour-intensity
 ```
 
 - [ ] **Step 4: Upload the dataset card**
@@ -842,7 +842,7 @@ from huggingface_hub import HfApi
 HfApi().upload_file(
     path_or_fileobj='docs/dataset-card.md',
     path_in_repo='README.md',
-    repo_id='gbettineschi/llm-behaviour-intensity-representations',
+    repo_id='llm-behaviour-intensity/activations',
     repo_type='dataset',
 )
 print('dataset card uploaded')
@@ -874,7 +874,7 @@ git commit -m "docs: document Hub-hosted representations and the commit guard"
 ```bash
 uv run python -c "
 from huggingface_hub import HfApi
-files = HfApi().list_repo_files('gbettineschi/llm-behaviour-intensity-representations', repo_type='dataset')
+files = HfApi().list_repo_files('llm-behaviour-intensity/activations', repo_type='dataset')
 pt = [f for f in files if f.endswith('.pt')]
 print(len(pt), 'tensors on the Hub')
 assert len(pt) >= 45, 'refusing to proceed: Hub copy incomplete'
@@ -922,7 +922,7 @@ Expected: `tensors remaining in history: 0`, and `.git` well under 50 MB (it was
 `git filter-repo` removes the `origin` remote deliberately:
 
 ```bash
-git remote add origin git@github.com:gbettineschi/llm-behaviour-intensity-representation.git
+git remote add origin git@github.com:llm-behaviour-intensity/llm-behaviour-intensity.git
 git push --force origin master data-pipeline-hardening multi-model-seeded-analysis
 ```
 

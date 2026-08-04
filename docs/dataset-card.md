@@ -41,4 +41,4 @@ on a signed three-level scale (negative / neutral / positive).
 Extraction is deterministic; seeds affect only the analysis stage. Every run is
 pinned from the source repository by `data/<run_id>/representations.lock.json`.
 
-Source code: https://github.com/gbettineschi/llm-behaviour-intensity-representation
+Source code: https://github.com/llm-behaviour-intensity/llm-behaviour-intensity

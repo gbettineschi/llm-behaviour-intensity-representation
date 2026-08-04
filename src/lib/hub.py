@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 LOCK_NAME = "representations.lock.json"
-DEFAULT_REPO_ID = "gbettineschi/llm-behaviour-intensity-representations"
+DEFAULT_REPO_ID = "llm-behaviour-intensity/activations"
 
 
 def lock_path(data_root: str | Path) -> Path:

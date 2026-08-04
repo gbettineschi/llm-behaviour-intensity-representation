@@ -392,6 +392,23 @@ _SHARED_INTENTS: list[dict] = [
 ]
 
 
+# The shared `request` constraint holds urgency fixed, which is a legitimate control
+# for every trait except urgency itself — there it forbids varying the trait under
+# study. Urgency keeps the scope/deadline half, which is still a real control.
+_URGENCY_INTENTS: list[dict] = [
+    {
+        **intent,
+        "extra_constraints": [
+            "Keep the requested action fixed across levels.",
+            "Keep the scope of the request and the stated deadline fixed across levels.",
+        ],
+    }
+    if intent["id"] == "request"
+    else intent
+    for intent in _SHARED_INTENTS
+]
+
+
 TRAITS: dict[str, dict] = {
     "politeness": {
         "description": "Mitigation of face threat, deference, social consideration. Negative = impolite/rude; neutral = plain/matter-of-fact; positive = polite/mitigated.",
@@ -519,7 +536,7 @@ TRAITS: dict[str, dict] = {
             "intent_target": "send the latest budget spreadsheet by end of day",
             "target_word_count": 18,
         },
-        "intents": _SHARED_INTENTS,
+        "intents": _URGENCY_INTENTS,
         "generation_constraints": [
             "Intent_target and the actual stated deadline must be fixed across levels and paraphrases.",
             "Scope and imposition must stay constant across levels.",

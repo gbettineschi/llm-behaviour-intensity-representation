@@ -16,6 +16,34 @@ from huggingface_hub import HfApi, snapshot_download
 from lib.hub import DEFAULT_REPO_ID, allow_patterns, read_lock, write_lock
 
 DATA_ROOT = Path("data")
+COV_NAME = "unembeddings_covariance.pt"
+
+
+def _tensors_on_disk(data_root: Path, *, model: str | None, trait: str | None) -> list[Path]:
+    """Layer tensors under ``data/<run>/representations`` matching the same
+    filters ``allow_patterns`` selects. The model-level covariance is excluded:
+    it is pulled alongside any trait filter, so it would mask an empty result."""
+    root = data_root / "representations"
+    if not root.is_dir():
+        return []
+    hits = []
+    for p in root.rglob("*.pt"):
+        if p.name == COV_NAME:
+            continue
+        parts = p.relative_to(root).parts  # (model, trait, <pooling>_token, layer_N.pt)
+        if len(parts) < 4:
+            continue
+        if (model is None or parts[0] == model) and (trait is None or parts[1] == trait):
+            hits.append(p)
+    return hits
+
+
+def _describe(lock: dict) -> str:
+    """What the pinned revision actually holds, as `model/trait` pairs."""
+    combos = sorted(
+        {"/".join(f.split("/")[1:3]) for f in lock["files"] if len(f.split("/")) >= 4}
+    )
+    return ", ".join(combos) or "(nothing)"
 
 
 def cmd_push(args: argparse.Namespace) -> None:
@@ -53,7 +81,18 @@ def cmd_pull(args: argparse.Namespace) -> None:
         allow_patterns=patterns,
         local_dir=str(DATA_ROOT),
     )
-    print(f"pulled {patterns} at {lock['revision'][:7]} into {DATA_ROOT}/{args.run}")
+    # snapshot_download matches nothing without complaining, so a typo'd --model
+    # would otherwise report success and leave the absence to surface much later
+    # as a FileNotFoundError from an analysis driver. Probe the filtered target
+    # specifically: tensors from some *other* model must not count as success.
+    got = _tensors_on_disk(data_root, model=args.model, trait=args.trait)
+    if not got:
+        raise SystemExit(
+            f"pulled nothing: {patterns} matched no files at "
+            f"{lock['repo_id']}@{lock['revision'][:7]}.\n"
+            f"Pinned at this revision: {_describe(lock)}"
+        )
+    print(f"pulled {len(got)} tensors at {lock['revision'][:7]} into {DATA_ROOT}/{args.run}")
 
 
 def main() -> None:

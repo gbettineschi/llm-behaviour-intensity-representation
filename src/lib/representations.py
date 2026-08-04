@@ -193,7 +193,8 @@ def extract_representations(
     both poolings coexist; the pooling-invariant ``unembeddings_covariance.pt`` is
     written once at ``cov_path`` (default ``out_dir/``) — pass a model-level path when
     ``out_dir`` is a per-trait subdirectory, since the covariance depends only on the
-    model. ``layers`` defaults to all transformer layers ``1..num_hidden_layers``.
+    model. ``layers`` defaults to ``1..num_hidden_layers - 1``: layer L reads
+    ``hidden_states[L + 1]``, so ``num_hidden_layers`` itself is out of range.
     Extraction is deterministic (no seed involved).
     """
     for p in token_poolings:

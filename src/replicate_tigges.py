@@ -255,4 +255,7 @@ if __name__ == "__main__":
     if len(seeds) > 1:
         from aggregate_results import aggregate_analysis
 
-        aggregate_analysis(seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.trait, args.token_pooling))
+        aggregate_analysis(
+            seeds_base_dir(DATASET_ROOT.name, ANALYSIS, args.model, args.trait, args.token_pooling),
+            seeds=seeds,
+        )

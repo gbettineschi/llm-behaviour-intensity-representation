@@ -27,7 +27,6 @@ Run from the repo root:
 from __future__ import annotations
 
 import json
-import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -35,6 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from lib.config import git_commit
 from lib.exports import write_csv as _write_csv, write_json as _write_json, write_tex_tabular as _write_tex_tabular
 from lib.figures import apply_style
 
@@ -78,18 +78,26 @@ def _aggregate_csv(frames: list[pd.DataFrame]) -> pd.DataFrame | None:
     return agg
 
 
-def _aggregate_json(values: list[object], n: int) -> object:
+# Keys whose values are provenance, not measurements. Averaging them yields
+# nonsense (a mean of three unrelated 32-bit RNG seeds) that reads like a
+# parameter, so they are kept per-seed instead.
+PROVENANCE_KEYS = {"seed", "seeds", "timestamp", "git_commit", "generated_at"}
+
+
+def _aggregate_json(values: list[object], n: int, *, key: str | None = None) -> object:
     """Recursive cross-seed merge of loaded JSON documents."""
     first = values[0]
     if all(v == first for v in values[1:]):
         return first
+    if key in PROVENANCE_KEYS:
+        return {"per_seed": values}
     if all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values):
         arr = np.array(values, dtype=float)
         return {"mean": float(np.nanmean(arr)), "std": float(np.nanstd(arr, ddof=1)), "n_seeds": n}
     if all(isinstance(v, dict) for v in values) and all(v.keys() == first.keys() for v in values[1:]):
-        return {k: _aggregate_json([v[k] for v in values], n) for k in first}
+        return {k: _aggregate_json([v[k] for v in values], n, key=k) for k in first}
     if all(isinstance(v, list) and len(v) == len(first) for v in values):
-        return [_aggregate_json([v[i] for v in values], n) for i in range(len(first))]
+        return [_aggregate_json([v[i] for v in values], n, key=key) for i in range(len(first))]
     return {"per_seed": values}
 
 
@@ -115,10 +123,23 @@ def _band_figure(agg: pd.DataFrame, out_path: Path) -> None:
     print(f"  wrote {out_path}")
 
 
-def aggregate_analysis(base_dir: str | Path) -> Path:
-    """Aggregate all ``seed_*`` runs under ``base_dir`` into ``base_dir/aggregated``."""
+def aggregate_analysis(base_dir: str | Path, seeds: list[int] | None = None) -> Path:
+    """Aggregate ``seed_*`` runs under ``base_dir`` into ``base_dir/aggregated``.
+
+    ``seeds`` aggregates exactly those master seeds; ``None`` folds in whatever is
+    on disk (standalone ``--dir``/``--discover`` use). Callers that know which
+    seeds they just ran should pass them: a ``seed_*`` dir left behind by an
+    earlier run — different seed set, or different code — is otherwise pulled
+    into the mean silently, and the published std with it.
+    """
     base_dir = Path(base_dir)
-    seed_dirs = sorted(base_dir.glob("seed_*"), key=lambda p: int(p.name.split("_")[1]))
+    if seeds is None:
+        seed_dirs = sorted(base_dir.glob("seed_*"), key=lambda p: int(p.name.split("_")[1]))
+    else:
+        seed_dirs = [base_dir / f"seed_{s}" for s in sorted(seeds)]
+        missing = [str(d.name) for d in seed_dirs if not d.is_dir()]
+        if missing:
+            raise SystemExit(f"missing seed dirs under {base_dir}: {', '.join(missing)}")
     if len(seed_dirs) < 2:
         raise SystemExit(f"need at least 2 seed_* dirs under {base_dir}, found {len(seed_dirs)}")
     out_dir = base_dir / "aggregated"
@@ -168,16 +189,10 @@ def aggregate_analysis(base_dir: str | Path) -> Path:
             _write_json(out_dir / rel, _aggregate_json(docs, len(seed_dirs)))
             report["aggregated" if docs.count(docs[0]) < len(docs) else "passthrough"].append(str(rel))
 
-    try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError):
-        commit = None
     _write_json(out_dir / "run_metadata.json", {
         "seeds": [int(d.name.split("_")[1]) for d in seed_dirs],
         "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
-        "git_commit": commit,
+        "git_commit": git_commit(),
     })
     _write_json(out_dir / "aggregation_report.json", report)
     return out_dir
@@ -198,5 +213,14 @@ if __name__ == "__main__":
         bases = sorted({p.parent for p in args.discover.glob("**/seed_*") if p.is_dir()})
         if not bases:
             raise SystemExit(f"no seed_* dirs found under {args.discover}")
+        skipped = []
         for base in bases:
-            aggregate_analysis(base)
+            # A single-seed base raises SystemExit; without this it would abort the
+            # sweep and leave every base sorted after it unaggregated and unreported.
+            try:
+                aggregate_analysis(base)
+            except SystemExit as e:
+                skipped.append(f"{base}: {e}")
+                print(f"  skip {base}: {e}")
+        if skipped:
+            print(f"\nskipped {len(skipped)}/{len(bases)} bases (see above); aggregated {len(bases) - len(skipped)}")

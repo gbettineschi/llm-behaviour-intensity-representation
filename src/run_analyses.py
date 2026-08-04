@@ -50,7 +50,8 @@ def run_sweep(
                         driver_main(model, trait, pooling, seed)
                     if len(seeds) > 1:
                         aggregate_analysis(
-                            seeds_base_dir(DATASET_ROOT.name, analysis, model, trait, pooling)
+                            seeds_base_dir(DATASET_ROOT.name, analysis, model, trait, pooling),
+                            seeds=seeds,
                         )
 
 

@@ -78,14 +78,30 @@ def child_seed(master: int, name: str) -> int:
 
 
 # --- provenance --------------------------------------------------------
-def run_metadata(*, model: str, trait: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int) -> dict:
-    """Provenance record written as ``run_metadata.json`` in each seed dir."""
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def git_commit() -> str | None:
+    """HEAD, suffixed ``-dirty`` when the tree has uncommitted changes.
+
+    Without the suffix a result stamped with commit X may have been produced by
+    code that was never committed, so checking X out does not reproduce it.
+    """
     try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+        sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=_REPO_ROOT, capture_output=True, text=True, check=True
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=_REPO_ROOT, capture_output=True, text=True, check=True
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
-        commit = None
+        return None
+    return f"{sha}-dirty" if dirty else sha
+
+
+def run_metadata(*, model: str, trait: str, seed: int, token_pooling: str, dataset: Path, focal_layer: int) -> dict:
+    """Provenance record written as ``run_metadata.json`` in each seed dir."""
+    commit = git_commit()
     versions = {}
     for pkg in ("numpy", "torch", "transformers", "scikit-learn"):
         try:

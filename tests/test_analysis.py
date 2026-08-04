@@ -285,6 +285,73 @@ def test_collect_summary_reads_aggregated_only_tree():
         _check("spearman_within_scenario populated", row["spearman_within_scenario"] == 0.895)
 
 
+def test_no_trait_intent_holds_its_own_trait_constant():
+    """Per-intent constraints must not tell the generator to hold constant the very
+    trait being varied. The shared `request` intent forbids changing urgency, which
+    is a correct control for every trait except urgency itself."""
+    print("test_no_trait_intent_holds_its_own_trait_constant")
+    from lib.traits import TRAITS
+
+    for trait, spec in sorted(TRAITS.items()):
+        for intent in spec["intents"]:
+            for c in intent.get("extra_constraints", []):
+                _check(f"{trait}/{intent['id']} does not pin {trait}", trait not in c.lower(), c)
+
+
+def test_aggregate_respects_explicit_seed_list():
+    """A seed_* dir left over from an earlier run must not be folded into the mean
+    when the caller says which seeds it just ran."""
+    print("test_aggregate_respects_explicit_seed_list")
+    import csv
+    import json
+    import tempfile
+
+    from aggregate_results import aggregate_analysis
+
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        # seed_2 is stale: a wildly different value from an earlier run.
+        for seed, val in {0: 1.0, 1: 3.0, 2: 99.0}.items():
+            num = base / f"seed_{seed}" / "numeric"
+            num.mkdir(parents=True)
+            with (num / "a.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["metric", "x"])
+                w.writerow(["m", val])
+        out = aggregate_analysis(base, seeds=[0, 1])
+        with (out / "numeric" / "a.csv").open() as f:
+            got = list(csv.reader(f))
+        _check("n_seeds is the requested count", int(got[1][-1]) == 2, str(got[1]))
+        _check("mean excludes the stale seed", abs(float(got[1][1]) - 2.0) < 1e-8, got[1][1])
+        meta = json.loads((out / "run_metadata.json").read_text())
+        _check("provenance records only the requested seeds", meta["seeds"] == [0, 1], str(meta["seeds"]))
+        # Globbing (seeds=None) still folds everything in, for standalone --dir use.
+        out2 = aggregate_analysis(base)
+        with (out2 / "numeric" / "a.csv").open() as f:
+            got2 = list(csv.reader(f))
+        _check("seeds=None still globs all three", int(got2[1][-1]) == 3, str(got2[1]))
+
+
+def test_aggregate_json_keeps_provenance_per_seed():
+    """RNG seeds and timestamps are provenance, not measurements — averaging them
+    yields a mean of unrelated 32-bit integers that reads like a parameter."""
+    print("test_aggregate_json_keeps_provenance_per_seed")
+    from aggregate_results import _aggregate_json
+
+    docs = [
+        {"n_perm": 100, "seed": 111111, "p_floor": 0.0099},
+        {"n_perm": 100, "seed": 222222, "p_floor": 0.0099},
+        {"n_perm": 100, "seed": 333333, "p_floor": 0.0099},
+    ]
+    got = _aggregate_json(docs, 3)
+    _check("varying seed kept per-seed", got["seed"] == {"per_seed": [111111, 222222, 333333]}, str(got["seed"]))
+    _check("seed not averaged", "mean" not in str(got["seed"]), str(got["seed"]))
+    _check("identical params pass through", got["n_perm"] == 100 and got["p_floor"] == 0.0099, str(got))
+    # A genuine measurement still aggregates.
+    m = _aggregate_json([{"score": 1.0}, {"score": 3.0}], 2)
+    _check("real metric still averaged", abs(m["score"]["mean"] - 2.0) < 1e-9, str(m))
+
+
 def test_run_analyses_skips_dirs_without_tensors():
     """Rep dirs survive a clone (metadata.json is tracked, tensors are not), so
     the sweep must skip on absent tensors rather than on an absent directory."""
@@ -314,6 +381,9 @@ def main():
         test_direction_seed,
         test_aggregate_csv,
         test_collect_summary_reads_aggregated_only_tree,
+        test_no_trait_intent_holds_its_own_trait_constant,
+        test_aggregate_respects_explicit_seed_list,
+        test_aggregate_json_keeps_provenance_per_seed,
         test_run_analyses_skips_dirs_without_tensors,
     ]
     failed = 0

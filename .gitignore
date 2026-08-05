@@ -36,6 +36,15 @@ data/.cache/
 # Per-seed analysis dumps - regenerate byte-identically by re-running the same seed
 results/**/seed_*/
 
+# Git LFS writes its hooks into core.hooksPath, which the README points at
+# .githooks/ — so anyone who ever ran `git lfs install` gets these next to our
+# commit guard. LFS is retired here, and with git-lfs absent they exit 2 and
+# break every checkout. Ignored so they can never be committed by `git add -A`.
+.githooks/post-checkout
+.githooks/post-commit
+.githooks/post-merge
+.githooks/pre-push
+
 # Figures. Each one renders the numeric export sitting next to it, so it holds
 # strictly less information than a file we already track, and "Binary files
 # differ" is not a review signal. A manuscript that needs a figure should copy

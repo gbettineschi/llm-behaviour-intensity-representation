@@ -116,7 +116,7 @@ git commit -m "data: publish representations for <run_id>"
 
 This replaces the previous focal-layer-only commit policy. That policy existed only to fit Git's size limits, and it cost real capability: every model/trait except `gemma-2-2b` and `qwen2.5-1.5b` under politeness had just its focal layer available, so layer sweeps needed local re-extraction. With representations on the Hub, full layer sets are kept for every combo.
 
-**Troubleshooting.** `FileNotFoundError: No representations under ...` means you have not fetched the tensors — run the `pull` command it prints. If a commit is rejected with "refusing to commit PyTorch tensors", that is the guard working: push the tensors to the Hub instead. If `verify` reports mismatches, your local tensors are not the pinned ones: `pull` to get the pinned bytes back, or `push` if the local ones are the version you actually want everyone to use.
+**Troubleshooting.** `FileNotFoundError: No representations under ...` means you have not fetched the tensors — run the `pull` command it prints. If a commit is rejected with "refusing to commit PyTorch tensors", that is the guard working: push the tensors to the Hub instead. If `verify` reports mismatches, your local tensors are not the pinned ones: `pull` to get the pinned bytes back, or `push` if the local ones are the version you actually want everyone to use. If a checkout fails complaining that `git-lfs` is missing, you have leftover LFS hooks in `.githooks/` from before LFS was retired — `rm -f .githooks/post-checkout .githooks/post-commit .githooks/post-merge .githooks/pre-push`.
 
 ### Extracting `qwen2.5-7b` on a cloud GPU
 

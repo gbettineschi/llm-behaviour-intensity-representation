@@ -35,3 +35,10 @@ data/.cache/
 
 # Per-seed analysis dumps - regenerate byte-identically by re-running the same seed
 results/**/seed_*/
+
+# Figures. Each one renders the numeric export sitting next to it, so it holds
+# strictly less information than a file we already track, and "Binary files
+# differ" is not a review signal. A manuscript that needs a figure should copy
+# the one it uses into wherever the manuscript lives; reaching into this tree is
+# what made 56 PNGs churn on every re-run.
+results/**/*.png

@@ -72,12 +72,23 @@ Reuse `_SHARED_INTENTS` unless a shared per-intent constraint would pin the trai
 
 ## Data and results
 
+An artifact is tracked if it cannot be reconstructed from something else we track, **or** if its diff is the thing you review. Everything else is generated output.
+
 | Artifact | Where it lives | Why |
 | --- | --- | --- |
-| Code, configs, sentence datasets | Git | small, reviewable, versions with the code |
-| `results/**/aggregated/` | Git | mostly text — metric changes show up in PR diffs (the `*_bands.png` figures alongside them are binary) |
+| Code, configs, sentence datasets | Git | the sentences come from a non-deterministic LLM call — they cannot be regenerated, only replaced |
+| `results/**/aggregated/*.csv`, `*.tex` | Git | a metric moving is exactly what a reviewer needs to see in a diff |
+| `results/**/*.png` | not tracked | each figure renders the numeric export beside it, so it holds less information than a file already tracked, and a binary diff shows nothing |
 | `results/**/seed_*/` | not tracked | regenerates byte-identically from the same seed |
-| `data/**/representations/*.pt` | [Hugging Face dataset repo](https://huggingface.co/datasets/llm-behaviour-intensity/activations) | too large for Git; fetched with `data_sync` |
+| `data/**/representations/*.pt` | [Hugging Face dataset repo](https://huggingface.co/datasets/llm-behaviour-intensity/activations) | too large for Git; tracked *by reference* — see the lock below |
+
+**Figures.** They land in `results/<ts>/<analysis>/<model>/<trait>/<pooling>_token/seed_<k>/`, and the mean±std band figures in `aggregated/`. A manuscript should copy the ones it uses into wherever the manuscript lives, rather than pointing `\graphicspath` into this tree — that coupling is why 56 PNGs used to be committed and churn on every re-run. Regenerating any figure is a complete operation now that a commit pins the code, the lock pins the exact tensor bytes, and the seed pins the RNG:
+
+```
+uv run python src/data_sync.py pull   --run <run_id>
+uv run python src/data_sync.py verify --run <run_id>
+uv run python src/run_analyses.py --models <model> --traits <trait>
+```
 
 ### How Git and the Hub stay connected
 

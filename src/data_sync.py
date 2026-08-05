@@ -143,7 +143,17 @@ def cmd_verify(args: argparse.Namespace) -> None:
         )
     if not res["matched"]:
         raise SystemExit("nothing to verify: no pinned tensors are on disk")
-    print("\nOK — every tensor on disk matches the revision this commit pins.")
+    # Say what was checked, not just that it passed: "OK" alongside a large
+    # missing count reads as "all good" when most of the run is simply absent.
+    scope = f"{len(res['matched'])} of {len(res['matched']) + len(res['missing'])} pinned tensors"
+    if res["missing"]:
+        print(
+            f"\nOK — {scope} are on disk and every one matches the pinned revision."
+            f"\n{len(res['missing'])} are not on disk. If you expected a full run,"
+            f" fetch them:\n    python src/data_sync.py pull --run {args.run}"
+        )
+    else:
+        print(f"\nOK — all {scope} are on disk and match the revision this commit pins.")
 
 
 def main() -> None:

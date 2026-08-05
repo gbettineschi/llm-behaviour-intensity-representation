@@ -4,8 +4,8 @@
     1,
     2
   ],
-  "timestamp": "20260804_213820",
-  "git_commit": "66066b7ec8899951d0b0d8c6f040fee58900ab6d",
+  "timestamp": "20260805_181938",
+  "git_commit": "7955e7c1dda6dd9af50c9dcdd354afc672fb1955",
   "representations": {
     "repo_id": "llm-behaviour-intensity/activations",
     "revision": "8c07f06b5627e6311d76602fe9b158484a975e37",

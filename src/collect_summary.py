@@ -1,6 +1,7 @@
 """Cross-combo summary table: one row per (model, trait, token_pooling) with
 the headline numbers from every analysis driver, for reviewing the sweep at a
-glance.
+glance — plus a cross-combo synthesis testing whether the bend is a general
+phenomenon (not a single-trait or single-model artifact).
 
 Scrapes the numeric CSVs the drivers already emit — no analysis logic lives
 here. Every column is read from ``aggregated/`` when the combo was aggregated,
@@ -23,6 +24,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+from scipy.stats import combine_pvalues, spearmanr
 
 from lib.config import DEFAULT_DATA_ROOT, MODELS, seeds_base_dir
 from lib.traits import TRAITS
@@ -134,10 +136,89 @@ def collect_all() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# --- cross-combo synthesis --------------------------------------------------
+#
+# A per-combo p-value in noise_null_summary.csv already tests the right
+# one-sided direction (step_cosine significantly *below*, midpoint_residual
+# significantly *above*, what a linear ladder + empirical noise would produce
+# — see the ("step_cosine", "<="), ("midpoint_residual", ">=") checks in
+# trait_geometry.py). Combining those across combos with Fisher's method is
+# therefore a direct test of "the bend is real in aggregate, across traits and
+# model scales" — not just eyeballing dozens of separate CIs.
+
+
+def _fisher_combined_p(pvalues: pd.Series) -> dict:
+    pvalues = pd.to_numeric(pvalues, errors="coerce").dropna()
+    n = len(pvalues)
+    if n == 0:
+        return {"n": 0, "p_value": None}
+    if n == 1:
+        return {"n": 1, "p_value": float(pvalues.iloc[0])}
+    return {"n": n, "p_value": float(combine_pvalues(pvalues, method="fisher").pvalue)}
+
+
+def _group_summary(df: pd.DataFrame, by: str) -> list[dict]:
+    g = df.groupby(by).agg(
+        n=("apex_angle_deg", "size"),
+        apex_angle_deg_mean=("apex_angle_deg", "mean"),
+        step_cosine_mean=("step_cosine", "mean"),
+        frac_significant_bend=("step_cosine_null_p", lambda s: float((pd.to_numeric(s, errors="coerce") < 0.05).mean())),
+    )
+    return g.reset_index().to_dict(orient="records")
+
+
+def meta_analysis(df: pd.DataFrame) -> dict:
+    """Cross-combo synthesis: is the bend general, or a single trait/model artifact?
+
+    * Fisher-combined p-values across every combo's linear-ladder-null test
+      (both the step_cosine and midpoint_residual versions).
+    * Fraction of combos individually significant at alpha=0.05.
+    * Spearman correlation between model scale (params_b) and bend magnitude
+      (-step_cosine, since 1.0 = collinear/linear) — tests whether the bend
+      shrinks with scale rather than persisting.
+    * Per-trait and per-model breakdowns, so "does it hold for every trait /
+      every model" can be read off directly rather than re-deriving it from
+      summary.csv by hand.
+    """
+    out: dict = {"n_combos": len(df)}
+    if df.empty:
+        return out
+
+    out["fisher_combined_p"] = {
+        "step_cosine_null": _fisher_combined_p(df["step_cosine_null_p"]),
+        "midpoint_residual_null": _fisher_combined_p(df["midpoint_residual_null_p"]),
+    }
+    out["frac_significant_bend_at_0.05"] = float(
+        (pd.to_numeric(df["step_cosine_null_p"], errors="coerce") < 0.05).mean()
+    )
+
+    scale_df = df.dropna(subset=["params_b", "step_cosine"])
+    if len(scale_df) >= 3:
+        rho, p = spearmanr(scale_df["params_b"], -scale_df["step_cosine"])
+        out["scale_vs_bend_magnitude"] = {"n": len(scale_df), "spearman_rho": float(rho), "p_value": float(p)}
+    else:
+        out["scale_vs_bend_magnitude"] = {"n": len(scale_df), "spearman_rho": None, "p_value": None}
+
+    out["by_trait"] = _group_summary(df, "trait")
+    out["by_model"] = _group_summary(df, "model")
+    return out
+
+
 if __name__ == "__main__":
     df = collect_all()
     out_dir = Path("results") / DATASET_ROOT.name / "summary"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "summary.csv"
-    df.to_csv(out_path, index=False)
-    print(f"Wrote {len(df)} rows to {out_path}")
+
+    summary_path = out_dir / "summary.csv"
+    df.to_csv(summary_path, index=False)
+    print(f"Wrote {len(df)} rows to {summary_path}")
+
+    meta = meta_analysis(df)
+    meta_path = out_dir / "meta_analysis.json"
+    meta_path.write_text(json.dumps(meta, indent=2))
+    print(f"Wrote cross-combo synthesis to {meta_path}")
+    if meta["n_combos"] < 10:
+        print(
+            f"  NOTE: only {meta['n_combos']} combos present — treat this synthesis as "
+            "illustrative until the full model x trait sweep has run."
+        )

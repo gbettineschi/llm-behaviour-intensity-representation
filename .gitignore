@@ -22,3 +22,32 @@ CLAUDE.md
 .vscode
 
 activations/
+
+# Model representations: every layer of every model/trait lives on the Hugging
+# Face Hub, fetched with src/data_sync.py and pinned by representations.lock.json.
+# This replaces the previous focal-layer-only policy, which existed solely to fit
+# Git's size limits and cost us full layer sweeps for all but two model/trait combos.
+data/**/representations/**/*.pt
+
+# huggingface_hub download cache created by src/data_sync.py pull
+# (the library writes its own .gitignore in here too; this makes the intent explicit)
+data/.cache/
+
+# Per-seed analysis dumps - regenerate byte-identically by re-running the same seed
+results/**/seed_*/
+
+# Git LFS writes its hooks into core.hooksPath, which the README points at
+# .githooks/ — so anyone who ever ran `git lfs install` gets these next to our
+# commit guard. LFS is retired here, and with git-lfs absent they exit 2 and
+# break every checkout. Ignored so they can never be committed by `git add -A`.
+.githooks/post-checkout
+.githooks/post-commit
+.githooks/post-merge
+.githooks/pre-push
+
+# Figures. Each one renders the numeric export sitting next to it, so it holds
+# strictly less information than a file we already track, and "Binary files
+# differ" is not a review signal. A manuscript that needs a figure should copy
+# the one it uses into wherever the manuscript lives; reaching into this tree is
+# what made 56 PNGs churn on every re-run.
+results/**/*.png

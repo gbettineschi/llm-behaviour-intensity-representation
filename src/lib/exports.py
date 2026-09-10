@@ -66,6 +66,10 @@ def jsonify(x: object):
     """Convert NumPy types to JSON-serialisable Python types."""
     if x is None:
         return None
+    # Before the int branch: bool is a subclass of int, so without this every
+    # boolean would be exported as 0/1 and read back as a count rather than a flag.
+    if isinstance(x, (bool, np.bool_)):
+        return bool(x)
     if isinstance(x, (np.floating, float)):
         xf = float(x)
         if np.isnan(xf):

@@ -125,7 +125,10 @@ def build_inner_product_spaces(
     W_aniso = np.diag(1.0 / np.clip(sigma, 1e-8, None))
 
     # 3 - Park causal: inverse-sqrt of the unembedding-row covariance.
-    cov_unembed = torch.load(unembed_cov_path, weights_only=False).numpy()
+    # Upcast to float64: newer covariance files are saved as float32 (storage-size
+    # limit at 7B hidden sizes), older ones are already float64 — this is a no-op
+    # for those and keeps eigendecomposition precision consistent either way.
+    cov_unembed = torch.load(unembed_cov_path, weights_only=False).to(torch.float64).numpy()
     W_park = inv_sqrt_psd(cov_unembed)
 
     # 4 - Mahalanobis / LDA: inverse-sqrt of pooled within-level covariance.

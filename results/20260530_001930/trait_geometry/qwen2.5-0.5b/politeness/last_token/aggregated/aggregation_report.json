@@ -1,0 +1,30 @@
+{
+  "aggregated": [
+    "numeric/geometry/geometry_bootstrap_summary.csv",
+    "numeric/noise_null/noise_null_summary.csv",
+    "numeric/shared_plane/shared_plane_summary.csv",
+    "numeric/steering_direction/steering_direction_summary.csv"
+  ],
+  "passthrough": [
+    "numeric/geometry/geometry_per_scenario.csv",
+    "numeric/geometry/geometry_pooled.csv",
+    "numeric/per_intent/per_intent_geometry.csv",
+    "numeric/shared_plane/shared_plane_axes.csv",
+    "numeric/shared_plane/shared_plane_coords_mean.csv",
+    "numeric/shared_plane/shared_plane_coords_per_scenario.csv",
+    "numeric/steering_direction/steering_direction_alignment_per_scenario.csv",
+    "numeric/steering_direction/steering_direction_principal_angles.csv",
+    "numeric/subspace/subspace_spectrum.csv",
+    "numeric/subspace/subspace_spectrum_summary.json"
+  ],
+  "skipped_draws": [
+    "numeric/geometry/geometry_bootstrap_draws.csv",
+    "numeric/noise_null/noise_null_null.csv",
+    "numeric/shared_plane/shared_plane_markedness_reliability_cosines.csv",
+    "numeric/steering_direction/steering_direction_markedness_reliability_cosines.csv",
+    "numeric/steering_direction/steering_direction_valence_reliability_cosines.csv",
+    "run_metadata.json"
+  ],
+  "skipped_misaligned": [],
+  "skipped_missing": []
+}

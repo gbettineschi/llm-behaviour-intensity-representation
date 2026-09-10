@@ -155,6 +155,258 @@ def test_within_scenario_recovers_confounded_ranking():
            f"within={within['spearman']:.4f} naive={naive['spearman']:.4f}")
 
 
+def test_child_seed_deterministic():
+    print("test_child_seed_deterministic")
+    from lib.config import child_seed
+
+    _check("same (master, name) -> same seed", child_seed(0, "bootstrap") == child_seed(0, "bootstrap"))
+    _check("different name -> different seed", child_seed(0, "bootstrap") != child_seed(0, "permutation_null"))
+    _check("different master -> different seed", child_seed(0, "bootstrap") != child_seed(1, "bootstrap"))
+    s = child_seed(3, "reliability")
+    _check("uint32 range", isinstance(s, int) and 0 <= s < 2**32, str(s))
+
+
+def test_direction_seed():
+    print("test_direction_seed")
+    from lib.directions import NAMES, direction
+
+    rng = np.random.default_rng(3)
+    X = np.vstack([rng.normal(0, 1, (40, 16)), rng.normal(1.5, 1, (40, 16))])
+    y = np.array([0] * 40 + [1] * 40)
+    for m in NAMES:
+        d1, d2 = direction(m, X, y, seed=1), direction(m, X, y, seed=1)
+        _check(f"{m} reproducible for same seed", np.allclose(d1, d2))
+        _check(f"{m} oriented (pos class higher)", (X[y == 1] @ d1).mean() > (X[y == 0] @ d1).mean())
+    r1, r2 = direction("Random", X, y, seed=1), direction("Random", X, y, seed=2)
+    _check("Random differs across seeds", not np.allclose(r1, r2))
+
+
+def test_aggregate_csv():
+    print("test_aggregate_csv")
+    import csv
+    import json
+    import tempfile
+
+    from aggregate_results import aggregate_analysis
+
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        rows = {0: [1.0, 2.0], 1: [3.0, 4.0]}
+        for seed, varying in rows.items():
+            num = base / f"seed_{seed}" / "numeric"
+            num.mkdir(parents=True)
+            with (num / "a.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["method", "constant", "varying"])
+                w.writerow(["MeanDiff", 7.0, varying[0]])
+                w.writerow(["KMeans", 8.0, varying[1]])
+            # misaligned key column across seeds -> must be skipped
+            with (num / "bad.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["name", "x"])
+                w.writerow([f"row_of_seed_{seed}", 1.0])
+        # present in seed_1 only: discovery unions over every seed, so this must be
+        # reported as missing rather than silently ignored (it is invisible to a
+        # seed_0-only glob).
+        with (base / "seed_1" / "numeric" / "late.csv").open("w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["name", "x"])
+            w.writerow(["only_in_seed_1", 1.0])
+        out = aggregate_analysis(base)
+        with (out / "numeric" / "a.csv").open() as f:
+            got = list(csv.reader(f))
+        _check("header has mean/std/n_seeds", got[0] == ["method", "constant", "varying_mean", "varying_std", "n_seeds"], str(got[0]))
+        _check("constant passthrough", float(got[1][1]) == 7.0)
+        # CSV values are formatted to 10 significant digits by exports.fmt
+        _check("mean correct", abs(float(got[1][2]) - 2.0) < 1e-8, got[1][2])
+        _check("std ddof=1 correct", abs(float(got[1][3]) - np.sqrt(2.0)) < 1e-8, got[1][3])
+        _check("n_seeds = 2", int(got[1][4]) == 2)
+        report = json.loads((out / "aggregation_report.json").read_text())
+        _check("misaligned file reported", "numeric/bad.csv" in report["skipped_misaligned"], str(report["skipped_misaligned"]))
+        _check("misaligned file not written", not (out / "numeric" / "bad.csv").exists())
+        _check("file missing from seed_0 reported", "numeric/late.csv" in report["skipped_missing"], str(report["skipped_missing"]))
+        _check("file missing from seed_0 not written", not (out / "numeric" / "late.csv").exists())
+
+
+def test_collect_summary_reads_aggregated_only_tree():
+    """A fresh clone has aggregated/ but no seed dirs, because results/**/seed_*/
+    is gitignored. Every column must still be populated from aggregated/."""
+    print("test_collect_summary_reads_aggregated_only_tree")
+    import csv
+    import json
+    import tempfile
+
+    import collect_summary
+
+    def _write(path, header, rows):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(header)
+            w.writerows(rows)
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        combo = "gemma-2-2b/politeness/avg_token"
+        geom = root / "trait_geometry" / combo / "aggregated"
+        lin = root / "ordinal_linearity" / combo / "aggregated"
+        # Column shapes exactly as aggregate_results emits them: deterministic
+        # columns pass through, varying ones gain _mean/_std.
+        _write(geom / "numeric" / "geometry" / "geometry_bootstrap_summary.csv",
+               ["metric", "point", "ci_lo_mean", "ci_lo_std", "ci_hi_mean", "ci_hi_std", "n_seeds"],
+               [["apex_angle_deg", 73.2, 68.0, 0.4, 78.1, 0.3, 3]])
+        _write(geom / "numeric" / "noise_null" / "noise_null_summary.csv",
+               ["metric", "observed", "p_value", "n_sim", "n_seeds"],
+               [["step_cosine", -0.289, 0.000999, 1000, 3],
+                ["midpoint_residual", 0.661, 0.000999, 1000, 3]])
+        _write(geom / "numeric" / "shared_plane" / "shared_plane_summary.csv",
+               ["markedness_R_full", "shared_bend_r2_cv"], [[0.91, 0.55]])
+        _write(lin / "numeric" / "linearity" / "linearity_metrics.csv",
+               ["metric", "within_scenario"], [["spearman", 0.895], ["probe_r2", 0.77]])
+        (geom / "run_metadata.json").write_text(json.dumps({"seeds": [0, 1, 2]}))
+
+        orig = collect_summary.DATASET_ROOT
+        try:
+            # _combo_dir builds results/<name>/... so point the tree at our temp root
+            collect_summary.seeds_base_dir = (
+                lambda name, analysis, model, trait, pooling: root / analysis / model / trait / f"{pooling}_token"
+            )
+            row = collect_summary.collect_combo("gemma-2-2b", "politeness", "avg")
+        finally:
+            collect_summary.DATASET_ROOT = orig
+
+        _check("row found with no seed dirs present", row is not None)
+        _check("n_seeds from aggregated provenance", row["n_seeds"] == 3, str(row["n_seeds"]))
+        _check("apex_angle_deg populated", row["apex_angle_deg"] == 73.2, str(row["apex_angle_deg"]))
+        _check("apex_angle_ci_lo from _mean column", row["apex_angle_ci_lo"] == 68.0, str(row["apex_angle_ci_lo"]))
+        _check("step_cosine populated", row["step_cosine"] == -0.289, str(row["step_cosine"]))
+        _check("step_cosine_null_p populated", row["step_cosine_null_p"] == 0.000999, str(row["step_cosine_null_p"]))
+        _check("midpoint_residual populated", row["midpoint_residual"] == 0.661, str(row["midpoint_residual"]))
+        _check("spearman_within_scenario populated", row["spearman_within_scenario"] == 0.895)
+
+
+def test_no_trait_intent_holds_its_own_trait_constant():
+    """Per-intent constraints must not tell the generator to hold constant the very
+    trait being varied. The shared `request` intent forbids changing urgency, which
+    is a correct control for every trait except urgency itself."""
+    print("test_no_trait_intent_holds_its_own_trait_constant")
+    from lib.traits import TRAITS
+
+    for trait, spec in sorted(TRAITS.items()):
+        for intent in spec["intents"]:
+            for c in intent.get("extra_constraints", []):
+                _check(f"{trait}/{intent['id']} does not pin {trait}", trait not in c.lower(), c)
+
+
+def test_git_commit_dirty_flag_tracks_src_only():
+    """The provenance -dirty flag must reflect uncommitted *code*, not the results
+    a run is writing. A whole-tree check stamps every result dirty from its own
+    output, which makes the flag carry no information at all."""
+    print("test_git_commit_dirty_flag_tracks_src_only")
+    import subprocess
+
+    from lib.config import git_commit
+
+    c = git_commit()
+    _check("returns a commit", c is not None, str(c))
+    _check("sha is 40 hex chars", len(c.split("-")[0]) == 40, str(c))
+    src_dirty = bool(
+        subprocess.run(
+            ["git", "status", "--porcelain", "--", "src"], capture_output=True, text=True
+        ).stdout.strip()
+    )
+    _check(
+        "dirty flag matches src/ state, ignoring results/",
+        c.endswith("-dirty") == src_dirty,
+        f"stamp={c} src_dirty={src_dirty}",
+    )
+
+
+def test_jsonify_keeps_booleans_boolean():
+    """bool is a subclass of int, so an unguarded int branch exports True as 1 —
+    which in a provenance file reads as a count, not a flag."""
+    print("test_jsonify_keeps_booleans_boolean")
+    from lib.exports import jsonify
+
+    _check("True stays True", jsonify(True) is True, repr(jsonify(True)))
+    _check("False stays False", jsonify(False) is False, repr(jsonify(False)))
+    _check("numpy bool stays bool", jsonify(np.bool_(True)) is True, repr(jsonify(np.bool_(True))))
+    _check("nested in a dict", jsonify({"verified": True})["verified"] is True)
+    _check("real ints unaffected", jsonify(50) == 50 and isinstance(jsonify(50), int))
+    _check("numpy int unaffected", jsonify(np.int64(7)) == 7)
+
+
+def test_aggregate_respects_explicit_seed_list():
+    """A seed_* dir left over from an earlier run must not be folded into the mean
+    when the caller says which seeds it just ran."""
+    print("test_aggregate_respects_explicit_seed_list")
+    import csv
+    import json
+    import tempfile
+
+    from aggregate_results import aggregate_analysis
+
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        # seed_2 is stale: a wildly different value from an earlier run.
+        for seed, val in {0: 1.0, 1: 3.0, 2: 99.0}.items():
+            num = base / f"seed_{seed}" / "numeric"
+            num.mkdir(parents=True)
+            with (num / "a.csv").open("w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["metric", "x"])
+                w.writerow(["m", val])
+        out = aggregate_analysis(base, seeds=[0, 1])
+        with (out / "numeric" / "a.csv").open() as f:
+            got = list(csv.reader(f))
+        _check("n_seeds is the requested count", int(got[1][-1]) == 2, str(got[1]))
+        _check("mean excludes the stale seed", abs(float(got[1][1]) - 2.0) < 1e-8, got[1][1])
+        meta = json.loads((out / "run_metadata.json").read_text())
+        _check("provenance records only the requested seeds", meta["seeds"] == [0, 1], str(meta["seeds"]))
+        # Globbing (seeds=None) still folds everything in, for standalone --dir use.
+        out2 = aggregate_analysis(base)
+        with (out2 / "numeric" / "a.csv").open() as f:
+            got2 = list(csv.reader(f))
+        _check("seeds=None still globs all three", int(got2[1][-1]) == 3, str(got2[1]))
+
+
+def test_aggregate_json_keeps_provenance_per_seed():
+    """RNG seeds and timestamps are provenance, not measurements — averaging them
+    yields a mean of unrelated 32-bit integers that reads like a parameter."""
+    print("test_aggregate_json_keeps_provenance_per_seed")
+    from aggregate_results import _aggregate_json
+
+    docs = [
+        {"n_perm": 100, "seed": 111111, "p_floor": 0.0099},
+        {"n_perm": 100, "seed": 222222, "p_floor": 0.0099},
+        {"n_perm": 100, "seed": 333333, "p_floor": 0.0099},
+    ]
+    got = _aggregate_json(docs, 3)
+    _check("varying seed kept per-seed", got["seed"] == {"per_seed": [111111, 222222, 333333]}, str(got["seed"]))
+    _check("seed not averaged", "mean" not in str(got["seed"]), str(got["seed"]))
+    _check("identical params pass through", got["n_perm"] == 100 and got["p_floor"] == 0.0099, str(got))
+    # A genuine measurement still aggregates.
+    m = _aggregate_json([{"score": 1.0}, {"score": 3.0}], 2)
+    _check("real metric still averaged", abs(m["score"]["mean"] - 2.0) < 1e-9, str(m))
+
+
+def test_run_analyses_skips_dirs_without_tensors():
+    """Rep dirs survive a clone (metadata.json is tracked, tensors are not), so
+    the sweep must skip on absent tensors rather than on an absent directory."""
+    print("test_run_analyses_skips_dirs_without_tensors")
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        rd = Path(td) / "representations" / "m" / "t" / "avg_token"
+        rd.mkdir(parents=True)
+        (rd / "metadata.json").write_text("{}")  # what a fresh clone actually has
+        has_tensors = rd.is_dir() and any(rd.glob("layer_*.pt"))
+        _check("dir with only metadata.json is skipped", not has_tensors)
+        _check("plain exists() would NOT have skipped it", rd.exists())
+        (rd / "layer_1.pt").write_bytes(b"x")
+        _check("dir with a tensor is not skipped", rd.is_dir() and any(rd.glob("layer_*.pt")))
+
+
 def main():
     tests = [
         test_perfectly_linear,
@@ -163,6 +415,16 @@ def main():
         test_within_center_and_triples,
         test_groupkfold_prevents_leakage,
         test_within_scenario_recovers_confounded_ranking,
+        test_child_seed_deterministic,
+        test_direction_seed,
+        test_aggregate_csv,
+        test_collect_summary_reads_aggregated_only_tree,
+        test_no_trait_intent_holds_its_own_trait_constant,
+        test_git_commit_dirty_flag_tracks_src_only,
+        test_jsonify_keeps_booleans_boolean,
+        test_aggregate_respects_explicit_seed_list,
+        test_aggregate_json_keeps_provenance_per_seed,
+        test_run_analyses_skips_dirs_without_tensors,
     ]
     failed = 0
     for t in tests:

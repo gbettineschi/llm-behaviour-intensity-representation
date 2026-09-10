@@ -53,7 +53,7 @@ def _unit(v: np.ndarray) -> np.ndarray:
     return v / n if n > 0 else v
 
 
-def direction(method: str, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+def direction(method: str, X: np.ndarray, y: np.ndarray, *, seed: int = 0) -> np.ndarray:
     """Unit trait direction estimated by one of the §2.2 methods.
 
     The vector is oriented so the positive class projects to higher values.
@@ -61,14 +61,14 @@ def direction(method: str, X: np.ndarray, y: np.ndarray) -> np.ndarray:
     if method == "MeanDiff":
         d = X[y == 1].mean(0) - X[y == 0].mean(0)
     elif method == "KMeans":
-        c = KMeans(n_clusters=2, n_init=10, random_state=0).fit(X).cluster_centers_
+        c = KMeans(n_clusters=2, n_init=10, random_state=seed).fit(X).cluster_centers_
         d = c[1] - c[0]
     elif method == "LogReg":
         d = LogisticRegression(max_iter=2000).fit(X, y).coef_[0]
     elif method == "PCA":
-        d = PCA(n_components=1, random_state=0).fit(X).components_[0]
+        d = PCA(n_components=1, random_state=seed).fit(X).components_[0]
     elif method == "Random":
-        d = np.random.default_rng(0).standard_normal(X.shape[1])
+        d = np.random.default_rng(seed).standard_normal(X.shape[1])
     else:
         raise ValueError(method)
     d = _unit(d)
@@ -89,6 +89,7 @@ def cv_direction_accuracy(
     groups: np.ndarray,
     *,
     n_splits: int = 5,
+    seed: int = 0,
 ) -> tuple[float, float]:
     """Mean ± SD balanced accuracy of the projection-threshold classifier under
     scenario-grouped K-fold CV. Direction and threshold are fit on the training
@@ -98,7 +99,7 @@ def cv_direction_accuracy(
     gkf = GroupKFold(n_splits=min(n_splits, len(set(groups))))
     accs = []
     for tr, te in gkf.split(X, y, groups):
-        d = direction(method, X[tr], y[tr])
+        d = direction(method, X[tr], y[tr], seed=seed)
         thr = 0.5 * ((X[tr][y[tr] == 1] @ d).mean() + (X[tr][y[tr] == 0] @ d).mean())
         accs.append(balanced_accuracy_score(y[te], (X[te] @ d > thr).astype(int)))
     return float(np.mean(accs)), float(np.std(accs))

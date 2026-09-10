@@ -1,0 +1,10 @@
+row,col,cosine_mean,cosine_std,n_seeds
+positive-neutral,positive-neutral,1,0,3
+positive-neutral,neutral-negative,-0.4530206371,0.0003063328939,3
+positive-neutral,positive-negative,0.2192019188,0.0001938720179,3
+neutral-negative,positive-neutral,-0.4530206371,0.0003063328939,3
+neutral-negative,neutral-negative,1,0,3
+neutral-negative,positive-negative,0.846590475,0.0004117460992,3
+positive-negative,positive-neutral,0.2192019188,0.0001938720179,3
+positive-negative,neutral-negative,0.846590475,0.0004117460992,3
+positive-negative,positive-negative,1,0,3

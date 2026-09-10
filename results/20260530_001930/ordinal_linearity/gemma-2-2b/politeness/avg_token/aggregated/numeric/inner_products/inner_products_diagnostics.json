@@ -1,0 +1,13 @@
+{
+  "D": 2304,
+  "N": 216,
+  "shrinkage_within_level": 0.14392389043868448,
+  "shrinkage_within_scenario": 0.2507780739896602,
+  "frobenius_norms": {
+    "Euclidean (raw)": 48.0,
+    "Anisotropy-corrected": 59.60003639587473,
+    "Park causal": 1846.744967385291,
+    "Mahalanobis / LDA": 129.2644207863164,
+    "Within-subjects noise": 185.1037327636809
+  }
+}

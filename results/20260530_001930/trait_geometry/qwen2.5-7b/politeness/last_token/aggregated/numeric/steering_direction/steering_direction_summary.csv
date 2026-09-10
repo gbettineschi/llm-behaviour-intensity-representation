@@ -1,0 +1,2 @@
+valence_r_half_mean,valence_r_half_std,valence_R_full_mean,valence_R_full_std,markedness_r_half_mean,markedness_r_half_std,markedness_R_full_mean,markedness_R_full_std,mean_cos_valence,mean_capture_valence,mean_cos_bend,median_theta1,median_theta2,median_overlap,contrast_within_intent_mean,contrast_between_intent_mean,contrast_gap,n_seeds
+0.8797654825,0.0009545969202,0.9360373077,0.0005401522257,0.827072983,0.0009762136661,0.9053527696,0.0005848725598,0.4269471416,0.1940465767,0.3478247517,57.45207444,72.8051661,0.1875614948,0.2507425233,0.1624176009,0.08832492242,3

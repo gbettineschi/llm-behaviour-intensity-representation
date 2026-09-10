@@ -1,28 +1,42 @@
-"""Extract activations for a prompt dataset into data/<timestamp>/representations/.
+"""Extract activations for a trait dataset into data/<timestamp>/representations/<model>/<trait>/.
 
 This script owns the input/output locations; the library loads the model, extracts, and saves.
+Extraction is deterministic (prefill only, no sampling), so there is no seed to set.
 
-Run from the repo root:  uv run python src/extract_representations.py
+Run from the repo root:  uv run python src/extract_representations.py --model gemma-2-2b --trait politeness
 """
 
-from pathlib import Path
+import argparse
 
+from lib.config import DEFAULT_DATA_ROOT, DEFAULT_MODEL, MODELS, dataset_path, unembed_cov_path
 from lib.representations import extract_representations
+from lib.traits import DEFAULT_TRAIT, TRAITS
 
-DATASET = Path("data/20260530_001930/sentences/sentences_filtered.jsonl")
-# Token pooling over the prompt's prefill hidden states: "last" = final content token,
-# "avg" = average over content tokens. No generation happens. Output folder is f"{TOKEN_POOLING}_token".
-TOKEN_POOLING = "avg"
-MODEL = "google/gemma-2-2b"
-LAYERS = list(range(1, 23))
+DATA_ROOT = DEFAULT_DATA_ROOT
 
 if __name__ == "__main__":
-    if not DATASET.exists():
-        raise SystemExit(DATASET)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--model", choices=sorted(MODELS), default=DEFAULT_MODEL)
+    ap.add_argument("--trait", choices=sorted(TRAITS), default=DEFAULT_TRAIT)
+    ap.add_argument(
+        "--token-pooling",
+        choices=("avg", "last", "both"),
+        default="both",
+        help="'avg' = average over content tokens, 'last' = final content token; "
+        "'both' extracts the two in a single forward pass",
+    )
+    ap.add_argument("--batch-size", type=int, default=8)
+    args = ap.parse_args()
+
+    dataset = dataset_path(DATA_ROOT, args.trait)
+    if not dataset.exists():
+        raise SystemExit(dataset)
+    poolings = ("avg", "last") if args.token_pooling == "both" else (args.token_pooling,)
     extract_representations(
-        DATASET,
-        DATASET.parent.parent / "representations",
-        model_name=MODEL,
-        layers=LAYERS,
-        token_pooling=TOKEN_POOLING,
+        dataset,
+        DATA_ROOT / "representations" / args.model / args.trait,
+        model_name=MODELS[args.model]["hf_id"],
+        token_poolings=poolings,
+        batch_size=args.batch_size,
+        cov_path=unembed_cov_path(DATA_ROOT, args.model),
     )

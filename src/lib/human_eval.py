@@ -1,11 +1,12 @@
 """Blind triplet-ranking web app (library).
 
 `human_eval(data_root)` serves a local web app and blocks until the annotator finishes:
-they first pick one of the available datasets (a `data/<timestamp>/sentences/` folder with a
-`sentences_filtered.jsonl`), then order each scenario's three paraphrases — shown unlabeled, in
-random order — from least to most of the trait. The true order is revealed after each answer. On
-finish the server stops and the collected results are RETURNED to the caller, which decides
-where to save them (see evaluate_prompts.py). Stdlib only — no extra dependencies.
+they first pick one of the available datasets (a `data/<timestamp>/sentences/<trait>/` folder
+with a `sentences_filtered.jsonl`), then order each scenario's three paraphrases — shown
+unlabeled, in random order — from least to most of the trait. The true order is revealed after
+each answer. On finish the server stops and the collected results are RETURNED to the caller,
+which decides where to save them (see evaluate_sentences.py). Stdlib only — no extra
+dependencies beyond the pure-data trait registry in lib.traits.
 """
 
 from __future__ import annotations
@@ -20,8 +21,7 @@ from itertools import combinations
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-LEVELS = ["negative", "neutral", "positive"]  # gold order, least -> most
-AXIS = {"politeness": "least polite  →  most polite"}
+from lib.traits import LEVELS, TRAITS  # LEVELS is the gold order, least -> most
 
 
 # --- dataset -> blind triplets
@@ -59,7 +59,7 @@ def build_triplets(run_dir: Path) -> list[dict]:
             {
                 "task_id": sid,
                 "trait": trait,
-                "axis": AXIS.get(trait, f"least {trait}  →  most {trait}"),
+                "axis": TRAITS.get(trait, {}).get("axis", f"least {trait}  →  most {trait}"),
                 "cards": [
                     {"cid": f"c{i}", "level": lvl, "text": chosen[lvl]}
                     for i, lvl in enumerate(display)
@@ -322,17 +322,18 @@ def _make_handler(data_root: Path, state: dict, results: dict, done: threading.E
                 self.wfile.write(body)
             elif parsed.path == "/api/datasets":
                 datasets = []
-                for p in sorted(data_root.glob("*/sentences/sentences_filtered.jsonl")):
+                for p in sorted(data_root.glob("*/sentences/*/sentences_filtered.jsonl")):
                     datasets.append(
                         {
-                            "name": p.parent.parent.name,
+                            "name": f"{p.parent.parent.parent.name}/{p.parent.name}",  # <ts>/<trait>
                             "n_triplets": len(build_triplets(p.parent)),
                         }
                     )
                 self._json({"datasets": datasets})
             elif parsed.path == "/api/tasks":
                 name = parse_qs(parsed.query).get("dataset", [""])[0]
-                triplets = build_triplets(data_root / name / "sentences")
+                ts, _, trait = name.partition("/")
+                triplets = build_triplets(data_root / ts / "sentences" / trait)
                 state.update(
                     dataset=name,
                     triplets=triplets,

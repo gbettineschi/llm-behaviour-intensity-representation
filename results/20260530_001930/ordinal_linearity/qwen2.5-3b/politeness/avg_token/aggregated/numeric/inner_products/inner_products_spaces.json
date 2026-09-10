@@ -1,0 +1,7 @@
+{
+  "euclidean_raw": "Euclidean (raw)",
+  "anisotropy_corrected": "Anisotropy-corrected",
+  "park_causal": "Park causal",
+  "mahalanobis_lda": "Mahalanobis / LDA",
+  "within_subjects_noise": "Within-subjects noise"
+}

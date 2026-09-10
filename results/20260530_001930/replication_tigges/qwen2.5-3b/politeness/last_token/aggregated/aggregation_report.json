@@ -1,0 +1,39 @@
+{
+  "aggregated": [
+    "numeric/layer_sweep.csv",
+    "numeric/neutral_vs_negative/cv_accuracy.csv",
+    "numeric/neutral_vs_negative/direction_agreement_centered.csv",
+    "numeric/neutral_vs_negative/direction_agreement_centered_long.csv",
+    "numeric/neutral_vs_negative/direction_agreement_raw.csv",
+    "numeric/neutral_vs_negative/direction_agreement_raw_long.csv",
+    "numeric/positive_vs_negative/direction_agreement_centered.csv",
+    "numeric/positive_vs_negative/direction_agreement_centered_long.csv",
+    "numeric/positive_vs_negative/direction_agreement_raw.csv",
+    "numeric/positive_vs_negative/direction_agreement_raw_long.csv",
+    "numeric/positive_vs_neutral/cv_accuracy.csv",
+    "numeric/positive_vs_neutral/direction_agreement_centered.csv",
+    "numeric/positive_vs_neutral/direction_agreement_centered_long.csv",
+    "numeric/positive_vs_neutral/direction_agreement_raw.csv",
+    "numeric/positive_vs_neutral/direction_agreement_raw_long.csv"
+  ],
+  "passthrough": [
+    "numeric/neutral_vs_negative/projection_centered.csv",
+    "numeric/neutral_vs_negative/projection_centered_summary.csv",
+    "numeric/neutral_vs_negative/projection_raw.csv",
+    "numeric/neutral_vs_negative/projection_raw_summary.csv",
+    "numeric/positive_vs_negative/cv_accuracy.csv",
+    "numeric/positive_vs_negative/projection_centered.csv",
+    "numeric/positive_vs_negative/projection_centered_summary.csv",
+    "numeric/positive_vs_negative/projection_raw.csv",
+    "numeric/positive_vs_negative/projection_raw_summary.csv",
+    "numeric/positive_vs_neutral/projection_centered.csv",
+    "numeric/positive_vs_neutral/projection_centered_summary.csv",
+    "numeric/positive_vs_neutral/projection_raw.csv",
+    "numeric/positive_vs_neutral/projection_raw_summary.csv"
+  ],
+  "skipped_draws": [
+    "run_metadata.json"
+  ],
+  "skipped_misaligned": [],
+  "skipped_missing": []
+}

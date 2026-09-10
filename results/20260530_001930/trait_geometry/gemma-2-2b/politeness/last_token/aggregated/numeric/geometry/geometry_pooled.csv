@@ -1,9 +1,9 @@
 metric,value
-span,45.10414285
-midpoint_residual,0.6132179727
-valence_offset,0.2966358309
-markedness,0.53669681
-markedness_ratio,1.07339362
-apex_angle_deg,76.78429823
-effective_vertices,4.688458556
-step_cosine,-0.2286176685
+span,45.10670172
+midpoint_residual,0.613357487
+valence_offset,0.2970198065
+markedness,0.5366438684
+markedness_ratio,1.073287737
+apex_angle_deg,76.76572609
+effective_vertices,4.689592847
+step_cosine,-0.2289332169

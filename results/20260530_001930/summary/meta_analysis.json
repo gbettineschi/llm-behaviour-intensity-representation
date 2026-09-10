@@ -1,0 +1,72 @@
+{
+  "n_combos": 12,
+  "fisher_combined_p": {
+    "step_cosine_null": {
+      "n": 12,
+      "p_value": 3.622040812689859e-23
+    },
+    "midpoint_residual_null": {
+      "n": 12,
+      "p_value": 3.622040812689859e-23
+    }
+  },
+  "frac_significant_bend_at_0.05": 1.0,
+  "scale_vs_bend_magnitude": {
+    "n": 12,
+    "spearman_rho": -0.23663363056235726,
+    "p_value": 0.45900401986332423
+  },
+  "by_trait": [
+    {
+      "trait": "politeness",
+      "n": 12,
+      "apex_angle_deg_mean": 51.602390195,
+      "step_cosine_mean": -0.5872085844,
+      "frac_significant_bend": 1.0
+    }
+  ],
+  "by_model": [
+    {
+      "model": "gemma-2-2b",
+      "n": 2,
+      "apex_angle_deg_mean": 74.97937653,
+      "step_cosine_mean": -0.2590407624,
+      "frac_significant_bend": 1.0
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "n": 2,
+      "apex_angle_deg_mean": 47.592199019999995,
+      "step_cosine_mean": -0.6610904279500001,
+      "frac_significant_bend": 1.0
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "n": 2,
+      "apex_angle_deg_mean": 42.264154205,
+      "step_cosine_mean": -0.70988877675,
+      "frac_significant_bend": 1.0
+    },
+    {
+      "model": "qwen2.5-1.5b-instruct",
+      "n": 2,
+      "apex_angle_deg_mean": 42.09071601,
+      "step_cosine_mean": -0.703978441,
+      "frac_significant_bend": 1.0
+    },
+    {
+      "model": "qwen2.5-3b",
+      "n": 2,
+      "apex_angle_deg_mean": 51.306684155,
+      "step_cosine_mean": -0.60246795695,
+      "frac_significant_bend": 1.0
+    },
+    {
+      "model": "qwen2.5-7b",
+      "n": 2,
+      "apex_angle_deg_mean": 51.38121125,
+      "step_cosine_mean": -0.58678514135,
+      "frac_significant_bend": 1.0
+    }
+  ]
+}

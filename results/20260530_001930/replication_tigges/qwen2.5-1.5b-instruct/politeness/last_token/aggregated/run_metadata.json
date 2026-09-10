@@ -1,0 +1,16 @@
+{
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timestamp": "20260910_223945",
+  "git_commit": "22085e9dd78cadd04657cc2ece841496c00f5f92",
+  "representations": {
+    "repo_id": "llm-behaviour-intensity/activations",
+    "revision": "829a221ace7cfed8f2b69ddb4cf0e881be5da01f",
+    "verified": true,
+    "n_matched": 54,
+    "n_mismatched": 0
+  }
+}

@@ -1,10 +1,10 @@
 row,col,cosine_mean,cosine_std,n_seeds
 positive-neutral,positive-neutral,1,0,3
-positive-neutral,neutral-negative,-0.1954874843,7.720137132e-07,3
-positive-neutral,positive-negative,0.4834225135,3.197368651e-06,3
-neutral-negative,positive-neutral,-0.1954874843,7.720137132e-07,3
+positive-neutral,neutral-negative,-0.1939427356,7.547741141e-07,3
+positive-neutral,positive-negative,0.4843151218,3.19612282e-06,3
+neutral-negative,positive-neutral,-0.1939427356,7.547741141e-07,3
 neutral-negative,neutral-negative,1,0,3
-neutral-negative,positive-negative,0.7793912105,1.01116927e-06,3
-positive-negative,positive-neutral,0.4834225135,3.197368651e-06,3
-positive-negative,neutral-negative,0.7793912105,1.01116927e-06,3
+neutral-negative,positive-negative,0.7797274001,1.048270062e-06,3
+positive-negative,positive-neutral,0.4843151218,3.19612282e-06,3
+positive-negative,neutral-negative,0.7797274001,1.048270062e-06,3
 positive-negative,positive-negative,1,0,3

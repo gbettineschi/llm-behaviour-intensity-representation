@@ -1,0 +1,4 @@
+row,positive-neutral_mean,positive-neutral_std,neutral-negative_mean,neutral-negative_std,positive-negative_mean,positive-negative_std,n_seeds
+positive-neutral,1,0,-0.9715476363,0.009115987288,-0.2579765177,0.004575293721,3
+neutral-negative,-0.9715476363,0.009115987288,1,0,0.9207370816,0.01929888326,3
+positive-negative,-0.2579765177,0.004575293721,0.9207370816,0.01929888326,1,0,3

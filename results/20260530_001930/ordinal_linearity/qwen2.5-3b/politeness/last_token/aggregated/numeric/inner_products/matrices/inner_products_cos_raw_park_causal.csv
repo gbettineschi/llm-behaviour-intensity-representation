@@ -1,0 +1,4 @@
+row,positive-neutral,neutral-negative,positive-negative
+positive-neutral,1,-0.4218211639,0.2020223999
+neutral-negative,-0.4218211639,1,0.8027668246
+positive-negative,0.2020223999,0.8027668246,1

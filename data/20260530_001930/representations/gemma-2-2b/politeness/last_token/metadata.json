@@ -1,8 +1,8 @@
 {
-  "generated_at": "20260804_210134",
+  "generated_at": "20260910_200612",
   "source_dataset": "data/20260530_001930/sentences/politeness/sentences_filtered.jsonl",
   "model": "google/gemma-2-2b",
-  "device": "mps",
+  "device": "cuda",
   "layers": [
     1,
     2,

@@ -1,13 +1,13 @@
 {
   "D": 1536,
   "N": 216,
-  "shrinkage_within_level": 0.013886396214864928,
-  "shrinkage_within_scenario": 0.016062847507267504,
+  "shrinkage_within_level": 0.01392279378335647,
+  "shrinkage_within_scenario": 0.016009265002456204,
   "frobenius_norms": {
     "Euclidean (raw)": 39.191835884530846,
-    "Anisotropy-corrected": 161.7339620504082,
-    "Park causal": 119.82982422485162,
-    "Mahalanobis / LDA": 85.83378220708411,
-    "Within-subjects noise": 460.84295281439813
+    "Anisotropy-corrected": 161.78830749047563,
+    "Park causal": 1721.185568333265,
+    "Mahalanobis / LDA": 85.73250598545626,
+    "Within-subjects noise": 463.2109798767385
   }
 }

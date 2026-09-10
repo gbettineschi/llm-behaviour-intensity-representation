@@ -1,0 +1,6 @@
+metric,pooled_naive_mean,pooled_naive_std,within_scenario,n_seeds
+spearman,0.7207546825,0,0.7522183615,3
+kendall,0.5667499256,0,0.5977975074,3
+probe_r2,0.5939269291,0.01929649424,0.793159829,3
+midpoint_residual,0.8235428728,0,0.763598484,3
+pc1_frac,0.7516313244,0,0.7516313244,3
